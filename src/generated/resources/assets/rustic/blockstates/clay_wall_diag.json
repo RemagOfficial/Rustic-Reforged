@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "rustic:block/clay_wall_diag",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "rustic:block/clay_wall_diag"
+    },
+    "facing=south": {
+      "model": "rustic:block/clay_wall_diag",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "rustic:block/clay_wall_diag",
+      "y": 270
+    }
+  }
+}

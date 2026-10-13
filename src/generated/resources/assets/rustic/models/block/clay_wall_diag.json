@@ -1,0 +1,53 @@
+{
+  "elements": [
+    {
+      "faces": {
+        "down": {
+          "cullface": "down",
+          "texture": "#plain"
+        },
+        "east": {
+          "cullface": "east",
+          "texture": "#diagonal"
+        },
+        "north": {
+          "cullface": "north",
+          "texture": "#plain"
+        },
+        "south": {
+          "cullface": "south",
+          "texture": "#plain"
+        },
+        "up": {
+          "cullface": "up",
+          "texture": "#plain"
+        },
+        "west": {
+          "cullface": "west",
+          "texture": "#diagonal",
+          "uv": [
+            16.0,
+            0.0,
+            0.0,
+            16.0
+          ]
+        }
+      },
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ]
+    }
+  ],
+  "textures": {
+    "diagonal": "rustic:block/clay_wall_diag",
+    "particle": "rustic:block/clay_wall_diag",
+    "plain": "rustic:block/clay_wall"
+  }
+}

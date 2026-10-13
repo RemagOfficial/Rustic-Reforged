@@ -9,6 +9,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import rustic.Rustic;
+import rustic.content.blocks.RusticBlocks;
 
 /**
  * The three Rustic creative tabs from 1.12.2 ({@code Rustic.decorTab} / {@code farmingTab} /
@@ -31,7 +32,18 @@ public final class RusticCreativeTabs {
                     // TODO Phase 3: replace with the rustic vase item (1.12.2: new ItemStack(ModBlocks.VASE))
                     .icon(() -> new ItemStack(Items.FLOWER_POT))
                     .displayItems((parameters, output) -> {
-                        // TODO Phase 3/4: decorative blocks land here
+                        // 1.12.2 filled this tab by calling setCreativeTab(decorTab) inside BlockBase,
+                        // BlockPillar and BlockStairsBase, so every decor block the config enabled was
+                        // in it. The families in RusticBlocks are that grouping, and the flag that used
+                        // to gate registration now only gates visibility here - turning a family off
+                        // leaves already-placed blocks intact.
+                        for (RusticBlocks.DecorFamily family : RusticBlocks.DECOR_FAMILIES) {
+                            if (family.gate().get()) {
+                                family.blocks().forEach(block -> output.accept(block.get()));
+                            }
+                        }
+                        // TODO Phase 3: the remaining decor families (candles, chains, chairs, tables,
+                        //   lattice, lanterns, gargoyle, vase) append themselves to DECOR_FAMILIES.
                     })
                     .build());
 

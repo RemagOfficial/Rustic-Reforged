@@ -148,7 +148,10 @@ dependencies {
 // Porting in progress: the 1.12.2 sources are kept in src/main/java as the
 // reference for each rewrite, but they import Minecraft/Forge classes that no
 // longer exist, so they must not reach the compiler. The two lists below are the
-// ledger: remove an entry when that file has been ported to NeoForge 1.21.1.
+// ledger: every line in them stays excluded until the whole port is finished and
+// the legacy tree is deleted. A file that has already been ported keeps its line
+// and gets a '# PORTED ...' note above it, naming the replacement - removing the
+// line would put the 1.12.2 file back on the compiler's path and break the build.
 // ---------------------------------------------------------------------------
 def unportedSources = { String listFile ->
     def listFileHandle = file(listFile)

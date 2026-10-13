@@ -21,14 +21,15 @@ import rustic.Rustic;
  * static {@code init()} that did {@code registry.register(...)}. Here a content class declares
  * {@code DeferredRegister} entries in its own static initialiser and everything is registered when
  * NeoForge fires the registry event, which removes the init-ordering constraints completely.
+ *
+ * <p>Blocks and items are the exception: they are owned by the content classes that fill them
+ * ({@link rustic.content.blocks.RusticBlocks} and {@link rustic.content.items.RusticItems}) rather
+ * than by a handle here, because {@code DeferredRegister.createBlocks}/{@code createItems} give
+ * {@code DeferredBlock}/{@code DeferredItem} holders with the block-item helpers on them. Several
+ * registers may point at one registry, so a content class that gains blocks later (fluid blocks,
+ * crops, machines) keeps its own.
  */
 public final class RusticRegistries {
-
-    /** Blocks, registered under {@code rustic:<name>}. */
-    public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(Rustic.MODID);
-
-    /** Items, including the block items that 1.12.2 registered next to each block. */
-    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Rustic.MODID);
 
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES =
             DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, Rustic.MODID);
@@ -64,8 +65,6 @@ public final class RusticRegistries {
      * mod constructor, before the loader fires the registry events.
      */
     public static void register(IEventBus modEventBus) {
-        BLOCKS.register(modEventBus);
-        ITEMS.register(modEventBus);
         BLOCK_ENTITY_TYPES.register(modEventBus);
         MENU_TYPES.register(modEventBus);
         ENTITY_TYPES.register(modEventBus);
