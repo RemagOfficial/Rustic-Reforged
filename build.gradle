@@ -80,6 +80,20 @@ idea {
 dependencies {
 	// has to be declared before the 'jar' section
 	//bundledLib "io.github.kostaskougios:cloning:1.10.3"
+	testCompile 'junit:junit:4.12'
+	// 'provided' deps are compile-only; the Phase 0 characterization tests load real Rustic
+	// classes that reference them at runtime, so they must be on the test runtime classpath.
+	testRuntime configurations.provided
+}
+
+// Phase 0 of the 1.21.1 port: characterization tests run against the 1.12.2 code.
+// Full stack traces and per-test results are needed to record the golden baseline.
+test {
+	testLogging {
+		events "passed", "skipped", "failed"
+		exceptionFormat "full"
+		showStandardStreams = true
+	}
 }
 
 jar {
