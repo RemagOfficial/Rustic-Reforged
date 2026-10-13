@@ -22,3 +22,7 @@ eclipse
 run
 libs
 /logs
+/src/generated/resources/.gitkeep
+/porting
+/new_gradle.txt
+/PORT_BASELINE.md

@@ -1,0 +1,32 @@
+# Mod descriptor for NeoForge. The dollar-brace placeholders are filled in from
+# gradle.properties by the generateModMetadata task in build.gradle, so no
+# placeholder here may use a property that build.gradle does not pass through.
+modLoader = "javafml"
+loaderVersion = "${loader_version_range}"
+license = "${mod_license}"
+issueTrackerURL = "https://github.com/RemagOfficial/Rustic-Reforged/issues"
+
+[[mods]]
+modId = "${mod_id}"
+version = "${mod_version}"
+displayName = "${mod_name}"
+displayURL = "https://github.com/RemagOfficial/Rustic-Reforged"
+authors = "cadaverous-eris, RemagOfficial"
+description = '''A medieval themed Minecraft mod based around decoration, exploration, agriculture, and alchemy. Ported to NeoForge 1.21.1.'''
+
+# The 1.12.2 mod declared "after:dynamictrees@[1.12.2-0.9.1e,);after:dynamictreesbop;before:dynamictreestc".
+# Dynamic Trees has no 1.21.1 build yet, so the dependency is dropped here and re-added in Phase 10 if it lands.
+
+[[dependencies.${ mod_id }]]
+modId = "neoforge"
+type = "required"
+versionRange = "[${ neo_version },)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${ mod_id }]]
+modId = "minecraft"
+type = "required"
+versionRange = "${ minecraft_version_range }"
+ordering = "NONE"
+side = "BOTH"
