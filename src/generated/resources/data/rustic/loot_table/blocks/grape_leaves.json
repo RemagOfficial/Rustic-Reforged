@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "block": "rustic:grape_leaves",
+          "condition": "minecraft:block_state_property",
+          "properties": {
+            "grapes": "true"
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "rustic:grapes"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "rustic:blocks/grape_leaves"
+}

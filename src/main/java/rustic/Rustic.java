@@ -15,6 +15,7 @@ import rustic.content.RusticCreativeTabs;
 import rustic.content.blockentity.RusticBlockEntities;
 import rustic.content.blocks.RopeDispenseBehavior;
 import rustic.content.blocks.RusticBlocks;
+import rustic.content.blocks.RusticFarmBlocks;
 import rustic.content.blocks.RusticMachineBlocks;
 import rustic.content.client.RusticClient;
 import rustic.content.entities.RusticEntities;
@@ -77,6 +78,9 @@ public class Rustic {
         // Machine blocks are their own register (see RusticMachineBlocks) but still feed the item loop
         // below, so they are attached before the items are derived from every block register.
         RusticMachineBlocks.register(modEventBus);
+        // Phase 5: the farm blocks are a third block register. Attached before the items for the same
+        // reason, and before them in particular because RusticItems derives the poles' block items from it.
+        RusticFarmBlocks.register(modEventBus);
         RusticItems.register(modEventBus);
         // 1.12.2's ModEntities.init(): the chair seat now, the tomato with Phase 5's crops.
         RusticEntities.register(modEventBus);
@@ -110,6 +114,8 @@ public class Rustic {
      */
     private static void commonSetup(FMLCommonSetupEvent event) {
         RusticBlocks.setFlammables();
+        // Phase 5: the ten burnable herbs took the legacy setFireInfo(60, 100); the fire table is per-block.
+        RusticFarmBlocks.setFlammables();
         // 1.12.2's CommonProxy.init(): DispenserBlock.registerBehavior is the 1.21 form of the putObject
         // call on the behaviour registry, and it takes the block's item, which every block has one of now.
         DispenserBlock.registerBehavior(RusticBlocks.ROPE.get().asItem(), new RopeDispenseBehavior());

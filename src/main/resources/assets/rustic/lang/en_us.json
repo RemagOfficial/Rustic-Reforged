@@ -114,5 +114,42 @@
   "block.rustic.vase": "Vase",
   "container.rustic.vase": "Vase",
 
+  "block.rustic.crop_stake": "Crop Stake",
+  "block.rustic.stake_tied": "Tied Stake",
+  "block.rustic.tomato_crop": "Tomato Crop",
+  "block.rustic.chili_crop": "Chili Crop",
+  
+  "block.rustic.grape_stem": "Grape Seeds",
+  "block.rustic.grape_leaves": "Grape Leaves",
+  
+  "block.rustic.wildberry_bush": "Wildberry Bush",
+
+  "block.rustic.aloe_vera": "Aloe Vera",
+  "block.rustic.blood_orchid": "Blood Orchid",
+  "block.rustic.chamomile": "Chamomile",
+  "block.rustic.cloudsbluff": "Clouds Bluff",
+  "block.rustic.cohosh": "Cohosh",
+  "block.rustic.core_root": "Core Root",
+  "block.rustic.deathstalk_mushroom": "Deathstalk Mushroom",
+  "block.rustic.ginseng": "Ginseng",
+  "block.rustic.horsetail": "Horsetail",
+  "block.rustic.marsh_mallow": "Marsh Mallow",
+  "block.rustic.mooncap_mushroom": "Mooncap Mushroom",
+  "block.rustic.vanta_lily": "Vanta Lily",
+  "block.rustic.wind_thistle": "Wind Thistle",
+
+  "item.rustic.tomato": "Tomato",
+  "item.rustic.chili_pepper": "Chili Pepper",
+  "item.rustic.ghost_pepper": "Ghost Pepper",
+  "item.rustic.grapes": "Grapes",
+  "item.rustic.wildberries": "Wildberries",
+  "item.rustic.tomato_seeds": "Tomato Seeds",
+  "item.rustic.chili_pepper_seeds": "Chili Pepper Seeds",
+
+  "item.rustic.cloudsbluff": "Clouds Bluff",
+  "item.rustic.core_root": "Core Root",
+  "item.rustic.ginseng": "Ginseng",
+  "item.rustic.marsh_mallow": "Marsh Mallow",
+
   "entity.rustic.chair": "Chair"
 }

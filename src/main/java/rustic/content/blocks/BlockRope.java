@@ -7,6 +7,7 @@ import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -67,13 +68,15 @@ public class BlockRope extends BlockRopeBase implements RusticFaceShapes.Declara
     }
 
     /**
-     * The blocks a rope will hold on to that the ordinary solid-face question cannot see.
-     *
-     * <p>Phase 5 adds {@code ModBlocks.STAKE_TIED} and {@code ModBlocks.GRAPE_LEAVES} here - the leaves
-     * case matching on the axis, as the legacy pair of tests did.
+     * The blocks a rope will hold on to that the ordinary solid-face question cannot see: the iron lattice
+     * (whose face shape is a centre stub), a tied stake, and a horizontal grape leaf - the two the class notes
+     * held for Phase 5. A leaf counts only when it is not hanging vertically, matching the legacy pair of tests.
      */
     private static boolean attachesTo(BlockState anchor) {
-        return anchor.getBlock() instanceof BlockLattice;
+        Block block = anchor.getBlock();
+        return block instanceof BlockLattice
+                || block == RusticFarmBlocks.STAKE_TIED.get()
+                || (block instanceof GrapeLeavesBlock && anchor.getValue(AXIS) != Direction.Axis.Y);
     }
 
     /**

@@ -7,6 +7,7 @@ import net.neoforged.neoforge.common.data.BlockTagsProvider;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import rustic.Rustic;
 import rustic.content.blocks.RusticBlocks;
+import rustic.content.blocks.RusticFarmBlocks;
 import rustic.content.blocks.RusticMachineBlocks;
 
 import java.util.concurrent.CompletableFuture;
@@ -73,6 +74,11 @@ public class RusticBlockTags extends BlockTagsProvider {
         // harvest level, so they all drop themselves even by hand.
         tag(BlockTags.MINEABLE_WITH_AXE).add(RusticMachineBlocks.BARREL.get(), RusticMachineBlocks.CABINET.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(RusticMachineBlocks.VASE.get());
+
+        // Phase 5 poles: both stake poles were Material.WOOD with isToolEffective("axe"), so they take the axe
+        // tag. The crops themselves are hardness-0 plants broken instantly and belong to no mineable tag.
+        tag(BlockTags.MINEABLE_WITH_AXE).add(
+                RusticFarmBlocks.CROP_STAKE.get(), RusticFarmBlocks.STAKE_TIED.get());
 
         // Shape tags rather than material ones: other mods' recipes and advancement triggers use these
         // where 1.12.2 used the ore dictionary entries "slabStone" and "stairs".

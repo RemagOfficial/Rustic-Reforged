@@ -10,6 +10,7 @@ import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.neoforged.neoforge.client.model.generators.BlockStateProvider;
 import net.neoforged.neoforge.client.model.generators.ConfiguredModel;
 import net.neoforged.neoforge.client.model.generators.ModelFile;
@@ -30,7 +31,10 @@ import rustic.content.blocks.BlockLantern;
 import rustic.content.blocks.BlockRopeBase;
 import rustic.content.blocks.BlockTable;
 import rustic.content.blocks.BlockWoodLantern;
+import rustic.content.blocks.GrapeStemBlock;
 import rustic.content.blocks.RusticBlocks;
+import rustic.content.blocks.HerbBlock;
+import rustic.content.blocks.RusticFarmBlocks;
 import rustic.content.blocks.RusticMachineBlocks;
 
 /**
@@ -77,6 +81,121 @@ public class RusticBlockStates extends BlockStateProvider {
         lattice();
         fertileSoil();
         machines();
+        farmBlocks();
+        herbs();
+        grape();
+        berry();
+    }
+
+    // ------------------------------------------------------------------
+    // Phase 5 farm blocks: the stake-crop poles and the two vine crops.
+    //
+    // Same "behaviour now, all models later" call the Phase 4 machines made: the poles and the vine are
+    // registered and functional this phase, but the legacy per-age crop models (tomato_crop_0..3) and the
+    // multi-element stake models are Phase 9 art. The vine maps every AGE state to one cross model that
+    // borrows a texture which already exists (tomato_crop_0 / chili_crop_0), so datagen's existence check
+    // passes and the crop is visible in world; the poles are placeholders on a real plank texture.
+    //
+    // The crops deliberately get NO block item and so NO item model here - only the two poles, which are
+    // placeable, do.
+    // ------------------------------------------------------------------
+    private void farmBlocks() {
+        simpleBlockWithItem(RusticFarmBlocks.CROP_STAKE.get(),
+                models().cubeAll(path(RusticFarmBlocks.CROP_STAKE), tex("planks_olive")));
+        simpleBlockWithItem(RusticFarmBlocks.STAKE_TIED.get(),
+                models().cubeAll(path(RusticFarmBlocks.STAKE_TIED), tex("planks_olive")));
+
+        cropCrop(RusticFarmBlocks.TOMATO_CROP, "tomato_crop_0");
+        cropCrop(RusticFarmBlocks.CHILI_CROP, "chili_crop_0");
+    }
+
+    /** Every age of one stake crop resolves to a single cutout cross; the real per-age art is Phase 9. */
+    private void cropCrop(
+            DeferredBlock<? extends rustic.content.blocks.StakeCropBlock> holder,
+            String texture
+    ) {
+        ModelFile crop = models().cross(path(holder), tex(texture)).renderType("cutout");
+        getVariantBuilder(holder.get())
+                .forAllStates(state -> ConfiguredModel.builder().modelFile(crop).build());
+    }
+
+    // ------------------------------------------------------------------
+    // Phase 5 herbs: thirteen single-block HerbBlock plants, each a two-stage cross.
+    //
+    // Unlike the stake crops - whose per-age art is deferred to Phase 9 - every herb already has real legacy
+    // art in textures/block/herbs: one mature sprite and one seedling sprite (the two mushrooms use a _spore
+    // seedling rather than _seed). So the four ages are not a placeholder: ages 0..2 draw the seedling cross
+    // and age 3 the mature one, both cutout. The herb ITEM models are flat sprites and live in RusticItemModels
+    // (the block item of a self-herb must not parent on the world-facing cross), so nothing here calls
+    // simpleBlockWithItem.
+    // ------------------------------------------------------------------
+    private void herbs() {
+        herb(RusticFarmBlocks.ALOE_VERA, "seed");
+        herb(RusticFarmBlocks.BLOOD_ORCHID, "seed");
+        herb(RusticFarmBlocks.CHAMOMILE, "seed");
+        herb(RusticFarmBlocks.CLOUDSBLUFF, "seed");
+        herb(RusticFarmBlocks.COHOSH, "seed");
+        herb(RusticFarmBlocks.CORE_ROOT, "seed");
+        herb(RusticFarmBlocks.DEATHSTALK_MUSHROOM, "spore");
+        herb(RusticFarmBlocks.GINSENG, "seed");
+        herb(RusticFarmBlocks.HORSETAIL, "seed");
+        herb(RusticFarmBlocks.MARSH_MALLOW, "seed");
+        herb(RusticFarmBlocks.MOONCAP_MUSHROOM, "spore");
+        herb(RusticFarmBlocks.VANTA_LILY, "seed");
+        herb(RusticFarmBlocks.WIND_THISTLE, "seed");
+    }
+
+    /**
+     * One herb's blockstate: a seedling cross for ages 0..2 and a mature cross for age 3, both drawn from the
+     * existing {@code block/herbs} art. The seedling file suffix differs only for the mushrooms ({@code spore}).
+     */
+    private void herb(DeferredBlock<? extends HerbBlock> holder, String seedSuffix) {
+        String name = path(holder);
+        ModelFile mature = models().cross(name, tex("herbs/" + name)).renderType("cutout");
+        ModelFile seed = models().cross(name + "_" + seedSuffix, tex("herbs/" + name + "_" + seedSuffix)).renderType("cutout");
+        IntegerProperty age = HerbBlock.AGE;
+        getVariantBuilder(holder.get()).forAllStates(state ->
+                ConfiguredModel.builder().modelFile(state.getValue(age) >= 3 ? mature : seed).build());
+    }
+
+    // ------------------------------------------------------------------
+    // Phase 5 vinery. Same "behaviour now, all models later" call as the stake crops: the stem and the leaves are
+    // registered and functional this phase, but the legacy per-age stem art (the age-3 model was a solid oak-log
+    // post), the multi-part leaf/vine/rope/grape assembly and the leaf foliage tint are all Phase 9. So the stem
+    // maps its four ages to two placeholder cutout crosses drawn from the existing grape_stem_0/_1 textures, and
+    // every leaf state (axis x/z, dangle, distance, grapes) resolves to one cross on the existing grape_vine art.
+    //
+    // The stem gets NO item model here: its block item is the legacy "Grape Seeds" flat sprite, generated in
+    // RusticItemModels. The leaves have no block item at all (they pick and loot as grapes), so nothing is emitted
+    // for either on the item side.
+    // ------------------------------------------------------------------
+    private void grape() {
+        String stem = path(RusticFarmBlocks.GRAPE_STEM);
+        ModelFile stemYoung = models().cross(stem, tex("grape_stem_0")).renderType("cutout");
+        ModelFile stemRipe = models().cross(stem + "_tall", tex("grape_stem_1")).renderType("cutout");
+        IntegerProperty stemAge = GrapeStemBlock.AGE;
+        getVariantBuilder(RusticFarmBlocks.GRAPE_STEM.get()).forAllStates(state ->
+                ConfiguredModel.builder().modelFile(state.getValue(stemAge) >= 3 ? stemRipe : stemYoung).build());
+
+        ModelFile leaves = models().cross(path(RusticFarmBlocks.GRAPE_LEAVES), tex("grape_vine")).renderType("cutout");
+        getVariantBuilder(RusticFarmBlocks.GRAPE_LEAVES.get()).forAllStates(state ->
+                ConfiguredModel.builder().modelFile(leaves).build());
+    }
+
+    // ------------------------------------------------------------------
+    // Phase 5 wildberry bush. Same "behaviour now, all models later" call as the vinery: the bush is registered and
+    // harvestable this phase, but its multi-element legacy model (a block base plus eight per-age berry overlays)
+    // and the foliage tint are Phase 9. So every age resolves to one cutout cross drawn from the existing
+    // wildberry_bush_leaves art.
+    //
+    // Unlike the self-herbs and the grape stem, the bush's block item is a draw of the block itself - the legacy
+    // item model was just "parent": rustic:block/wildberry_bush - so simpleBlockWithItem emits both here and the
+    // state provider owns the item model. The berry produce item (item/wildberries) is a flat sprite generated in
+    // RusticItemModels.
+    // ------------------------------------------------------------------
+    private void berry() {
+        ModelFile bush = models().cross(path(RusticFarmBlocks.WILDBERRY_BUSH), tex("wildberry_bush_leaves")).renderType("cutout");
+        simpleBlockWithItem(RusticFarmBlocks.WILDBERRY_BUSH.get(), bush);
     }
 
     // ------------------------------------------------------------------

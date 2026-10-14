@@ -34,6 +34,8 @@ public final class RusticDataGen {
 
         // Client: blockstates, block models and the item models that parent on them.
         generator.addProvider(event.includeClient(), new RusticBlockStates(output, existingFileHelper));
+        // Phase 5: the standalone item models (produce and seeds) that parent on nothing.
+        generator.addProvider(event.includeClient(), new RusticItemModels(output, existingFileHelper));
 
         // Server: drops, then the tags that carry the old Material's tool behaviour.
         generator.addProvider(event.includeServer(), new LootTableProvider(output, Set.of(),

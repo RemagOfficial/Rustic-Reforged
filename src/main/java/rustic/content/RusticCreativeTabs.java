@@ -10,7 +10,9 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import rustic.Rustic;
 import rustic.content.blocks.RusticBlocks;
+import rustic.content.blocks.RusticFarmBlocks;
 import rustic.content.blocks.RusticMachineBlocks;
+import rustic.content.items.RusticItems;
 
 /**
  * The three Rustic creative tabs from 1.12.2 ({@code Rustic.decorTab} / {@code farmingTab} /
@@ -65,7 +67,28 @@ public final class RusticCreativeTabs {
                                 family.blocks().forEach(block -> output.accept(block.get()));
                             }
                         }
-                        // TODO Phase 5: crop/seed/herb items go here.
+                        // Phase 5: the two placeable poles (crop stake, tied stake) and the produce + seeds
+                        // of the stake crops. The crops themselves have no item - they are picked as seeds -
+                        // so only RusticFarmBlocks.blockItemEntries() (not every farm block) is shown here.
+                        RusticFarmBlocks.blockItemEntries().forEach(holder -> output.accept(holder.get()));
+                        output.accept(RusticItems.TOMATO_SEEDS.get());
+                        output.accept(RusticItems.CHILI_PEPPER_SEEDS.get());
+                        output.accept(RusticItems.TOMATO.get());
+                        output.accept(RusticItems.CHILI_PEPPER.get());
+                        output.accept(RusticItems.GHOST_PEPPER.get());
+                        // Phase 5 herbs: the nine self-herbs already came through blockItemEntries(); the four
+                        // crop-herbs show here as their ItemHerbEdible, which is both their seed and their produce
+                        // (the crop-herb blocks have no block item of their own).
+                        output.accept(RusticItems.CLOUDSBLUFF.get());
+                        output.accept(RusticItems.CORE_ROOT.get());
+                        output.accept(RusticItems.GINSENG.get());
+                        output.accept(RusticItems.MARSH_MALLOW.get());
+                        // Phase 5 vinery: the grapes produce. The placeable stem (shown as its legacy "Grape Seeds"
+                        // block item) already came through blockItemEntries(); the leaves have no item and are not shown.
+                        output.accept(RusticItems.GRAPES.get());
+                        // Phase 5 berry bush: the placeable bush came through blockItemEntries(); its produce here.
+                        output.accept(RusticItems.WILDBERRIES.get());
+                        // TODO Phase 5: remaining berry/food items append here as those slices land.
                         // TODO Phase 6: 1.12.2 overrode displayAllRelevantItems to also add a filled
                         //   universal bucket for every Rustic fluid; that belongs here once the
                         //   fluids and their bucket items are registered.

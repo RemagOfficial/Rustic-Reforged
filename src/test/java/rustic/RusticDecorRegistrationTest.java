@@ -81,6 +81,7 @@ import rustic.content.blocks.BlockRotatable;
 import rustic.content.blocks.BlockTable;
 import rustic.content.blocks.BlockWoodLantern;
 import rustic.content.blocks.RusticBlocks;
+import rustic.content.blocks.RusticFarmBlocks;
 import rustic.content.blocks.RusticMachineBlocks;
 
 /**
@@ -660,17 +661,21 @@ public class RusticDecorRegistrationTest {
 
     /**
      * Phase 5 owns the crops and Phase 6 the brews, but the wood family's agriculture half and the fertile
-     * soil already went to this tab with 3b, so it is asserted as exactly that list rather than as empty.
+     * soil already went to this tab with 3b. Phase 5 has now appended its own stake-crop poles, produce and
+     * seeds to the same tab, so the decor baseline asserts the wood half as <em>membership</em> - that the
+     * seven 3b ids are still offered - and leaves the exact crop list to {@code RusticFarmRegistrationTest}.
      */
     @Test
-    public void theFarmingTabHoldsTheAgricultureHalfOfTheWoodFamiliesAndNothingElse() {
+    public void theFarmingTabStillHoldsTheAgricultureHalfOfTheWoodFamilies() {
         CreativeModeTab farming = RusticCreativeTabs.FARMING.get();
         farming.buildContents(new CreativeModeTab.ItemDisplayParameters(FeatureFlags.DEFAULT_FLAGS, true, null));
-        assertEquals(idsOf(FARMING_TAB_IDS.stream().map(id -> "rustic:" + id).toList()),
-                farming.getDisplayItems().stream()
-                        .map(stack -> BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())
-                        .sorted().toList(),
-                "the FARMING tab is not the legacy farmingTab list");
+        List<String> shown = farming.getDisplayItems().stream()
+                .map(stack -> BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())
+                .toList();
+        for (String id : FARMING_TAB_IDS) {
+            assertTrue(shown.contains("rustic:" + id),
+                    "the wood-family agriculture half left the FARMING tab: rustic:" + id);
+        }
 
         assertNotNull(RusticCreativeTabs.ALCHEMY.get());
         CreativeModeTab alchemy = RusticCreativeTabs.ALCHEMY.get();
@@ -998,6 +1003,7 @@ public class RusticDecorRegistrationTest {
     private static List<String> distinctTag(String name) {
         return tag(name).stream()
                 .filter(id -> !machineIds().contains(id.substring(id.lastIndexOf(':') + 1)))
+                .filter(id -> !farmIds().contains(id.substring(id.lastIndexOf(':') + 1)))
                 .distinct().sorted().toList();
     }
 
@@ -1006,7 +1012,8 @@ public class RusticDecorRegistrationTest {
         Map<String, Block> out = new TreeMap<>();
         for (Block block : BuiltInRegistries.BLOCK) {
             ResourceLocation key = BuiltInRegistries.BLOCK.getKey(block);
-            if (key != null && Rustic.MODID.equals(key.getNamespace()) && !machineIds().contains(key.getPath())) {
+            if (key != null && Rustic.MODID.equals(key.getNamespace()) && !machineIds().contains(key.getPath())
+                    && !farmIds().contains(key.getPath())) {
                 out.put(key.getPath(), block);
             }
         }
@@ -1017,7 +1024,8 @@ public class RusticDecorRegistrationTest {
         Map<String, Item> out = new TreeMap<>();
         for (Item item : BuiltInRegistries.ITEM) {
             ResourceLocation key = BuiltInRegistries.ITEM.getKey(item);
-            if (key != null && Rustic.MODID.equals(key.getNamespace()) && !machineIds().contains(key.getPath())) {
+            if (key != null && Rustic.MODID.equals(key.getNamespace()) && !machineIds().contains(key.getPath())
+                    && !farmIds().contains(key.getPath())) {
                 out.put(key.getPath(), item);
             }
         }
@@ -1035,5 +1043,19 @@ public class RusticDecorRegistrationTest {
         return RusticMachineBlocks.entries().stream()
                 .map(holder -> holder.getId().getPath())
                 .collect(java.util.stream.Collectors.toSet());
+    }
+
+    /**
+     * Phase 5's crop content lives in its own register ({@code RusticFarmBlocks}) plus a handful of
+     * standalone produce / seed items, and is characterised by {@code RusticFarmRegistrationTest}. The decor
+     * baseline excludes these ids exactly as it excludes the machine ids, so a new crop cannot silently
+     * shift the decor block / item counts or the mineable-tag comparison.
+     */
+    private static java.util.Set<String> farmIds() {
+        java.util.Set<String> ids = new java.util.HashSet<>();
+        RusticFarmBlocks.entries().forEach(holder -> ids.add(holder.getId().getPath()));
+        ids.addAll(List.of("tomato", "chili_pepper", "ghost_pepper", "tomato_seeds", "chili_pepper_seeds",
+                "grapes", "wildberries"));
+        return ids;
     }
 }

@@ -135,6 +135,22 @@ public final class RusticBlockProperties {
     }
 
     /**
+     * 1.12.2's {@code BlockStakeCrop.STAKE_CROP}: a {@code Material.FOLIAGE} that was neither solid nor
+     * light-blocking, at {@code SoundType.PLANT} and hardness 0 - i.e. broken instantly, which is why
+     * {@code requiresCorrectToolForDrops()} stays unset and no tool tag is written for it. 1.21 expresses
+     * "not solid, no light" as {@link BlockBehaviour.Properties#noOcclusion()} and the plant sound as
+     * {@link SoundType#CROP} (the rename of 1.12's PLANT); the mobility flag the legacy material overrode
+     * to {@code BLOCK} is 1.21's default for a plant, so it is not restated here.
+     */
+    public static BlockBehaviour.Properties crop() {
+        return BlockBehaviour.Properties.of()
+                .mapColor(MapColor.PLANT)
+                .sound(SoundType.CROP)
+                .strength(0.0F, NO_EXPLOSION_RESISTANCE)
+                .noOcclusion();
+    }
+
+    /**
      * 1.12.2 {@code Material.WOOD} at the hardness the planks used, but with the explosion resistance
      * that {@code BlockPlanksRustic.setResistance(5F)} reported - the first non-zero resistance in the
      * port, and the reason {@link #NO_EXPLOSION_RESISTANCE} is spelled out everywhere else.
