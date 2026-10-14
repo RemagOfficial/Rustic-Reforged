@@ -151,5 +151,44 @@
   "item.rustic.ginseng": "Ginseng",
   "item.rustic.marsh_mallow": "Marsh Mallow",
 
-  "entity.rustic.chair": "Chair"
+  "block.rustic.olive_oil": "Olive Oil",
+  "block.rustic.ironberry_juice": "Ironberry Juice",
+  "block.rustic.wildberry_juice": "Wildberry Juice",
+  "block.rustic.grape_juice": "Grape Juice",
+  "block.rustic.apple_juice": "Apple Juice",
+  "block.rustic.ale_wort": "Ale Wort",
+  "block.rustic.honey": "Honey",
+  "block.rustic.golden_apple_juice": "Golden Apple Juice",
+
+  "item.rustic.olive_oil_bucket": "Olive Oil Bucket",
+  "item.rustic.ironberry_juice_bucket": "Ironberry Juice Bucket",
+  "item.rustic.wildberry_juice_bucket": "Wildberry Juice Bucket",
+  "item.rustic.grape_juice_bucket": "Grape Juice Bucket",
+  "item.rustic.apple_juice_bucket": "Apple Juice Bucket",
+  "item.rustic.ale_wort_bucket": "Ale Wort Bucket",
+  "item.rustic.honey_bucket": "Honey Bucket",
+  "item.rustic.golden_apple_juice_bucket": "Golden Apple Juice Bucket",
+  "item.rustic.vanta_oil_bucket": "Vanta Oil Bucket",
+
+  "entity.rustic.chair": "Chair",
+
+  "effect.rustic.ironskin": "Iron Skin",
+  "effect.rustic.feather": "Feather",
+  "effect.rustic.blazing_trail": "Blazing Trail",
+  "effect.rustic.shame": "Shame",
+  "effect.rustic.full": "Full Stomach",
+  "effect.rustic.magic_resistance": "Magic Resistance",
+  "effect.rustic.wither_ward": "Wither Ward",
+  "effect.rustic.undying": "Undying",
+  "effect.rustic.fullmetal": "Fullmetal",
+  "effect.rustic.fire_power": "Fire Power",
+  "effect.rustic.tipsy": "Inebriated",
+
+  "item.rustic.fluid_bottle": "Glass Fluid Bottle",
+  "item.rustic.fluid_bottle.name": "Bottle of %s",
+  "item.rustic.elixir": "Elixir",
+  "rustic.elixir.prefix": "Elixir of ",
+  "rustic.elixir.separator": ", ",
+  "tooltip.rustic.drinkable": "Drinkable",
+  "tooltip.rustic.quality": "Quality"
 }

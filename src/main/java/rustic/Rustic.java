@@ -3,6 +3,7 @@ package rustic;
 import net.minecraft.world.level.block.DispenserBlock;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
@@ -19,8 +20,14 @@ import rustic.content.blocks.RusticFarmBlocks;
 import rustic.content.blocks.RusticMachineBlocks;
 import rustic.content.client.RusticClient;
 import rustic.content.entities.RusticEntities;
+import rustic.content.fluids.RusticDataComponents;
+import rustic.content.fluids.RusticFluidBlocks;
+import rustic.content.fluids.RusticFluids;
 import rustic.content.items.RusticItems;
 import rustic.content.menu.RusticMenus;
+import rustic.content.network.RusticPayloads;
+import rustic.content.potions.RusticEventHandlerPotions;
+import rustic.content.potions.RusticMobEffects;
 import rustic.data.RusticDataGen;
 import rustic.registry.RusticRegistries;
 
@@ -71,6 +78,11 @@ public class Rustic {
 
     public Rustic(IEventBus modEventBus, ModContainer modContainer) {
         RusticRegistries.register(modEventBus);
+        // Phase 6: the fluid content registers. The quality data component goes on before the fluids that
+        // read it, and both go on before the blocks and items because the Slice 3 fluid blocks and buckets
+        // derive from these fluid holders.
+        RusticDataComponents.register(modEventBus);
+        RusticFluids.register(modEventBus);
         // Blocks before items: the block items are derived from the block entries, so touching
         // RusticItems brings RusticBlocks' initialiser in first anyway, but reading top to bottom in
         // dependency order is the point of dropping the legacy init() calls.
@@ -81,6 +93,9 @@ public class Rustic {
         // Phase 5: the farm blocks are a third block register. Attached before the items for the same
         // reason, and before them in particular because RusticItems derives the poles' block items from it.
         RusticFarmBlocks.register(modEventBus);
+        // Phase 6: the eight fluid blocks are their own register, attached before the items so RusticItems'
+        // block-item loop finds them and so the fluids' lazy block suppliers resolve at registry freeze.
+        RusticFluidBlocks.register(modEventBus);
         RusticItems.register(modEventBus);
         // 1.12.2's ModEntities.init(): the chair seat now, the tomato with Phase 5's crops.
         RusticEntities.register(modEventBus);
@@ -88,10 +103,16 @@ public class Rustic {
         RusticBlockEntities.register(modEventBus);
         RusticMenus.register(modEventBus);
         RusticCreativeTabs.register(modEventBus);
+        // Phase 6: the eleven Rustic potion effects (PotionsRustic.init()), on their own register.
+        RusticMobEffects.register(modEventBus);
+        // Phase 6: the mod's custom network payloads (the 1.21 form of PacketHandler.registerMessages), mod bus.
+        RusticPayloads.register(modEventBus);
 
         modEventBus.addListener(Rustic::commonSetup);
         // NeoForge's replacement for the legacy getCapability overrides on the inventory tile entities.
         modEventBus.addListener(RusticBlockEntities::registerCapabilities);
+        // Phase 6: the drinkable bottle exposes its fluid content through the item fluid-handler capability.
+        modEventBus.addListener(RusticItems::registerCapabilities);
         // Only ever fired by the data generator run, so this listener is inert in a normal game.
         modEventBus.addListener(RusticDataGen::gatherData);
         // The client listeners have to stay off a dedicated server's class path, so the dist is tested
@@ -119,5 +140,9 @@ public class Rustic {
         // 1.12.2's CommonProxy.init(): DispenserBlock.registerBehavior is the 1.21 form of the putObject
         // call on the behaviour registry, and it takes the block's item, which every block has one of now.
         DispenserBlock.registerBehavior(RusticBlocks.ROPE.get().asItem(), new RopeDispenseBehavior());
+        // Phase 6: the potion/effect behaviour handler (damage, death, mount/sleep/jump/fall, sobering). It listens
+        // on the NeoForge game bus rather than being an @EventBusSubscriber, matching the one-instance-per-bus idiom
+        // the legacy EventHandlerPotions used when the network stack registered it.
+        NeoForge.EVENT_BUS.register(new RusticEventHandlerPotions());
     }
 }

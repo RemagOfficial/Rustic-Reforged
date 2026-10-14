@@ -5,6 +5,7 @@ import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.StairBlock;
@@ -36,6 +37,7 @@ import rustic.content.blocks.RusticBlocks;
 import rustic.content.blocks.HerbBlock;
 import rustic.content.blocks.RusticFarmBlocks;
 import rustic.content.blocks.RusticMachineBlocks;
+import rustic.content.fluids.RusticFluidBlocks;
 
 /**
  * Blockstates and block models, replacing the hand-written JSON that 1.12.2 shipped under
@@ -85,6 +87,37 @@ public class RusticBlockStates extends BlockStateProvider {
         herbs();
         grape();
         berry();
+        fluidBlocks();
+    }
+
+    // ------------------------------------------------------------------
+    // Phase 6 fluid blocks.
+    //
+    // Vanilla renders a fluid's faces through a dedicated path that ignores the block model's geometry and
+    // reads the still/flowing sprites off the FluidType, so a fluid block's own model carries only a particle
+    // texture - exactly {@code minecraft:block/water}. The eight placeables reproduce that shape: one model
+    // per block, drawn from the existing {@code block/fluids/<id>_still} art, and one blockstate whose single
+    // default variant covers every LEVEL (which is how vanilla's {@code water} state file is written too).
+    //
+    // The block item is emitted alongside - the plan gives each fluid block a same-id item - and parents on
+    // the (geometry-less) fluid model, so it renders blank in-hand. The tinted fluid-sprite item display and
+    // the FluidType still/flow texture bindings are Phase 9, matching the deferred bottle color handler.
+    // ------------------------------------------------------------------
+    private void fluidBlocks() {
+        fluidBlock(RusticFluidBlocks.OLIVE_OIL);
+        fluidBlock(RusticFluidBlocks.IRONBERRY_JUICE);
+        fluidBlock(RusticFluidBlocks.WILDBERRY_JUICE);
+        fluidBlock(RusticFluidBlocks.GRAPE_JUICE);
+        fluidBlock(RusticFluidBlocks.APPLE_JUICE);
+        fluidBlock(RusticFluidBlocks.ALE_WORT);
+        fluidBlock(RusticFluidBlocks.HONEY);
+        fluidBlock(RusticFluidBlocks.GOLDEN_APPLE_JUICE);
+    }
+
+    private void fluidBlock(DeferredBlock<? extends LiquidBlock> holder) {
+        String name = path(holder);
+        ModelFile fluid = models().getBuilder(name).texture("particle", tex("fluids/" + name + "_still"));
+        simpleBlockWithItem(holder.get(), fluid);
     }
 
     // ------------------------------------------------------------------

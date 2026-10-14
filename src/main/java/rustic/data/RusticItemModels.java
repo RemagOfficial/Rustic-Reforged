@@ -61,6 +61,34 @@ public class RusticItemModels extends ItemModelProvider {
         // Phase 5 wildberry bush. The bush's own block item is drawn by RusticBlockStates (its legacy item parented
         // on the block model); only the berry produce needs a flat sprite here, on the existing item/wildberries art.
         basicItem(RusticItems.WILDBERRIES.get());
+
+        // Phase 6 fluid buckets: the nine per-fluid buckets (a deliberate deviation from the legacy universal
+        // bucket). There is no per-fluid bucket art yet - the tinted fluid look and the FluidType texture bindings are
+        // Phase 9 - so each model parents on the vanilla bucket, which gives datagen a real existing texture to check
+        // and shows a plain bucket in-hand for now. The eight placeable fluids plus vanta oil (which has no block) all
+        // get one; the seven boozes stay bucket-less, preserving the observable 9/7 split.
+        fluidBucket("olive_oil_bucket");
+        fluidBucket("ironberry_juice_bucket");
+        fluidBucket("wildberry_juice_bucket");
+        fluidBucket("grape_juice_bucket");
+        fluidBucket("apple_juice_bucket");
+        fluidBucket("ale_wort_bucket");
+        fluidBucket("honey_bucket");
+        fluidBucket("golden_apple_juice_bucket");
+        fluidBucket("vanta_oil_bucket");
+
+        // Phase 6 drinkable bottle: a plain generated-item placeholder. The tinted fluid-sprite FluidBottleModel
+        // and its item colour handler are Phase 9, so no layer0 art is wired here yet.
+        withExistingParent("fluid_bottle", mcLoc("item/generated"));
+
+        // Phase 6 elixir: the same placeholder deal - the legacy item was tinted per stored effect via
+        // ElixirUtils.getColor (IColoredItem); that colour handler is Phase 9, so a plain generated item now.
+        withExistingParent("elixir", mcLoc("item/generated"));
+    }
+
+    /** A fluid bucket item modelled on the vanilla bucket until Phase 9 supplies the tinted art. */
+    private void fluidBucket(String name) {
+        withExistingParent(name, mcLoc("item/bucket"));
     }
 
     /** A flat {@code item/generated} sprite whose single layer is the given Rustic texture path. */

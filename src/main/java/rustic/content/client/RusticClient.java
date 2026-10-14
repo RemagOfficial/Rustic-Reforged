@@ -1,14 +1,20 @@
 package rustic.content.client;
 
 import net.minecraft.client.renderer.entity.NoopRenderer;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import rustic.content.client.screen.RusticChestScreen;
 import rustic.content.entities.RusticEntities;
 import rustic.content.menu.RusticMenus;
+import rustic.content.network.RusticPayloads;
+import rustic.content.potions.RusticMobEffects;
 
 /**
  * The client half of the mod, reached only when {@link FMLEnvironment#dist} is {@link Dist#CLIENT} -
@@ -27,6 +33,36 @@ public final class RusticClient {
     public static void register(IEventBus modEventBus) {
         modEventBus.addListener(RusticClient::registerRenderers);
         modEventBus.addListener(RusticClient::registerScreens);
+        // Phase 6 fire power: the client's left-clicks into empty space and onto blocks are not visible to the
+        // server, so they ping RusticPayloads.FirePowerAttackPayload back. Registered on the game bus because these
+        // are NeoForge gameplay events; this method only runs on the client dist, so a server never sees them.
+        NeoForge.EVENT_BUS.addListener(RusticClient::onLeftClickEmpty);
+        NeoForge.EVENT_BUS.addListener(RusticClient::onLeftClickBlock);
+    }
+
+    /** Left click on nothing, client only. */
+    private static void onLeftClickEmpty(PlayerInteractEvent.LeftClickEmpty event) {
+        sendFirePowerIfApt(event.getEntity());
+    }
+
+    /** Left click on a block. Fires on both sides, so keep to the client start-of-break only. */
+    private static void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
+        if (event.getLevel().isClientSide && event.getAction() == PlayerInteractEvent.LeftClickBlock.Action.START) {
+            sendFirePowerIfApt(event.getEntity());
+        }
+    }
+
+    /**
+     * The legacy client guard ({@code !isSneaking && potion active}) that used to gate sending {@code
+     * MessageFirePowerAttack}. The old {@code !isSwingInProgress} sub-check has no public 1.21 equivalent and is
+     * dropped as a cosmetic anti-double-fire nicety (parked with the other client polish); the server re-validates
+     * the effect before spawning, so a stray ping is harmless.
+     */
+    private static void sendFirePowerIfApt(Player player) {
+        if (player.isCrouching() || !player.hasEffect(RusticMobEffects.FIRE_POWER)) {
+            return;
+        }
+        PacketDistributor.sendToServer(RusticPayloads.FirePowerAttackPayload.INSTANCE);
     }
 
     /**

@@ -5,6 +5,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.material.Fluid;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -13,6 +14,8 @@ import rustic.content.blocks.RusticBlocks;
 import rustic.content.blocks.RusticFarmBlocks;
 import rustic.content.blocks.RusticMachineBlocks;
 import rustic.content.items.RusticItems;
+import rustic.content.items.ItemElixir;
+import rustic.content.fluids.RusticFluids;
 
 /**
  * The three Rustic creative tabs from 1.12.2 ({@code Rustic.decorTab} / {@code farmingTab} /
@@ -88,25 +91,60 @@ public final class RusticCreativeTabs {
                         output.accept(RusticItems.GRAPES.get());
                         // Phase 5 berry bush: the placeable bush came through blockItemEntries(); its produce here.
                         output.accept(RusticItems.WILDBERRIES.get());
-                        // TODO Phase 5: remaining berry/food items append here as those slices land.
-                        // TODO Phase 6: 1.12.2 overrode displayAllRelevantItems to also add a filled
-                        //   universal bucket for every Rustic fluid; that belongs here once the
-                        //   fluids and their bucket items are registered.
+                        // Phase 6 fluid buckets. 1.12.2 overrode displayAllRelevantItems to add a filled universal
+                        // bucket for every Rustic fluid; this port instead registers nine per-fluid buckets (the seven
+                        // boozes stay bucket-less, preserving the observable 9/7 split), and they are shown directly.
+                        output.accept(RusticItems.OLIVE_OIL_BUCKET.get());
+                        output.accept(RusticItems.IRONBERRY_JUICE_BUCKET.get());
+                        output.accept(RusticItems.WILDBERRY_JUICE_BUCKET.get());
+                        output.accept(RusticItems.GRAPE_JUICE_BUCKET.get());
+                        output.accept(RusticItems.APPLE_JUICE_BUCKET.get());
+                        output.accept(RusticItems.ALE_WORT_BUCKET.get());
+                        output.accept(RusticItems.HONEY_BUCKET.get());
+                        output.accept(RusticItems.GOLDEN_APPLE_JUICE_BUCKET.get());
+                        output.accept(RusticItems.VANTA_OIL_BUCKET.get());
+                        // Phase 6 filled bottles. Legacy ItemFluidBottle.getSubItems seeded the tab with a full
+                        // bottle of every Rustic fluid; the seven boozes came pre-filled at quality 0.75F, the rest
+                        // plain (null). Faithful here - sixteen bottles, booze quality seeded on the fluid stack.
+                        output.accept(fluidBottle(RusticFluids.OLIVE_OIL.value(), null));
+                        output.accept(fluidBottle(RusticFluids.IRONBERRY_JUICE.value(), null));
+                        output.accept(fluidBottle(RusticFluids.WILDBERRY_JUICE.value(), null));
+                        output.accept(fluidBottle(RusticFluids.GRAPE_JUICE.value(), null));
+                        output.accept(fluidBottle(RusticFluids.APPLE_JUICE.value(), null));
+                        output.accept(fluidBottle(RusticFluids.ALE_WORT.value(), null));
+                        output.accept(fluidBottle(RusticFluids.HONEY.value(), null));
+                        output.accept(fluidBottle(RusticFluids.GOLDEN_APPLE_JUICE.value(), null));
+                        output.accept(fluidBottle(RusticFluids.ALE.value(), 0.75F));
+                        output.accept(fluidBottle(RusticFluids.CIDER.value(), 0.75F));
+                        output.accept(fluidBottle(RusticFluids.IRON_WINE.value(), 0.75F));
+                        output.accept(fluidBottle(RusticFluids.MEAD.value(), 0.75F));
+                        output.accept(fluidBottle(RusticFluids.WILDBERRY_WINE.value(), 0.75F));
+                        output.accept(fluidBottle(RusticFluids.WINE.value(), 0.75F));
+                        output.accept(fluidBottle(RusticFluids.AMBROSIA.value(), 0.75F));
                     })
                     .build());
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> ALCHEMY =
             CREATIVE_MODE_TABS.register("alchemy", () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.rustic.alchemy"))
-                    // TODO Phase 6: replace with the rustic elixir item (1.12.2: ModItems.ELIXIR.getDefaultInstance())
-                    .icon(() -> new ItemStack(Items.POTION))
+                    // 1.12.2 icon: ModItems.ELIXIR.getDefaultInstance() - the instant-health default elixir.
+                    .icon(ItemElixir::defaultElixir)
                     .displayItems((parameters, output) -> {
-                        // TODO Phase 6: elixirs, booze bottles, potions and alchemy machines land here
+                        // The legacy default instance first (getDefaultInstance seeded one tick of instant
+                        // health); TODO Phase 7: the condenser-recipe elixirs getSubItems listed then.
+                        output.accept(ItemElixir.defaultElixir());
+                        // Vanta oil is shown as a filled bottle, the alchemy-side entry it had in legacy.
+                        output.accept(fluidBottle(RusticFluids.VANTA_OIL.value(), null));
                     })
                     .build());
 
     public static void register(IEventBus modEventBus) {
         CREATIVE_MODE_TABS.register(modEventBus);
+    }
+
+    /** A full drinkable bottle of {@code fluid} for a tab entry; {@code quality} is the legacy booze seed. */
+    private static ItemStack fluidBottle(Fluid fluid, Float quality) {
+        return RusticItems.FLUID_BOTTLE.get().getFilledBottle(fluid, quality);
     }
 
     private RusticCreativeTabs() {
