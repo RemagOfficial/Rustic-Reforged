@@ -38,5 +38,72 @@
   "block.rustic.painted_wood_brown": "Brown Painted Wood",
   "block.rustic.painted_wood_green": "Green Painted Wood",
   "block.rustic.painted_wood_red": "Red Painted Wood",
-  "block.rustic.painted_wood_black": "Black Painted Wood"
+  "block.rustic.painted_wood_black": "Black Painted Wood",
+
+  "block.rustic.planks_olive": "Olive Wood Planks",
+  "block.rustic.planks_ironwood": "Ironwood Planks",
+  "block.rustic.log_olive": "Olive Wood",
+  "block.rustic.log_ironwood": "Ironwood",
+  "block.rustic.leaves_olive": "Olive Leaves",
+  "block.rustic.leaves_ironwood": "Ironwood Leaves",
+  "block.rustic.sapling_olive": "Olive Sapling",
+  "block.rustic.sapling_ironwood": "Ironwood Sapling",
+  "block.rustic.fence_olive": "Olive Wood Fence",
+  "block.rustic.fence_ironwood": "Ironwood Fence",
+  "block.rustic.fence_gate_olive": "Olive Wood Fence Gate",
+  "block.rustic.fence_gate_ironwood": "Ironwood Fence Gate",
+  "block.rustic.olive_slab": "Olive Wood Slab",
+  "block.rustic.ironwood_slab": "Ironwood Slab",
+  "block.rustic.stairs_olive": "Olive Wood Stairs",
+  "block.rustic.stairs_ironwood": "Ironwood Stairs",
+
+  "block.rustic.chain": "Iron Chain",
+  "block.rustic.candle": "Iron Candle",
+  "block.rustic.candle_double": "Iron Candelabra",
+  "block.rustic.candle_lever": "Iron Candle Lever",
+  "block.rustic.chandelier": "Iron Chandelier Ring",
+  "block.rustic.iron_torch": "Iron Torch",
+
+  "block.rustic.chain_gold": "Golden Chain",
+  "block.rustic.candle_gold": "Golden Candle",
+  "block.rustic.candle_double_gold": "Golden Candelabra",
+  "block.rustic.candle_lever_gold": "Golden Candle Lever",
+  "block.rustic.chandelier_gold": "Golden Chandelier Ring",
+
+  "block.rustic.chain_silver": "Silver Chain",
+  "block.rustic.candle_silver": "Silver Candle",
+  "block.rustic.candle_double_silver": "Silver Candelabra",
+  "block.rustic.candle_lever_silver": "Silver Candle Lever",
+  "block.rustic.chandelier_silver": "Silver Chandelier Ring",
+
+  "block.rustic.iron_lantern": "Iron Lantern",
+  "block.rustic.golden_lantern": "Golden Lantern",
+  "block.rustic.silver_lantern": "Silver Lantern",
+  "block.rustic.lantern_wood": "Wooden Lantern",
+
+  "block.rustic.gargoyle": "Gargoyle",
+
+  "block.rustic.chair_oak": "Oak Chair",
+  "block.rustic.chair_big_oak": "Dark Oak Chair",
+  "block.rustic.chair_birch": "Birch Chair",
+  "block.rustic.chair_spruce": "Spruce Chair",
+  "block.rustic.chair_acacia": "Acacia Chair",
+  "block.rustic.chair_jungle": "Jungle Chair",
+  "block.rustic.chair_olive": "Olive Wood Chair",
+  "block.rustic.chair_ironwood": "Ironwood Chair",
+
+  "block.rustic.table_oak": "Oak Table",
+  "block.rustic.table_big_oak": "Dark Oak Table",
+  "block.rustic.table_birch": "Birch Table",
+  "block.rustic.table_spruce": "Spruce Table",
+  "block.rustic.table_acacia": "Acacia Table",
+  "block.rustic.table_jungle": "Jungle Table",
+  "block.rustic.table_olive": "Olive Wood Table",
+  "block.rustic.table_ironwood": "Ironwood Table",
+
+  "block.rustic.iron_lattice": "Iron Lattice",
+  "block.rustic.rope": "Rope",
+  "block.rustic.fertile_soil": "Fertile Soil",
+
+  "entity.rustic.chair": "Chair"
 }

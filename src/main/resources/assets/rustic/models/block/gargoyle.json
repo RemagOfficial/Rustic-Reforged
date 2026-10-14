@@ -1,9 +1,10 @@
 {
+    "render_type": "cutout",
     "__comment": "Model generated using MrCrayfish's Model Creator (http://mrcrayfish.com/modelcreator/)",
     "textures": {
-        "particle": "blocks/stone",
-        "0": "blocks/stone",
-        "1": "rustic:blocks/gargoyle"
+        "particle": "block/stone",
+        "0": "block/stone",
+        "1": "rustic:block/gargoyle"
     },
     "elements": [
         {

@@ -1,10 +1,16 @@
 package rustic.data;
 
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.data.loot.BlockLootSubProvider;
 import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.entries.LootItem;
+import net.minecraft.world.level.storage.loot.predicates.BonusLevelTableCondition;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import rustic.content.blocks.RusticBlocks;
 
@@ -17,9 +23,13 @@ import java.util.Set;
  * <p>The legacy mod never wrote a loot table: 1.12.2 dropped a block's own item unless the block
  * declared a harvest level, and none of Rustic's decorative blocks did. Under 1.21 every block needs
  * an explicit table, and "drop myself" is exactly what the old code did, so that is all this
- * generates - with the one exception the block itself cannot express, a double slab, which 1.21
- * stores as a state of the slab block rather than as the separate {@code *_doubleslab} block 1.12.2
- * registered and therefore has to say "two slabs" out loud.
+ * generates - with the two exceptions the block itself cannot express.
+ *
+ * <p>The first is a double slab, which 1.21 stores as a state of the slab block rather than as the
+ * separate {@code *_doubleslab} block 1.12.2 registered and therefore has to say "two slabs" out loud.
+ * The second is leaves: {@code BlockLeavesRustic.getDrops} rolled a one-in-twenty sapling, or the block
+ * itself under silk touch or shears, which is vanilla's own leaf table except for one detail - it never
+ * dropped the sticks vanilla adds, so {@link #leavesDrops} leaves them out too.
  */
 public class RusticBlockLoot extends BlockLootSubProvider {
 
@@ -33,13 +43,35 @@ public class RusticBlockLoot extends BlockLootSubProvider {
 
     @Override
     protected void generate() {
+        for (RusticBlocks.WoodFamily wood : RusticBlocks.WOOD_FAMILIES) {
+            add(wood.leaves().get(), leavesDrops(wood.leaves().get(), wood.sapling().get()));
+        }
         for (Block block : knownBlocks()) {
             if (block instanceof SlabBlock) {
                 add(block, createSlabItemTable(block));
-            } else {
+            } else if (!(block instanceof LeavesBlock)) {
+                // The leaves were written above: their drop is the sapling of the same wood, not itself.
                 dropSelf(block);
             }
         }
+    }
+
+    /**
+     * One wood's leaves table. {@code BlockLeavesRustic.getDrops} rolled {@code rand.nextInt(20)} for the
+     * sapling and shortened that divisor by {@code 2 << fortune} down to a floor of 10 - 1/20, 1/16,
+     * 1/12, 1/10 - which is exactly {@link #NORMAL_LEAVES_SAPLING_CHANCES}, and why the vanilla constant
+     * is reused instead of a list of Rustic numbers. The dispatch on silk touch or shears is what the
+     * legacy {@code getSilkTouchDrop} and {@code onSheared} overrides did: both handed back the leaf block.
+     *
+     * <p>The olives and ironberries the same method rolled at 1/6 and 1/16 arrive with the fruit items
+     * they drop, in the phase that ports them.
+     */
+    private LootTable.Builder leavesDrops(Block leaves, Block sapling) {
+        return createSilkTouchOrShearsDispatchTable(leaves,
+                applyExplosionCondition(leaves, LootItem.lootTableItem(sapling))
+                        .when(BonusLevelTableCondition.bonusLevelFlatChance(
+                                registries.lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.FORTUNE),
+                                NORMAL_LEAVES_SAPLING_CHANCES)));
     }
 
     @Override

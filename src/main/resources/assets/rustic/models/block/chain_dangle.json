@@ -1,7 +1,8 @@
 {
+    "render_type": "cutout",
     "__comment": "Model generated using MrCrayfish's Model Creator (http://mrcrayfish.com/modelcreator/)",
     "textures": {
-        "chain": "rustic:blocks/chain"
+        "chain": "rustic:block/chain"
     },
     "elements": [
         {

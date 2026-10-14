@@ -53,6 +53,14 @@ public final class RusticCreativeTabs {
                     // TODO Phase 5: replace with the rustic olives item (1.12.2: new ItemStack(ModItems.OLIVES))
                     .icon(() -> new ItemStack(Items.WHEAT))
                     .displayItems((parameters, output) -> {
+                        // 1.12.2 filled this tab the same way, through setCreativeTab(farmingTab) in the
+                        // log, leaves and sapling constructors. The wood family's agriculture half is that
+                        // grouping; the crops, herbs and fruit items of Phase 5 append to FARMING_FAMILIES.
+                        for (RusticBlocks.DecorFamily family : RusticBlocks.FARMING_FAMILIES) {
+                            if (family.gate().get()) {
+                                family.blocks().forEach(block -> output.accept(block.get()));
+                            }
+                        }
                         // TODO Phase 5: crop/seed/herb items go here.
                         // TODO Phase 6: 1.12.2 overrode displayAllRelevantItems to also add a filled
                         //   universal bucket for every Rustic fluid; that belongs here once the

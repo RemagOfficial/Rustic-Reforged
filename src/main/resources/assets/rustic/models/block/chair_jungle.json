@@ -1,8 +1,9 @@
-{
+﻿{
+    "render_type": "cutout",
     "__comment": "Model generated using MrCrayfish's Model Creator (http://mrcrayfish.com/modelcreator/)",
     "textures": {
-        "0": "blocks/planks_jungle",
-	"particle": "blocks/planks_jungle"
+        "0": "minecraft:block/jungle_planks",
+	"particle": "minecraft:block/jungle_planks"
     },
     "elements": [
         {

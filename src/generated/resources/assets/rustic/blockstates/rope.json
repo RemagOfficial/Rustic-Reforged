@@ -1,0 +1,67 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "rustic:block/rope_horizontal",
+        "y": 90
+      },
+      "when": {
+        "axis": "x"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/rope"
+      },
+      "when": {
+        "axis": "y"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/rope_horizontal"
+      },
+      "when": {
+        "axis": "z"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/rope_dangle",
+        "y": 90
+      },
+      "when": {
+        "axis": "x",
+        "dangle": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/rope_knot",
+        "y": 90
+      },
+      "when": {
+        "axis": "x",
+        "dangle": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/rope_dangle"
+      },
+      "when": {
+        "axis": "y|z",
+        "dangle": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/rope_knot"
+      },
+      "when": {
+        "axis": "y|z",
+        "dangle": "true"
+      }
+    }
+  ]
+}

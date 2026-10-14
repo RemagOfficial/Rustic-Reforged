@@ -1,7 +1,7 @@
 {
     "parent": "rustic:block/chain",
     "textures": {
-        "chain": "rustic:blocks/chain_gold",
-				"particle": "rustic:blocks/chain_gold"
+        "chain": "rustic:block/chain_gold",
+				"particle": "rustic:block/chain_gold"
     }
 }

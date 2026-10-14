@@ -1,6 +1,0 @@
-{
-	"variants": {
-		"variant=olive":	{ "model": "rustic:planks_olive" },
-		"variant=ironwood":	{ "model": "rustic:planks_ironwood" }
-	}
-}

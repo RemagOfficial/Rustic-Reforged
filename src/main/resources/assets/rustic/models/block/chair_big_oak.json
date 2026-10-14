@@ -1,8 +1,9 @@
-{
+﻿{
+    "render_type": "cutout",
     "__comment": "Model generated using MrCrayfish's Model Creator (http://mrcrayfish.com/modelcreator/)",
     "textures": {
-        "0": "blocks/planks_big_oak",
-	"particle": "blocks/planks_big_oak"
+        "0": "minecraft:block/dark_oak_planks",
+	"particle": "minecraft:block/dark_oak_planks"
     },
     "elements": [
         {

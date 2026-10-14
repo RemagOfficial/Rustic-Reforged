@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "rustic:block/fertile_soil",
+    "particle": "rustic:block/fertile_soil",
+    "up": "minecraft:block/farmland_moist"
+  }
+}

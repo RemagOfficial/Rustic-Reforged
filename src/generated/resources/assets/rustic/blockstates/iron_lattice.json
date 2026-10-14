@@ -1,0 +1,129 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "rustic:block/lattice_iron_base"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/lattice_leaves_base"
+      },
+      "when": {
+        "leaves": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/lattice_iron_bar",
+        "x": 90
+      },
+      "when": {
+        "down": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/lattice_leaves_bar",
+        "x": 90
+      },
+      "when": {
+        "down": "true",
+        "leaves": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/lattice_iron_bar",
+        "x": 270
+      },
+      "when": {
+        "up": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/lattice_leaves_bar",
+        "x": 270
+      },
+      "when": {
+        "leaves": "true",
+        "up": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/lattice_iron_bar"
+      },
+      "when": {
+        "north": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/lattice_leaves_bar"
+      },
+      "when": {
+        "leaves": "true",
+        "north": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/lattice_iron_bar",
+        "y": 180
+      },
+      "when": {
+        "south": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/lattice_leaves_bar",
+        "y": 180
+      },
+      "when": {
+        "leaves": "true",
+        "south": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/lattice_iron_bar",
+        "y": 270
+      },
+      "when": {
+        "west": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/lattice_leaves_bar",
+        "y": 270
+      },
+      "when": {
+        "leaves": "true",
+        "west": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/lattice_iron_bar",
+        "y": 90
+      },
+      "when": {
+        "east": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/lattice_leaves_bar",
+        "y": 90
+      },
+      "when": {
+        "east": "true",
+        "leaves": "true"
+      }
+    }
+  ]
+}

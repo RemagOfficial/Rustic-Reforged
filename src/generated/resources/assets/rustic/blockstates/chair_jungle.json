@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "rustic:block/chair_jungle",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "rustic:block/chair_jungle"
+    },
+    "facing=south": {
+      "model": "rustic:block/chair_jungle",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "rustic:block/chair_jungle",
+      "y": 270
+    }
+  }
+}

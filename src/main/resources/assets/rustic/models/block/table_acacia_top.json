@@ -1,8 +1,8 @@
-{
+﻿{
     "__comment": "Model generated using MrCrayfish's Model Creator (http://mrcrayfish.com/modelcreator/)",
     "textures": {
-        "0": "blocks/planks_acacia",
-	"particle": "blocks/planks_acacia"
+        "0": "minecraft:block/acacia_planks",
+	"particle": "minecraft:block/acacia_planks"
     },
     "elements": [
         {

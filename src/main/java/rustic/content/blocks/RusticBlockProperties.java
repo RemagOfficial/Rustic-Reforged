@@ -67,11 +67,99 @@ public final class RusticBlockProperties {
     }
 
     /**
+     * 1.12.2 {@code SoundType.CLOTH}, which 1.21 names {@link SoundType#WOOL}, plus the map colour of the
+     * same name - the rope's {@code MaterialRope} was built on {@code MapColor.CLOTH} and asked for that
+     * sound by hand over the material's own.
+     *
+     * <p>No tool is declared for it anywhere: 1.12.2's mining-speed table is keyed on the vanilla
+     * {@code Material} constants and a custom subclass matched none of them, so rope was mined at hand
+     * speed by everything. See {@link RusticBlocks#DECOR_FAMILIES} for the family that carries the null.
+     */
+    public static BlockBehaviour.Properties cloth(float hardness) {
+        return BlockBehaviour.Properties.of()
+                .mapColor(MapColor.WOOL)
+                .sound(SoundType.WOOL)
+                .strength(hardness, NO_EXPLOSION_RESISTANCE);
+    }
+
+    /**
+     * 1.12.2 {@code Material.GROUND} at {@code SoundType.GROUND}, which is 1.21's
+     * {@link SoundType#GRAVEL} again - the same rename the clay walls went through, and the reason dirt,
+     * farmland and the fertile soil all play gravel samples.
+     */
+    public static BlockBehaviour.Properties dirt(float hardness) {
+        return BlockBehaviour.Properties.of()
+                .mapColor(MapColor.DIRT)
+                .sound(SoundType.GRAVEL)
+                .strength(hardness, NO_EXPLOSION_RESISTANCE);
+    }
+
+    /**
      * What a 1.12.2 block that never called {@code setResistance} reported to the explosion code. Named
      * rather than inlined because it looks like an omission, and the next phase's wooden blocks really
      * do have a non-zero value.
      */
     private static final float NO_EXPLOSION_RESISTANCE = 0.0F;
+
+    /**
+     * 1.12.2 {@code Material.IRON}, which is what the chains, lanterns, chandeliers and the iron torch
+     * were made of, and which Rustic then gave {@code SoundType.METAL} or {@code SoundType.ANVIL} by
+     * hand anyway. The map colour is the one 1.21's own iron blocks use: the legacy {@code Material}
+     * constant's colour is not readable from the mod's source and only decides the minimap tint, so it is
+     * listed in the baseline notes rather than guessed at here.
+     */
+    public static BlockBehaviour.Properties metal(float hardness) {
+        return BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .sound(SoundType.METAL)
+                .strength(hardness, NO_EXPLOSION_RESISTANCE);
+    }
+
+    /** 1.12.2's chandelier, which overrode the iron sound with {@code SoundType.ANVIL}. */
+    public static BlockBehaviour.Properties anvil(float hardness) {
+        return BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .sound(SoundType.ANVIL)
+                .strength(hardness, NO_EXPLOSION_RESISTANCE);
+    }
+
+    /**
+     * 1.12.2 {@code Material.CIRCUITS} - the material the candles and the iron torch were built from -
+     * with the {@code SoundType.METAL} Rustic put on all of them. Nothing else in the mod used CIRCUITS.
+     */
+    public static BlockBehaviour.Properties circuits(float hardness) {
+        return BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .sound(SoundType.METAL)
+                .strength(hardness, NO_EXPLOSION_RESISTANCE);
+    }
+
+    /**
+     * 1.12.2 {@code Material.WOOD} at the hardness the planks used, but with the explosion resistance
+     * that {@code BlockPlanksRustic.setResistance(5F)} reported - the first non-zero resistance in the
+     * port, and the reason {@link #NO_EXPLOSION_RESISTANCE} is spelled out everywhere else.
+     */
+    public static BlockBehaviour.Properties woodResistant(float hardness) {
+        return BlockBehaviour.Properties.of()
+                .mapColor(MapColor.WOOD)
+                .sound(SoundType.WOOD)
+                .strength(hardness, RESISTANT_WOOD);
+    }
+
+    /** The 1.12.2 value of {@code setResistance(5F)}: the setter stored {@code 5 * 3}, the getter of a
+     * block that was queried through {@code getExplosionResistance} returned a fifth of it. */
+    private static final float RESISTANT_WOOD = 3.0F;
+
+    /**
+     * 1.12.2's {@code setLightLevel(1.0F)}, which every lit decor block in this slice called. The float
+     * was a 0..1 fraction of full brightness; 1.21 stores the 0..15 level directly, so 1.0 is 15.
+     */
+    public static BlockBehaviour.Properties lit(BlockBehaviour.Properties properties) {
+        return properties.lightLevel(state -> FULL_BRIGHTNESS);
+    }
+
+    /** {@code Block#LIGHT_MAX} is not public, so the number the legacy {@code 1.0F} meant is written out. */
+    private static final int FULL_BRIGHTNESS = 15;
 
     /**
      * The 1.21 way to build a derived block (stairs, slab) from its parent: inherit everything the

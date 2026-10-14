@@ -1,8 +1,9 @@
-{
+﻿{
+    "render_type": "cutout",
     "__comment": "Model generated using MrCrayfish's Model Creator (http://mrcrayfish.com/modelcreator/)",
     "textures": {
-        "0": "rustic:blocks/planks_olive",
-	"particle": "rustic:blocks/planks_olive"
+        "0": "rustic:block/planks_olive",
+	"particle": "rustic:block/planks_olive"
     },
     "elements": [
         {

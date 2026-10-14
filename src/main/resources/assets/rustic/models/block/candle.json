@@ -1,7 +1,8 @@
 {
+    "render_type": "cutout",
     "textures": {
-        "candle": "rustic:blocks/candle",
-				"particle": "rustic:blocks/candle"
+        "candle": "rustic:block/candle",
+				"particle": "rustic:block/candle"
     },
     "elements": [
         {

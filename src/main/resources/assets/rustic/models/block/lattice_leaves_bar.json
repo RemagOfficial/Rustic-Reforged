@@ -1,8 +1,9 @@
 {
+    "render_type": "cutout",
     "__comment": "Model generated using MrCrayfish's Model Creator (http://mrcrayfish.com/modelcreator/)",
     "textures": {
-        "particle": "minecraft:blocks/leaves_oak",
-        "0": "minecraft:blocks/leaves_oak"
+        "particle": "minecraft:block/oak_leaves",
+        "0": "minecraft:block/oak_leaves"
     },
     "elements": [
         {

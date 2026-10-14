@@ -1,0 +1,48 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "rustic:block/chain_horizontal_gold",
+        "y": 90
+      },
+      "when": {
+        "axis": "x"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/chain_gold"
+      },
+      "when": {
+        "axis": "y"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/chain_horizontal_gold"
+      },
+      "when": {
+        "axis": "z"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/chain_dangle_gold",
+        "y": 90
+      },
+      "when": {
+        "axis": "x",
+        "dangle": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/chain_dangle_gold"
+      },
+      "when": {
+        "axis": "y|z",
+        "dangle": "true"
+      }
+    }
+  ]
+}

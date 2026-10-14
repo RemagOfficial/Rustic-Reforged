@@ -2,6 +2,7 @@
   "values": [
     "rustic:clay_wall",
     "rustic:clay_wall_cross",
-    "rustic:clay_wall_diag"
+    "rustic:clay_wall_diag",
+    "rustic:fertile_soil"
   ]
 }

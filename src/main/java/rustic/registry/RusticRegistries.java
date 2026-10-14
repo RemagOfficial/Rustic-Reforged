@@ -1,7 +1,6 @@
 package rustic.registry;
 
 import net.minecraft.world.effect.MobEffect;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.material.Fluid;
@@ -27,7 +26,8 @@ import rustic.Rustic;
  * than by a handle here, because {@code DeferredRegister.createBlocks}/{@code createItems} give
  * {@code DeferredBlock}/{@code DeferredItem} holders with the block-item helpers on them. Several
  * registers may point at one registry, so a content class that gains blocks later (fluid blocks,
- * crops, machines) keeps its own.
+ * crops, machines) keeps its own. Entities follow the same rule: the chair seat and the tomato are
+ * declared by {@link rustic.content.entities.RusticEntities}, which owns its own register.
  */
 public final class RusticRegistries {
 
@@ -36,10 +36,6 @@ public final class RusticRegistries {
 
     public static final DeferredRegister<MenuType<?>> MENU_TYPES =
             DeferredRegister.create(Registries.MENU, Rustic.MODID);
-
-    /** The throwable tomato. */
-    public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
-            DeferredRegister.create(Registries.ENTITY_TYPE, Rustic.MODID);
 
     /** The seven potion effects (fullmetal, shame, iron skin, ...). */
     public static final DeferredRegister<MobEffect> MOB_EFFECTS =
@@ -67,7 +63,6 @@ public final class RusticRegistries {
     public static void register(IEventBus modEventBus) {
         BLOCK_ENTITY_TYPES.register(modEventBus);
         MENU_TYPES.register(modEventBus);
-        ENTITY_TYPES.register(modEventBus);
         MOB_EFFECTS.register(modEventBus);
         FLUID_TYPES.register(modEventBus);
         FLUIDS.register(modEventBus);

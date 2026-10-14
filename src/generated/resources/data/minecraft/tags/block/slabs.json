@@ -1,6 +1,8 @@
 {
   "values": [
     "rustic:slate_roof_slab",
-    "rustic:slate_brick_slab"
+    "rustic:slate_brick_slab",
+    "rustic:olive_slab",
+    "rustic:ironwood_slab"
   ]
 }

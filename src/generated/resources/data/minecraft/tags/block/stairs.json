@@ -1,6 +1,8 @@
 {
   "values": [
     "rustic:stairs_slate_roof",
-    "rustic:stairs_slate_brick"
+    "rustic:stairs_slate_brick",
+    "rustic:stairs_olive",
+    "rustic:stairs_ironwood"
   ]
 }

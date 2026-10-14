@@ -1,8 +1,9 @@
 {
+    "render_type": "cutout",
 	"credit": "Model generated using MrCrayfish's Model Creator (http://mrcrayfish.com/modelcreator/)",
 	"textures": {
-		"particle": "rustic:blocks/candle",
-		"candle": "rustic:blocks/candle"
+		"particle": "rustic:block/candle",
+		"candle": "rustic:block/candle"
 	},
 	"elements": [
 		{

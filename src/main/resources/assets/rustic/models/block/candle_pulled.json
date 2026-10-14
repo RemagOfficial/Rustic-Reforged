@@ -1,8 +1,9 @@
 {
+    "render_type": "cutout",
 	"credit": "Made with Blockbench",
 	"textures": {
-		"particle": "rustic:blocks/candle",
-		"candle": "rustic:blocks/candle"
+		"particle": "rustic:block/candle",
+		"candle": "rustic:block/candle"
 	},
 	"elements": [
 		{

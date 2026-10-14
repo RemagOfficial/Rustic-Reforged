@@ -1,15 +1,21 @@
 package rustic;
 
+import net.minecraft.world.level.block.DispenserBlock;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.loading.FMLEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rustic.config.RusticConfig;
 import rustic.content.RusticCreativeTabs;
+import rustic.content.blocks.RopeDispenseBehavior;
 import rustic.content.blocks.RusticBlocks;
+import rustic.content.client.RusticClient;
+import rustic.content.entities.RusticEntities;
 import rustic.content.items.RusticItems;
 import rustic.data.RusticDataGen;
 import rustic.registry.RusticRegistries;
@@ -35,10 +41,13 @@ import java.util.UUID;
  *   <li>{@code NetworkRegistry.registerGuiHandler(Rustic.instance, new GuiProxy())} -
  *       {@code MenuType} registration, so GuiProxy itself is not ported (Phase 4).</li>
  *   <li>{@code initFluidBottle()}, {@code BookManager.init()}, model loaders, colour handlers and
- *       the iron-skin layer - client entry points and item data components (Phases 6 and 9).</li>
+ *       the iron-skin layer - client entry points and item data components (Phases 6 and 9), all of
+ *       which belong in {@link RusticClient}, and the entity renderers of {@code initRenderers()}
+ *       already live there.</li>
  *   <li>{@code BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(rope, ...)} - the 1.21
- *       equivalent of a rope dispense behaviour, and the chicken temptation set, which 1.21 reads
- *       from item tags instead of a static field (Phase 3/5).</li>
+ *       equivalent of a rope dispense behaviour, which {@link rustic.content.blocks.RopeDispenseBehavior}
+ *       is, registered from {@link #commonSetup} below. The chicken temptation set, which 1.21 reads from
+ *       item tags instead of a static field, arrives with the crops (Phase 5).</li>
  *   <li>CraftTweaker, Forestry and Dynamic Trees hooks - optional compat (Phase 10).</li>
  * </ul>
  */
@@ -63,11 +72,18 @@ public class Rustic {
         // dependency order is the point of dropping the legacy init() calls.
         RusticBlocks.register(modEventBus);
         RusticItems.register(modEventBus);
+        // 1.12.2's ModEntities.init(): the chair seat now, the tomato with Phase 5's crops.
+        RusticEntities.register(modEventBus);
         RusticCreativeTabs.register(modEventBus);
 
         modEventBus.addListener(Rustic::commonSetup);
         // Only ever fired by the data generator run, so this listener is inert in a normal game.
         modEventBus.addListener(RusticDataGen::gatherData);
+        // The client listeners have to stay off a dedicated server's class path, so the dist is tested
+        // before the method reference is taken: the reference is only resolved when this branch runs.
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            RusticClient.register(modEventBus);
+        }
 
         // Replaces the manual CommonProxy.config = new Configuration(...) + Config.readConfig() pair:
         // NeoForge writes config/rustic-common.toml, reloads it on change and pushes values to listeners.
@@ -83,5 +99,8 @@ public class Rustic {
      */
     private static void commonSetup(FMLCommonSetupEvent event) {
         RusticBlocks.setFlammables();
+        // 1.12.2's CommonProxy.init(): DispenserBlock.registerBehavior is the 1.21 form of the putObject
+        // call on the behaviour registry, and it takes the block's item, which every block has one of now.
+        DispenserBlock.registerBehavior(RusticBlocks.ROPE.get().asItem(), new RopeDispenseBehavior());
     }
 }

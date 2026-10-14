@@ -13,6 +13,27 @@
     "rustic:stairs_slate_roof",
     "rustic:slate_roof_slab",
     "rustic:stairs_slate_brick",
-    "rustic:slate_brick_slab"
+    "rustic:slate_brick_slab",
+    "rustic:chain",
+    "rustic:candle",
+    "rustic:candle_double",
+    "rustic:candle_lever",
+    "rustic:chandelier",
+    "rustic:iron_torch",
+    "rustic:chain_gold",
+    "rustic:candle_gold",
+    "rustic:candle_double_gold",
+    "rustic:candle_lever_gold",
+    "rustic:chandelier_gold",
+    "rustic:iron_lantern",
+    "rustic:golden_lantern",
+    "rustic:gargoyle",
+    "rustic:iron_lattice",
+    "rustic:chain_silver",
+    "rustic:candle_silver",
+    "rustic:candle_double_silver",
+    "rustic:candle_lever_silver",
+    "rustic:chandelier_silver",
+    "rustic:silver_lantern"
   ]
 }

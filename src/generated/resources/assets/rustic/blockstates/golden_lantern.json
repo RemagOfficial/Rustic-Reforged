@@ -1,0 +1,25 @@
+{
+  "variants": {
+    "facing=down": {
+      "model": "rustic:block/lantern_down_gold"
+    },
+    "facing=east": {
+      "model": "rustic:block/lantern_wall_gold",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "rustic:block/lantern_wall_gold"
+    },
+    "facing=south": {
+      "model": "rustic:block/lantern_wall_gold",
+      "y": 180
+    },
+    "facing=up": {
+      "model": "rustic:block/lantern_up_gold"
+    },
+    "facing=west": {
+      "model": "rustic:block/lantern_wall_gold",
+      "y": 270
+    }
+  }
+}

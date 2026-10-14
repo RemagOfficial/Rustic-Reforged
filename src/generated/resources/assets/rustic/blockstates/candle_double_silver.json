@@ -1,0 +1,26 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "rustic:block/candle_double_wall_silver",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "rustic:block/candle_double_wall_silver"
+    },
+    "facing=south": {
+      "model": "rustic:block/candle_double_wall_silver",
+      "y": 180
+    },
+    "facing=up_x": {
+      "model": "rustic:block/candle_double_silver",
+      "y": 90
+    },
+    "facing=up_z": {
+      "model": "rustic:block/candle_double_silver"
+    },
+    "facing=west": {
+      "model": "rustic:block/candle_double_wall_silver",
+      "y": 270
+    }
+  }
+}

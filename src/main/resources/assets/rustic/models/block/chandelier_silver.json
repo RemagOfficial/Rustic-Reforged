@@ -1,8 +1,8 @@
 {
     "parent": "rustic:block/chandelier",
     "textures": {
-        "chandelier": "rustic:blocks/chandelier_silver",
-				"chain": "rustic:blocks/chain_silver",
-				"particle": "rustic:blocks/chandelier_silver"
+        "chandelier": "rustic:block/chandelier_silver",
+				"chain": "rustic:block/chain_silver",
+				"particle": "rustic:block/chandelier_silver"
     }
 }

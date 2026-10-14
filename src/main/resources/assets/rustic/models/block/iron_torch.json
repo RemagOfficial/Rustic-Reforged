@@ -1,9 +1,10 @@
 {
+    "render_type": "cutout",
 	"credit": "Made with Blockbench",
 	"ambientocclusion": false,
 	"textures": {
-		"particle": "rustic:blocks/iron_torch_on",
-		"torch": "rustic:blocks/iron_torch_on"
+		"particle": "rustic:block/iron_torch_on",
+		"torch": "rustic:block/iron_torch_on"
 	},
 	"elements": [
 		{

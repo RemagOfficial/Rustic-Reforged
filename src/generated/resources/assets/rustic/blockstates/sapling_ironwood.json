@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "stage=0": {
+      "model": "rustic:block/sapling_ironwood"
+    },
+    "stage=1": {
+      "model": "rustic:block/sapling_ironwood"
+    }
+  }
+}

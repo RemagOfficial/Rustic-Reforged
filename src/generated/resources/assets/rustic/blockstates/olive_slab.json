@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "rustic:block/olive_slab"
+    },
+    "type=double": {
+      "model": "rustic:block/olive_slab_double"
+    },
+    "type=top": {
+      "model": "rustic:block/olive_slab_top"
+    }
+  }
+}

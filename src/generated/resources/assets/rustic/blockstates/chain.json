@@ -1,0 +1,48 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "rustic:block/chain_horizontal",
+        "y": 90
+      },
+      "when": {
+        "axis": "x"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/chain"
+      },
+      "when": {
+        "axis": "y"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/chain_horizontal"
+      },
+      "when": {
+        "axis": "z"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/chain_dangle",
+        "y": 90
+      },
+      "when": {
+        "axis": "x",
+        "dangle": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "rustic:block/chain_dangle"
+      },
+      "when": {
+        "axis": "y|z",
+        "dangle": "true"
+      }
+    }
+  ]
+}
