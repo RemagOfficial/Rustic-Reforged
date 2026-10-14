@@ -1,0 +1,43 @@
+{
+  "variants": {
+    "variant=0": {
+      "model": "rustic:block/vase"
+    },
+    "variant=1": {
+      "model": "rustic:block/vase"
+    },
+    "variant=10": {
+      "model": "rustic:block/vase"
+    },
+    "variant=11": {
+      "model": "rustic:block/vase"
+    },
+    "variant=12": {
+      "model": "rustic:block/vase"
+    },
+    "variant=2": {
+      "model": "rustic:block/vase"
+    },
+    "variant=3": {
+      "model": "rustic:block/vase"
+    },
+    "variant=4": {
+      "model": "rustic:block/vase"
+    },
+    "variant=5": {
+      "model": "rustic:block/vase"
+    },
+    "variant=6": {
+      "model": "rustic:block/vase"
+    },
+    "variant=7": {
+      "model": "rustic:block/vase"
+    },
+    "variant=8": {
+      "model": "rustic:block/vase"
+    },
+    "variant=9": {
+      "model": "rustic:block/vase"
+    }
+  }
+}

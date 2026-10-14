@@ -81,6 +81,7 @@ import rustic.content.blocks.BlockRotatable;
 import rustic.content.blocks.BlockTable;
 import rustic.content.blocks.BlockWoodLantern;
 import rustic.content.blocks.RusticBlocks;
+import rustic.content.blocks.RusticMachineBlocks;
 
 /**
  * Phase 2 characterisation test for the decor slice: the 33 blocks 1.12.2 built in
@@ -650,7 +651,9 @@ public class RusticDecorRegistrationTest {
         CreativeModeTab decor = RusticCreativeTabs.DECOR.get();
         decor.buildContents(new CreativeModeTab.ItemDisplayParameters(FeatureFlags.DEFAULT_FLAGS, true, null));
         return decor.getDisplayItems().stream()
-                .map(stack -> BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())
+                .map(stack -> BuiltInRegistries.ITEM.getKey(stack.getItem()))
+                .filter(key -> !machineIds().contains(key.getPath()))
+                .map(ResourceLocation::toString)
                 .sorted()
                 .toList();
     }
@@ -984,9 +987,18 @@ public class RusticDecorRegistrationTest {
         return prefixedIds.stream().sorted().toList();
     }
 
-    /** A tag's entries, sorted and deduplicated - the order and any repeats mean nothing to the game. */
+    /**
+     * A tag's entries, sorted and deduplicated - the order and any repeats mean nothing to the game.
+     *
+     * <p>The {@code minecraft:mineable/*} files are shared with the Phase 4 machines (the barrel is
+     * legitimately axe-mined), so the machine ids are filtered out here just as they are from
+     * {@link #rusticBlocks()}: this is the decor baseline, and it asserts the decor half of each tag.
+     * {@code RusticMachineRegistrationTest} covers the machine's own tag membership.
+     */
     private static List<String> distinctTag(String name) {
-        return tag(name).stream().distinct().sorted().toList();
+        return tag(name).stream()
+                .filter(id -> !machineIds().contains(id.substring(id.lastIndexOf(':') + 1)))
+                .distinct().sorted().toList();
     }
 
     /** The rustic half of the block registry, keyed by path and sorted so failures read as a list. */
@@ -994,7 +1006,7 @@ public class RusticDecorRegistrationTest {
         Map<String, Block> out = new TreeMap<>();
         for (Block block : BuiltInRegistries.BLOCK) {
             ResourceLocation key = BuiltInRegistries.BLOCK.getKey(block);
-            if (key != null && Rustic.MODID.equals(key.getNamespace())) {
+            if (key != null && Rustic.MODID.equals(key.getNamespace()) && !machineIds().contains(key.getPath())) {
                 out.put(key.getPath(), block);
             }
         }
@@ -1005,10 +1017,23 @@ public class RusticDecorRegistrationTest {
         Map<String, Item> out = new TreeMap<>();
         for (Item item : BuiltInRegistries.ITEM) {
             ResourceLocation key = BuiltInRegistries.ITEM.getKey(item);
-            if (key != null && Rustic.MODID.equals(key.getNamespace())) {
+            if (key != null && Rustic.MODID.equals(key.getNamespace()) && !machineIds().contains(key.getPath())) {
                 out.put(key.getPath(), item);
             }
         }
         return out;
+    }
+
+    /**
+     * The Phase 4 machine blocks live in their own register ({@code RusticMachineBlocks}) and are
+     * characterised by {@code RusticMachineRegistrationTest}. This test is the decor baseline, so its
+     * registry scans and its creative-tab comparison exclude these ids - a new machine then cannot
+     * silently shift the decor count, and the decor tab assertion still checks every decor family is
+     * present.
+     */
+    private static java.util.Set<String> machineIds() {
+        return RusticMachineBlocks.entries().stream()
+                .map(holder -> holder.getId().getPath())
+                .collect(java.util.stream.Collectors.toSet());
     }
 }

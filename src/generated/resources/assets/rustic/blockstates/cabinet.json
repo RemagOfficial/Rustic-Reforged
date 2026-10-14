@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "facing=east,mirror=false,top=false": {
+      "model": "rustic:block/cabinet"
+    },
+    "facing=east,mirror=false,top=true": {
+      "model": "rustic:block/cabinet"
+    },
+    "facing=east,mirror=true,top=false": {
+      "model": "rustic:block/cabinet"
+    },
+    "facing=east,mirror=true,top=true": {
+      "model": "rustic:block/cabinet"
+    },
+    "facing=north,mirror=false,top=false": {
+      "model": "rustic:block/cabinet"
+    },
+    "facing=north,mirror=false,top=true": {
+      "model": "rustic:block/cabinet"
+    },
+    "facing=north,mirror=true,top=false": {
+      "model": "rustic:block/cabinet"
+    },
+    "facing=north,mirror=true,top=true": {
+      "model": "rustic:block/cabinet"
+    },
+    "facing=south,mirror=false,top=false": {
+      "model": "rustic:block/cabinet"
+    },
+    "facing=south,mirror=false,top=true": {
+      "model": "rustic:block/cabinet"
+    },
+    "facing=south,mirror=true,top=false": {
+      "model": "rustic:block/cabinet"
+    },
+    "facing=south,mirror=true,top=true": {
+      "model": "rustic:block/cabinet"
+    },
+    "facing=west,mirror=false,top=false": {
+      "model": "rustic:block/cabinet"
+    },
+    "facing=west,mirror=false,top=true": {
+      "model": "rustic:block/cabinet"
+    },
+    "facing=west,mirror=true,top=false": {
+      "model": "rustic:block/cabinet"
+    },
+    "facing=west,mirror=true,top=true": {
+      "model": "rustic:block/cabinet"
+    }
+  }
+}

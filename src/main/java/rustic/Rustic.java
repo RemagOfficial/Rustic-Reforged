@@ -12,11 +12,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rustic.config.RusticConfig;
 import rustic.content.RusticCreativeTabs;
+import rustic.content.blockentity.RusticBlockEntities;
 import rustic.content.blocks.RopeDispenseBehavior;
 import rustic.content.blocks.RusticBlocks;
+import rustic.content.blocks.RusticMachineBlocks;
 import rustic.content.client.RusticClient;
 import rustic.content.entities.RusticEntities;
 import rustic.content.items.RusticItems;
+import rustic.content.menu.RusticMenus;
 import rustic.data.RusticDataGen;
 import rustic.registry.RusticRegistries;
 
@@ -71,12 +74,20 @@ public class Rustic {
         // RusticItems brings RusticBlocks' initialiser in first anyway, but reading top to bottom in
         // dependency order is the point of dropping the legacy init() calls.
         RusticBlocks.register(modEventBus);
+        // Machine blocks are their own register (see RusticMachineBlocks) but still feed the item loop
+        // below, so they are attached before the items are derived from every block register.
+        RusticMachineBlocks.register(modEventBus);
         RusticItems.register(modEventBus);
         // 1.12.2's ModEntities.init(): the chair seat now, the tomato with Phase 5's crops.
         RusticEntities.register(modEventBus);
+        // Phase 4: the tile entities and their menus, each owning its own register.
+        RusticBlockEntities.register(modEventBus);
+        RusticMenus.register(modEventBus);
         RusticCreativeTabs.register(modEventBus);
 
         modEventBus.addListener(Rustic::commonSetup);
+        // NeoForge's replacement for the legacy getCapability overrides on the inventory tile entities.
+        modEventBus.addListener(RusticBlockEntities::registerCapabilities);
         // Only ever fired by the data generator run, so this listener is inert in a normal game.
         modEventBus.addListener(RusticDataGen::gatherData);
         // The client listeners have to stay off a dedicated server's class path, so the dist is tested

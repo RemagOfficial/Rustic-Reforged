@@ -10,6 +10,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import rustic.Rustic;
 import rustic.content.blocks.RusticBlocks;
+import rustic.content.blocks.RusticMachineBlocks;
 
 /**
  * The three Rustic creative tabs from 1.12.2 ({@code Rustic.decorTab} / {@code farmingTab} /
@@ -42,6 +43,9 @@ public final class RusticCreativeTabs {
                                 family.blocks().forEach(block -> output.accept(block.get()));
                             }
                         }
+                        // Phase 4: 1.12.2 put the storage machines (barrel, cabinet, vase) in the same
+                        // decorTab through setCreativeTab, so the machine register is appended here.
+                        RusticMachineBlocks.entries().forEach(block -> output.accept(block.get()));
                         // TODO Phase 3: the remaining decor families (candles, chains, chairs, tables,
                         //   lattice, lanterns, gargoyle, vase) append themselves to DECOR_FAMILIES.
                     })

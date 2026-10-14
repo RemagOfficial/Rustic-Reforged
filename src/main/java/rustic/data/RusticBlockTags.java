@@ -7,6 +7,7 @@ import net.neoforged.neoforge.common.data.BlockTagsProvider;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import rustic.Rustic;
 import rustic.content.blocks.RusticBlocks;
+import rustic.content.blocks.RusticMachineBlocks;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -66,6 +67,12 @@ public class RusticBlockTags extends BlockTagsProvider {
         if (RusticBlocks.silverDecorEnabled()) {
             climbable.add(RusticBlocks.SILVER_DECOR.chain().get());
         }
+
+        // Phase 4 machines. The barrel and cabinet were Material.WOOD in 1.12.2, so they take the axe like
+        // the wooden decor they sat beside; the vase was Material.ROCK, so it takes the pickaxe. None had a
+        // harvest level, so they all drop themselves even by hand.
+        tag(BlockTags.MINEABLE_WITH_AXE).add(RusticMachineBlocks.BARREL.get(), RusticMachineBlocks.CABINET.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(RusticMachineBlocks.VASE.get());
 
         // Shape tags rather than material ones: other mods' recipes and advancement triggers use these
         // where 1.12.2 used the ore dictionary entries "slabStone" and "stairs".

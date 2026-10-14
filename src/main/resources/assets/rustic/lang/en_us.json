@@ -105,5 +105,14 @@
   "block.rustic.rope": "Rope",
   "block.rustic.fertile_soil": "Fertile Soil",
 
+  "block.rustic.barrel": "Barrel",
+  "container.rustic.barrel": "Barrel",
+
+  "block.rustic.cabinet": "Cabinet",
+  "container.rustic.cabinet": "Cabinet",
+
+  "block.rustic.vase": "Vase",
+  "container.rustic.vase": "Vase",
+
   "entity.rustic.chair": "Chair"
 }

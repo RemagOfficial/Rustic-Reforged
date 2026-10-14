@@ -7,6 +7,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import rustic.Rustic;
 import rustic.content.blocks.RusticBlocks;
+import rustic.content.blocks.RusticMachineBlocks;
 
 /**
  * Item registration, ported from 1.12.2's {@code ModItems} plus the item half of {@code ModBlocks}.
@@ -31,6 +32,10 @@ public final class RusticItems {
     static {
         // 1.12.2: new ItemBlock(this).setRegistryName(getRegistryName()) inside BlockBase.register()
         for (DeferredHolder<Block, ? extends Block> block : RusticBlocks.entries()) {
+            ITEMS.registerSimpleBlockItem(block.getId().getPath(), block);
+        }
+        // Phase 4: the machine blocks live in their own register but need a block item just the same.
+        for (DeferredHolder<Block, ? extends Block> block : RusticMachineBlocks.entries()) {
             ITEMS.registerSimpleBlockItem(block.getId().getPath(), block);
         }
     }

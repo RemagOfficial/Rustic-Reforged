@@ -31,6 +31,7 @@ import rustic.content.blocks.BlockRopeBase;
 import rustic.content.blocks.BlockTable;
 import rustic.content.blocks.BlockWoodLantern;
 import rustic.content.blocks.RusticBlocks;
+import rustic.content.blocks.RusticMachineBlocks;
 
 /**
  * Blockstates and block models, replacing the hand-written JSON that 1.12.2 shipped under
@@ -75,6 +76,41 @@ public class RusticBlockStates extends BlockStateProvider {
         rope();
         lattice();
         fertileSoil();
+        machines();
+    }
+
+    // ------------------------------------------------------------------
+    // Phase 4 storage machines.
+    //
+    // The barrel block was a CUTOUT custom model in 1.12.2 (BlockBarrelRustic's see-through top), but the
+    // port hands it an opaque cube so it can be registered before the baked-model rework in Phase 9; the
+    // orientation of the legacy model is not part of the behaviour contract. Generating a plain cube keeps
+    // runData from failing on a multi-element model this phase has no reason to reconstruct yet.
+    //
+    // The cabinet is the same deferral: its two animated doors were drawn by a CabinetRenderer over a
+    // custom model (textures/models/cabinet*.png), which is Phase 9 art. Its facing/mirror/top properties
+    // drive behaviour (placement and the 54-slot double), not this placeholder, so every property
+    // combination is mapped to one static cube - forAllStates rather than a single default variant, because
+    // the block does declare properties and each state still has to resolve to a model.
+    //
+    // The vase follows the cabinet again: it declares a scaffolded VARIANT(0-12) property whose thirteen real
+    // models are deferred to Phase 9, so all thirteen states resolve to one cube. There is no single vase.png
+    // in the legacy art - the styles were vase_side_N / _top_N / _bottom_N - so the placeholder borrows the
+    // brown-ceramic side texture (vase_side_0), which exists and still reads as a vase.
+    // ------------------------------------------------------------------
+    private void machines() {
+        simpleBlockWithItem(RusticMachineBlocks.BARREL.get(),
+                models().cubeAll(path(RusticMachineBlocks.BARREL), tex("barrel")));
+
+        ModelFile cabinet = models().cubeAll(path(RusticMachineBlocks.CABINET), tex("cabinet"));
+        getVariantBuilder(RusticMachineBlocks.CABINET.get())
+                .forAllStates(state -> ConfiguredModel.builder().modelFile(cabinet).build());
+        simpleBlockItem(RusticMachineBlocks.CABINET.get(), cabinet);
+
+        ModelFile vase = models().cubeAll(path(RusticMachineBlocks.VASE), tex("vase_side_0"));
+        getVariantBuilder(RusticMachineBlocks.VASE.get())
+                .forAllStates(state -> ConfiguredModel.builder().modelFile(vase).build());
+        simpleBlockItem(RusticMachineBlocks.VASE.get(), vase);
     }
 
     // ------------------------------------------------------------------

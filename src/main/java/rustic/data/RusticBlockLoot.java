@@ -13,6 +13,7 @@ import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.predicates.BonusLevelTableCondition;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import rustic.content.blocks.RusticBlocks;
+import rustic.content.blocks.RusticMachineBlocks;
 
 import java.util.List;
 import java.util.Set;
@@ -84,6 +85,10 @@ public class RusticBlockLoot extends BlockLootSubProvider {
      * demand a table for each vanilla block as well, so the list is narrowed to Rustic's own.
      */
     private static List<Block> knownBlocks() {
-        return RusticBlocks.entries().stream().<Block>map(DeferredHolder::get).toList();
+        // Both block registers: the decor and the Phase 4 machines need a drop-myself table alike.
+        List<Block> blocks = new java.util.ArrayList<>(
+                RusticBlocks.entries().stream().<Block>map(DeferredHolder::get).toList());
+        RusticMachineBlocks.entries().forEach(holder -> blocks.add(holder.get()));
+        return blocks;
     }
 }

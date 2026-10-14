@@ -5,7 +5,10 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import rustic.content.client.screen.RusticChestScreen;
 import rustic.content.entities.RusticEntities;
+import rustic.content.menu.RusticMenus;
 
 /**
  * The client half of the mod, reached only when {@link FMLEnvironment#dist} is {@link Dist#CLIENT} -
@@ -23,6 +26,23 @@ public final class RusticClient {
     /** Attaches the client listeners to the mod event bus. Call only on the client dist. */
     public static void register(IEventBus modEventBus) {
         modEventBus.addListener(RusticClient::registerRenderers);
+        modEventBus.addListener(RusticClient::registerScreens);
+    }
+
+    /**
+     * Binds the tile-entity {@code MenuType}s to the {@code RusticChestScreen} that replaces the legacy
+     * {@code GuiCabinet}/{@code GuiBarrel}/{@code GuiVase} trio. This is the client half of what
+     * {@code GuiProxy.getClientGuiElement} used to do; the proxy's other half ({@code openGui} ids) is
+     * gone because the menu now opens straight from the block entity's {@code MenuProvider}.
+     */
+    private static void registerScreens(RegisterMenuScreensEvent event) {
+        // One screen class serves all four: RusticChestScreen reads the menu's row count to pick the
+        // generic_27 or generic_54 panel and the matching window height, exactly as the four legacy Gui
+        // classes did when they each hard-coded their own.
+        event.register(RusticMenus.BARREL.get(), RusticChestScreen::new);
+        event.register(RusticMenus.VASE.get(), RusticChestScreen::new);
+        event.register(RusticMenus.CABINET.get(), RusticChestScreen::new);
+        event.register(RusticMenus.DOUBLE_CABINET.get(), RusticChestScreen::new);
     }
 
     /**
