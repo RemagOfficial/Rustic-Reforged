@@ -36,6 +36,11 @@ public final class RusticMachineBlocks {
     public static final DeferredBlock<BarrelBlock> BARREL =
             MACHINE_BLOCKS.registerBlock("barrel", BarrelBlock::new, RusticBlockProperties.wood(1.5F));
 
+    // 1.12.2: BlockLiquidBarrel, Material.WOOD, hardness 1.5 - a fluid tank (16 buckets), no GUI. Its item and loot
+    // ride the same entries() loops as every other machine block.
+    public static final DeferredBlock<LiquidBarrelBlock> LIQUID_BARREL =
+            MACHINE_BLOCKS.registerBlock("liquid_barrel", LiquidBarrelBlock::new, RusticBlockProperties.wood(1.5F));
+
     // 1.12.2: BlockCabinet, Material.WOOD, hardness 2.5, no harvest level, a 27-slot tile entity that merges
     // vertically into a 54-slot double. The animated doors are Phase 9; the block and its double are here.
     public static final DeferredBlock<CabinetBlock> CABINET =
@@ -46,6 +51,31 @@ public final class RusticMachineBlocks {
     // variant-selection packet are deferred to the art (Phase 9) and recipe (Phase 7) phases.
     public static final DeferredBlock<VaseBlock> VASE =
             MACHINE_BLOCKS.registerBlock("vase", VaseBlock::new, RusticBlockProperties.stone(0.5F));
+
+    // ------------------------------------------------------------------
+    // Processing machines. 1.12.2: BlockCrushingTub, Material.WOOD, hardness 1.5 - a one-slot input over a
+    // drain-only fluid tank, no GUI.
+    // ------------------------------------------------------------------
+    public static final DeferredBlock<CrushingTubBlock> CRUSHING_TUB =
+            MACHINE_BLOCKS.registerBlock("crushing_tub", CrushingTubBlock::new, RusticBlockProperties.wood(1.5F));
+
+    // 1.12.2: BlockEvaporatingBasin, Material.ROCK, hardness 1.5 - a fluid-in / dust-out basin, no GUI.
+    public static final DeferredBlock<EvaporatingBasinBlock> EVAPORATING_BASIN =
+            MACHINE_BLOCKS.registerBlock("evaporating_basin", EvaporatingBasinBlock::new, RusticBlockProperties.stone(1.5F));
+
+    // 1.12.2: BlockBrewingBarrel, Material.WOOD, hardness 1.5 - the fermenting barrel with the bespoke GUI.
+    public static final DeferredBlock<BrewingBarrelBlock> BREWING_BARREL =
+            MACHINE_BLOCKS.registerBlock("brewing_barrel", BrewingBarrelBlock::new, RusticBlockProperties.wood(1.5F));
+
+    // 1.12.2: BlockCondenser, Material.ROCK, hardness 2 - the elixir still. Rebuilt as a single functional block
+    // (no retort flank) behind CondenserBlockEntity; its item and loot ride the same entries() loops as every machine.
+    public static final DeferredBlock<CondenserBlock> CONDENSER =
+            MACHINE_BLOCKS.registerBlock("condenser", CondenserBlock::new, RusticBlockProperties.stone(2.0F));
+
+    // 1.12.2: BlockCondenserAdvanced, Material.ROCK, hardness 2 - the two-block advanced still (bottom owns the
+    // inventory, top forwards) behind CondenserAdvancedBlockEntity, with the modifier slot for advanced recipes.
+    public static final DeferredBlock<CondenserAdvancedBlock> CONDENSER_ADVANCED =
+            MACHINE_BLOCKS.registerBlock("condenser_advanced", CondenserAdvancedBlock::new, RusticBlockProperties.stone(2.0F));
 
     /**
      * All machine blocks, in registration order. Consumed by the same item/loot loops that walk

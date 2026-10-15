@@ -2,14 +2,22 @@ package rustic.registry;
 
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.fluids.FluidType;
+import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import rustic.Rustic;
+import rustic.content.crafting.BrewingBarrelRecipe;
+import rustic.content.crafting.CondenserRecipe;
+import rustic.content.crafting.CrushingTubRecipe;
+import rustic.content.crafting.EvaporatingBasinRecipe;
 
 /**
  * The registry handles every content class registers into. Phase 1 only wires the plumbing up;
@@ -53,8 +61,34 @@ public final class RusticRegistries {
             DeferredRegister.create(Registries.FLUID, Rustic.MODID);
 
     /** Custom recipe types: barrel, brewing barrel, condenser, crushing tub, evaporating basin, elixir. */
-    public static final DeferredRegister<net.minecraft.world.item.crafting.RecipeSerializer<?>> RECIPE_SERIALIZERS =
+    public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS =
             DeferredRegister.create(Registries.RECIPE_SERIALIZER, Rustic.MODID);
+
+    /** The machine {@link RecipeType}s. A {@code RecipeMap} keys recipes by type registry name, so these must be registered. */
+    public static final DeferredRegister<RecipeType<?>> RECIPE_TYPES =
+            DeferredRegister.create(Registries.RECIPE_TYPE, Rustic.MODID);
+
+    private static ResourceLocation machineRecipe(String name) {
+        return ResourceLocation.fromNamespaceAndPath(Rustic.MODID, name);
+    }
+
+    public static final DeferredHolder<RecipeType<?>, RecipeType<CrushingTubRecipe>> CRUSHING_TUB_TYPE =
+            RECIPE_TYPES.register("crushing_tub", () -> RecipeType.simple(machineRecipe("crushing_tub")));
+    public static final DeferredHolder<RecipeType<?>, RecipeType<EvaporatingBasinRecipe>> EVAPORATING_BASIN_TYPE =
+            RECIPE_TYPES.register("evaporating_basin", () -> RecipeType.simple(machineRecipe("evaporating_basin")));
+    public static final DeferredHolder<RecipeType<?>, RecipeType<BrewingBarrelRecipe>> BREWING_BARREL_TYPE =
+            RECIPE_TYPES.register("brewing_barrel", () -> RecipeType.simple(machineRecipe("brewing_barrel")));
+    public static final DeferredHolder<RecipeType<?>, RecipeType<CondenserRecipe>> CONDENSER_TYPE =
+            RECIPE_TYPES.register("condenser", () -> RecipeType.simple(machineRecipe("condenser")));
+
+    public static final DeferredHolder<RecipeSerializer<?>, CrushingTubRecipe.Serializer> CRUSHING_TUB_SERIALIZER =
+            RECIPE_SERIALIZERS.register("crushing_tub", CrushingTubRecipe.Serializer::new);
+    public static final DeferredHolder<RecipeSerializer<?>, EvaporatingBasinRecipe.Serializer> EVAPORATING_BASIN_SERIALIZER =
+            RECIPE_SERIALIZERS.register("evaporating_basin", EvaporatingBasinRecipe.Serializer::new);
+    public static final DeferredHolder<RecipeSerializer<?>, BrewingBarrelRecipe.Serializer> BREWING_BARREL_SERIALIZER =
+            RECIPE_SERIALIZERS.register("brewing_barrel", BrewingBarrelRecipe.Serializer::new);
+    public static final DeferredHolder<RecipeSerializer<?>, CondenserRecipe.Serializer> CONDENSER_SERIALIZER =
+            RECIPE_SERIALIZERS.register("condenser", CondenserRecipe.Serializer::new);
 
     /**
      * Attaches every {@link DeferredRegister} above to the mod event bus. Must be called from the
@@ -67,6 +101,7 @@ public final class RusticRegistries {
         FLUID_TYPES.register(modEventBus);
         FLUIDS.register(modEventBus);
         RECIPE_SERIALIZERS.register(modEventBus);
+        RECIPE_TYPES.register(modEventBus);
     }
 
     private RusticRegistries() {

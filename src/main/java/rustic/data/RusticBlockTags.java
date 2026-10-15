@@ -75,6 +75,14 @@ public class RusticBlockTags extends BlockTagsProvider {
         tag(BlockTags.MINEABLE_WITH_AXE).add(RusticMachineBlocks.BARREL.get(), RusticMachineBlocks.CABINET.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(RusticMachineBlocks.VASE.get());
 
+        // Phase 4b fluid machines, by the same 1.12.2 material rule: the three barrels/tub (liquid barrel, crushing
+        // tub, brewing barrel) were Material.WOOD so they take the axe; the basin and both condensers were
+        // Material.ROCK so they take the pickaxe. None declared a harvest level, so all still drop by hand.
+        tag(BlockTags.MINEABLE_WITH_AXE).add(RusticMachineBlocks.LIQUID_BARREL.get(),
+                RusticMachineBlocks.CRUSHING_TUB.get(), RusticMachineBlocks.BREWING_BARREL.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(RusticMachineBlocks.EVAPORATING_BASIN.get(),
+                RusticMachineBlocks.CONDENSER.get(), RusticMachineBlocks.CONDENSER_ADVANCED.get());
+
         // Phase 5 poles: both stake poles were Material.WOOD with isToolEffective("axe"), so they take the axe
         // tag. The crops themselves are hardness-0 plants broken instantly and belong to no mineable tag.
         tag(BlockTags.MINEABLE_WITH_AXE).add(

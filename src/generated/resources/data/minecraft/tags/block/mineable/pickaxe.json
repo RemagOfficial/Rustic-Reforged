@@ -35,6 +35,9 @@
     "rustic:candle_lever_silver",
     "rustic:chandelier_silver",
     "rustic:silver_lantern",
-    "rustic:vase"
+    "rustic:vase",
+    "rustic:evaporating_basin",
+    "rustic:condenser",
+    "rustic:condenser_advanced"
   ]
 }

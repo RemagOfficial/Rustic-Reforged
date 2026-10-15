@@ -51,6 +51,29 @@ public final class RusticMenus {
             MENUS.register("double_cabinet", () -> chest(54));
 
     /**
+     * The brewing barrel's bespoke container. Unlike the chest-like storages above, it is not a {@code ChestMenu}:
+     * it lays six machine slots (three fluid-container inputs, three take-only outputs) and syncs the brew countdown
+     * and fluid levels through {@code DataSlot}s, so it gets its own {@link MenuType} whose factory rebuilds the
+     * client copy from the block position the server wrote (see {@link BrewingBarrelMenu#client}).
+     */
+    public static final DeferredHolder<MenuType<?>, MenuType<BrewingBarrelMenu>> BREWING_BARREL =
+            MENUS.register("brewing_barrel", () ->
+                    IMenuTypeExtension.create(BrewingBarrelMenu::client));
+
+    /**
+     * The two condensers, also bespoke (see {@link RusticMenus}' brewing-barrel note for why a {@code ChestMenu} will
+     * not do): each lays its machine slots plus the four furnace-style burn/brew {@code DataSlot}s, and its factory
+     * rebuilds the client copy from the block position the server wrote. The advanced one runs on the lower half's
+     * block entity even when the click landed on the decoration-only upper half.
+     */
+    public static final DeferredHolder<MenuType<?>, MenuType<CondenserMenu>> CONDENSER =
+            MENUS.register("condenser", () ->
+                    IMenuTypeExtension.create(CondenserMenu::client));
+    public static final DeferredHolder<MenuType<?>, MenuType<CondenserAdvancedMenu>> CONDENSER_ADVANCED =
+            MENUS.register("condenser_advanced", () ->
+                    IMenuTypeExtension.create(CondenserAdvancedMenu::client));
+
+    /**
      * A chest menu type of {@code slots} slots. The client factory rebuilds the same empty inventory the
      * vanilla generic menus build - {@link ChestMenu#threeRows} / {@link ChestMenu#sixRows} hand back a
      * {@code SimpleContainer} of the matching size that {@code AbstractContainerMenu}'s slot sync then

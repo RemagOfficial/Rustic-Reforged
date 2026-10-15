@@ -114,6 +114,16 @@
   "block.rustic.vase": "Vase",
   "container.rustic.vase": "Vase",
 
+  "block.rustic.liquid_barrel": "Liquid Barrel",
+  "block.rustic.crushing_tub": "Crushing Tub",
+  "block.rustic.evaporating_basin": "Evaporating Basin",
+  "block.rustic.brewing_barrel": "Brewing Barrel",
+  "container.rustic.brewing_barrel": "Brewing Barrel",
+  "block.rustic.condenser": "Condenser",
+  "container.rustic.condenser": "Condenser",
+  "block.rustic.condenser_advanced": "Advanced Condenser",
+  "container.rustic.condenser_advanced": "Advanced Condenser",
+
   "block.rustic.crop_stake": "Crop Stake",
   "block.rustic.stake_tied": "Tied Stake",
   "block.rustic.tomato_crop": "Tomato Crop",
@@ -209,6 +219,7 @@
   "rustic.elixir.prefix": "Elixir of ",
   "rustic.elixir.separator": ", ",
   "tooltip.rustic.drinkable": "Drinkable",
+  "tooltip.rustic.empty": "Empty",
   "tooltip.rustic.quality": "Quality",
   "tooltip.rustic.ghost_pepper": "Warning: Extremely Hot"
 }

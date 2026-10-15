@@ -263,6 +263,38 @@ public class RusticBlockStates extends BlockStateProvider {
         getVariantBuilder(RusticMachineBlocks.VASE.get())
                 .forAllStates(state -> ConfiguredModel.builder().modelFile(vase).build());
         simpleBlockItem(RusticMachineBlocks.VASE.get(), vase);
+
+        // ------------------------------------------------------------------
+        // Phase 4b fluid machines. These are functional shells this phase; their 1.8-era machine models
+        // (multi-part barrels, the condenser column, the basin dish) are Phase 11 art, so - exactly as the
+        // barrel/cabinet/vase placeholders above - every state resolves to one cube. runData runs against an
+        // ExistingFileHelper, so each placeholder borrows a texture that is already on disk rather than naming
+        // a machine texture that has not migrated yet: a missing reference would fail datagen outright, while a
+        // borrowed one simply renders a plain block until the real assets land (expected, not a defect).
+        //   - liquid barrel: a fluid-holding barrel, and no liquid_barrel.png exists, so it borrows the wooden barrel.
+        //   - evaporating basin: Material.ROCK in 1.12.2 with no evaporating_basin.png, so it borrows the slate cube.
+        //   - crushing tub / brewing barrel / condenser / advanced condenser each have a *_side-ish texture that was
+        //     migrated with the decor, so the placeholder uses that directly and already reads as the machine.
+        // ------------------------------------------------------------------
+        simpleBlockWithItem(RusticMachineBlocks.LIQUID_BARREL.get(),
+                models().cubeAll(path(RusticMachineBlocks.LIQUID_BARREL), tex("barrel")));
+        simpleBlockWithItem(RusticMachineBlocks.CRUSHING_TUB.get(),
+                models().cubeAll(path(RusticMachineBlocks.CRUSHING_TUB), tex("crushing_tub")));
+        simpleBlockWithItem(RusticMachineBlocks.EVAPORATING_BASIN.get(),
+                models().cubeAll(path(RusticMachineBlocks.EVAPORATING_BASIN), tex("slate")));
+        simpleBlockWithItem(RusticMachineBlocks.BREWING_BARREL.get(),
+                models().cubeAll(path(RusticMachineBlocks.BREWING_BARREL), tex("brewing_barrel_side")));
+        simpleBlockWithItem(RusticMachineBlocks.CONDENSER.get(),
+                models().cubeAll(path(RusticMachineBlocks.CONDENSER), tex("condenser_side")));
+
+        // The advanced condenser is a two-block column: only the TOP property varies, and the top/bottom art
+        // distinction is Phase 11, so both states resolve to the one condenser_adv_side cube (the cabinet above is
+        // the same forAllStates placeholder for a property-bearing block).
+        ModelFile condenserAdv = models().cubeAll(path(RusticMachineBlocks.CONDENSER_ADVANCED),
+                tex("condenser_adv_side"));
+        getVariantBuilder(RusticMachineBlocks.CONDENSER_ADVANCED.get())
+                .forAllStates(state -> ConfiguredModel.builder().modelFile(condenserAdv).build());
+        simpleBlockItem(RusticMachineBlocks.CONDENSER_ADVANCED.get(), condenserAdv);
     }
 
     // ------------------------------------------------------------------

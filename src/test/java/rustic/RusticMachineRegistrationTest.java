@@ -34,16 +34,31 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.registries.DeferredBlock;
+import net.neoforged.neoforge.registries.DeferredHolder;
 import rustic.content.RusticCreativeTabs;
 import rustic.content.blockentity.BarrelBlockEntity;
+import rustic.content.blockentity.BrewingBarrelBlockEntity;
 import rustic.content.blockentity.CabinetBlockEntity;
+import rustic.content.blockentity.CondenserAdvancedBlockEntity;
+import rustic.content.blockentity.CondenserBlockEntity;
+import rustic.content.blockentity.CrushingTubBlockEntity;
+import rustic.content.blockentity.EvaporatingBasinBlockEntity;
+import rustic.content.blockentity.LiquidBarrelBlockEntity;
 import rustic.content.blockentity.RusticBlockEntities;
 import rustic.content.blockentity.VaseBlockEntity;
 import rustic.content.blocks.BarrelBlock;
+import rustic.content.blocks.BrewingBarrelBlock;
 import rustic.content.blocks.CabinetBlock;
+import rustic.content.blocks.CondenserAdvancedBlock;
+import rustic.content.blocks.CondenserBlock;
+import rustic.content.blocks.CrushingTubBlock;
+import rustic.content.blocks.EvaporatingBasinBlock;
+import rustic.content.blocks.LiquidBarrelBlock;
 import rustic.content.blocks.RusticMachineBlocks;
 import rustic.content.blocks.VaseBlock;
 import rustic.content.menu.RusticMenus;
+import rustic.registry.RusticRegistries;
 
 /**
  * Phase 4 characterisation test for the storage-machine slice, starting with the barrel vertical slice.
@@ -367,6 +382,191 @@ public class RusticMachineRegistrationTest {
 
         List<String> pickaxe = tagValues("mineable/pickaxe");
         assertTrue(pickaxe.contains("rustic:vase"), "Material.ROCK means the vase is pickaxe-mined");
+    }
+
+    // ==================================================================
+    // Phase 4b fluid machines (liquid barrel, crushing tub, evaporating basin, brewing barrel, condenser,
+    // advanced condenser). They share the storage machines' wiring contract - block + block item + block entity
+    // type + (for the GUI three) a menu type + datagen + a decor-tab entry - so these assertions mirror the
+    // barrel/cabinet/vase tests above, table-driven for the six. Machine textures are placeholders until Phase 11,
+    // so each fluid-machine blockstate resolves every state to one rustic:block/<name> cube.
+    // ==================================================================
+
+    /** holder, block class, hardness, sound type and block entity holder - the per-machine registration facts. */
+    private record FluidSpec(DeferredBlock<? extends Block> holder, Class<? extends Block> blockClass,
+                             float hardness, SoundType sound,
+                             DeferredHolder<BlockEntityType<?>, ? extends BlockEntityType<?>> beType) {
+    }
+
+    private static final List<FluidSpec> FLUID_MACHINES = List.of(
+            new FluidSpec(RusticMachineBlocks.LIQUID_BARREL, LiquidBarrelBlock.class, 1.5F, SoundType.WOOD,
+                    RusticBlockEntities.LIQUID_BARREL),
+            new FluidSpec(RusticMachineBlocks.CRUSHING_TUB, CrushingTubBlock.class, 1.5F, SoundType.WOOD,
+                    RusticBlockEntities.CRUSHING_TUB),
+            new FluidSpec(RusticMachineBlocks.EVAPORATING_BASIN, EvaporatingBasinBlock.class, 1.5F, SoundType.STONE,
+                    RusticBlockEntities.EVAPORATING_BASIN),
+            new FluidSpec(RusticMachineBlocks.BREWING_BARREL, BrewingBarrelBlock.class, 1.5F, SoundType.WOOD,
+                    RusticBlockEntities.BREWING_BARREL),
+            new FluidSpec(RusticMachineBlocks.CONDENSER, CondenserBlock.class, 2.0F, SoundType.STONE,
+                    RusticBlockEntities.CONDENSER),
+            new FluidSpec(RusticMachineBlocks.CONDENSER_ADVANCED, CondenserAdvancedBlock.class, 2.0F, SoundType.STONE,
+                    RusticBlockEntities.CONDENSER_ADVANCED));
+
+    /** Each fluid machine is the right block class, resolvable in the registry, with its 1.12.2 material numbers and block item. */
+    @Test
+    public void everyFluidMachineIsRegisteredWithItsLegacyNumbersAndBlockItem() {
+        for (FluidSpec spec : FLUID_MACHINES) {
+            Block block = spec.holder().get();
+            assertSame(spec.blockClass(), block.getClass(),
+                    spec.holder().getId() + " is not a " + spec.blockClass().getSimpleName());
+            assertSame(block, BuiltInRegistries.BLOCK.get(spec.holder().getId()),
+                    "block register does not resolve " + spec.holder().getId());
+            assertEquals(spec.hardness(), block.defaultDestroyTime(), 0.0001F, spec.holder().getId() + " hardness");
+            assertSame(spec.sound(), block.getSoundType(block.defaultBlockState(), null, null, null),
+                    spec.holder().getId() + " sound");
+            assertFalse(block.defaultBlockState().requiresCorrectToolForDrops(),
+                    spec.holder().getId() + " declared a harvest level; legacy dropped by hand");
+
+            Item item = block.asItem();
+            assertTrue(item instanceof BlockItem, spec.holder().getId() + " has no block item");
+            assertEquals(spec.holder().getId().getPath(), BuiltInRegistries.ITEM.getKey(item).getPath(),
+                    spec.holder().getId() + " block item drifted from the block id");
+            assertSame(block, ((BlockItem) item).getBlock());
+        }
+    }
+
+    /** The block entity type is registered, resolves to the deferred holder, and is valid for the block. */
+    @Test
+    public void everyFluidMachineHasABlockEntityTypeValidForItsBlock() {
+        for (FluidSpec spec : FLUID_MACHINES) {
+            ResourceLocation id = spec.holder().getId();
+            BlockEntityType<?> type = BuiltInRegistries.BLOCK_ENTITY_TYPE.get(id);
+            assertNotNull(type, "no block entity type registered under " + id);
+            assertSame(spec.beType().get(), type, "the deferred block entity holder and the registry disagree for " + id);
+            assertTrue(type.getValidBlocks().contains(spec.holder().get()),
+                    id + " block entity type is not valid for the block");
+        }
+    }
+
+    /**
+     * The three GUI machines each need a menu type as well (the liquid barrel, crushing tub and evaporating basin
+     * are interact-only shells and register none); a missing menu type would throw the moment a player right-clicks.
+     */
+    @Test
+    public void theThreeGuiFluidMachinesEachHaveAMenuType() {
+        assertSame(RusticMenus.BREWING_BARREL.get(),
+                BuiltInRegistries.MENU.get(RusticMenus.BREWING_BARREL.getId()), "no brewing-barrel menu type");
+        assertSame(RusticMenus.CONDENSER.get(),
+                BuiltInRegistries.MENU.get(RusticMenus.CONDENSER.getId()), "no condenser menu type");
+        assertSame(RusticMenus.CONDENSER_ADVANCED.get(),
+                BuiltInRegistries.MENU.get(RusticMenus.CONDENSER_ADVANCED.getId()), "no advanced-condenser menu type");
+    }
+
+    /** The legacy slot counts and fluid-tank capacities each machine block entity was built around. */
+    @Test
+    public void fluidMachineBlockEntitiesCarryTheLegacySlotAndTankSizes() {
+        assertEquals(16 * 1000, new LiquidBarrelBlockEntity(net.minecraft.core.BlockPos.ZERO,
+                        RusticMachineBlocks.LIQUID_BARREL.get().defaultBlockState()).getTank().getCapacity(),
+                "the liquid barrel holds 16 buckets");
+
+        CrushingTubBlockEntity tub = new CrushingTubBlockEntity(net.minecraft.core.BlockPos.ZERO,
+                RusticMachineBlocks.CRUSHING_TUB.get().defaultBlockState());
+        assertEquals(1, tub.getItemHandler().getSlots(), "the crushing tub has one input slot");
+        assertEquals(8 * 1000, tub.getTank().getCapacity(), "the crushing tub drains into an eight-bucket tank");
+
+        assertEquals(6 * 1000, new EvaporatingBasinBlockEntity(net.minecraft.core.BlockPos.ZERO,
+                        RusticMachineBlocks.EVAPORATING_BASIN.get().defaultBlockState()).getTank().getCapacity(),
+                "the evaporating basin holds six buckets");
+
+        BrewingBarrelBlockEntity brew = new BrewingBarrelBlockEntity(net.minecraft.core.BlockPos.ZERO,
+                RusticMachineBlocks.BREWING_BARREL.get().defaultBlockState());
+        assertEquals(6, brew.getItemHandler().getSlots(), "three fluid-container inputs plus three take-only outputs");
+        assertEquals(8 * 1000, brew.getInputTank().getCapacity(), "the brewing barrel input tank");
+
+        CondenserBlockEntity condenser = new CondenserBlockEntity(net.minecraft.core.BlockPos.ZERO,
+                RusticMachineBlocks.CONDENSER.get().defaultBlockState());
+        assertEquals(5, condenser.getItemHandler().getSlots(), "result/fuel/bottle/two ingredients");
+        assertEquals(8 * 1000, condenser.getTank().getCapacity(), "the condenser holds eight buckets of water");
+
+        CondenserAdvancedBlockEntity advanced = new CondenserAdvancedBlockEntity(net.minecraft.core.BlockPos.ZERO,
+                RusticMachineBlocks.CONDENSER_ADVANCED.get().defaultBlockState());
+        assertEquals(7, advanced.getItemHandler().getSlots(), "result/fuel/bottle/modifier/three ingredients");
+    }
+
+    /** All six were offered in the decor tab in 1.12.2, so the machine entries() loop must reach them. */
+    @Test
+    public void everyFluidMachineAppearsInTheDecorTab() {
+        CreativeModeTab decor = RusticCreativeTabs.DECOR.get();
+        decor.buildContents(new CreativeModeTab.ItemDisplayParameters(FeatureFlags.DEFAULT_FLAGS, true, null));
+        List<String> ids = new ArrayList<>();
+        for (net.minecraft.world.item.ItemStack stack : decor.getDisplayItems()) {
+            ids.add(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+        }
+        for (FluidSpec spec : FLUID_MACHINES) {
+            assertTrue(ids.contains(spec.holder().getId().toString()),
+                    spec.holder().getId() + " is not offered in the DECOR tab: " + ids);
+        }
+    }
+
+    /**
+     * The datagen that makes each fluid machine render and drop, plus its mineable tag by material: the three
+     * wooden barrels/tub take the axe, the three stone machines take the pickaxe. Every blockstate resolves to the
+     * single rustic:block/&lt;name&gt; placeholder cube (real machine models are Phase 11). Re-run {@code runData} if this fails.
+     */
+    @Test
+    public void datagenProducedStateModelLootAndTagForEveryFluidMachine() {
+        for (FluidSpec spec : FLUID_MACHINES) {
+            String path = spec.holder().getId().getPath();
+            Set<String> models = blockstateModels("/assets/rustic/blockstates/" + path + ".json");
+            assertEquals(Set.of("rustic:block/" + path), models,
+                    path + " states should draw the one placeholder cube until Phase 11");
+
+            JsonObject itemModel = json("/assets/rustic/models/item/" + path + ".json");
+            assertEquals("rustic:block/" + path, itemModel.get("parent").getAsString(),
+                    path + " item model parents the block model");
+
+            JsonObject loot = json("/data/rustic/loot_table/blocks/" + path + ".json");
+            JsonElement entry = loot.getAsJsonArray("pools").get(0).getAsJsonObject()
+                    .getAsJsonArray("entries").get(0);
+            assertEquals("rustic:" + path, entry.getAsJsonObject().get("name").getAsString(),
+                    path + " must drop itself, as 1.12.2's default did");
+        }
+
+        List<String> axe = tagValues("mineable/axe");
+        assertTrue(axe.contains("rustic:liquid_barrel"), "Material.WOOD liquid barrel is axe-mined");
+        assertTrue(axe.contains("rustic:crushing_tub"), "Material.WOOD crushing tub is axe-mined");
+        assertTrue(axe.contains("rustic:brewing_barrel"), "Material.WOOD brewing barrel is axe-mined");
+
+        List<String> pickaxe = tagValues("mineable/pickaxe");
+        assertTrue(pickaxe.contains("rustic:evaporating_basin"), "Material.ROCK evaporating basin is pickaxe-mined");
+        assertTrue(pickaxe.contains("rustic:condenser"), "Material.ROCK condenser is pickaxe-mined");
+        assertTrue(pickaxe.contains("rustic:condenser_advanced"), "Material.ROCK advanced condenser is pickaxe-mined");
+    }
+
+    /** The four custom machine recipe types and their serializers must be in the registries the block entities query. */
+    @Test
+    public void theFourFluidMachineRecipeTypesAndSerializersAreRegistered() {
+        assertSame(RusticRegistries.CRUSHING_TUB_TYPE.get(),
+                BuiltInRegistries.RECIPE_TYPE.get(RusticRegistries.CRUSHING_TUB_TYPE.getId()), "crushing tub recipe type");
+        assertSame(RusticRegistries.EVAPORATING_BASIN_TYPE.get(),
+                BuiltInRegistries.RECIPE_TYPE.get(RusticRegistries.EVAPORATING_BASIN_TYPE.getId()), "evaporating basin recipe type");
+        assertSame(RusticRegistries.BREWING_BARREL_TYPE.get(),
+                BuiltInRegistries.RECIPE_TYPE.get(RusticRegistries.BREWING_BARREL_TYPE.getId()), "brewing barrel recipe type");
+        assertSame(RusticRegistries.CONDENSER_TYPE.get(),
+                BuiltInRegistries.RECIPE_TYPE.get(RusticRegistries.CONDENSER_TYPE.getId()), "condenser recipe type");
+
+        assertSame(RusticRegistries.CRUSHING_TUB_SERIALIZER.get(),
+                BuiltInRegistries.RECIPE_SERIALIZER.get(RusticRegistries.CRUSHING_TUB_SERIALIZER.getId()),
+                "crushing tub serializer");
+        assertSame(RusticRegistries.EVAPORATING_BASIN_SERIALIZER.get(),
+                BuiltInRegistries.RECIPE_SERIALIZER.get(RusticRegistries.EVAPORATING_BASIN_SERIALIZER.getId()),
+                "evaporating basin serializer");
+        assertSame(RusticRegistries.BREWING_BARREL_SERIALIZER.get(),
+                BuiltInRegistries.RECIPE_SERIALIZER.get(RusticRegistries.BREWING_BARREL_SERIALIZER.getId()),
+                "brewing barrel serializer");
+        assertSame(RusticRegistries.CONDENSER_SERIALIZER.get(),
+                BuiltInRegistries.RECIPE_SERIALIZER.get(RusticRegistries.CONDENSER_SERIALIZER.getId()),
+                "condenser serializer");
     }
 
     // ---------------------------------------------------------------- helpers

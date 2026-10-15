@@ -18,7 +18,10 @@ import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 import rustic.Rustic;
+import rustic.content.client.screen.RusticBrewingBarrelScreen;
 import rustic.content.client.screen.RusticChestScreen;
+import rustic.content.client.screen.RusticCondenserScreen;
+import rustic.content.client.screen.RusticCondenserAdvancedScreen;
 import rustic.content.entities.RusticEntities;
 import rustic.content.fluids.RusticFluids;
 import rustic.content.menu.RusticMenus;
@@ -94,6 +97,13 @@ public final class RusticClient {
         event.register(RusticMenus.VASE.get(), RusticChestScreen::new);
         event.register(RusticMenus.CABINET.get(), RusticChestScreen::new);
         event.register(RusticMenus.DOUBLE_CABINET.get(), RusticChestScreen::new);
+        // The brewing barrel is the phase's first bespoke GUI: its own screen draws the fluid tanks and brew
+        // progress over the brewing_barrel panel, replacing the legacy GuiBrewingBarrel.
+        event.register(RusticMenus.BREWING_BARREL.get(), RusticBrewingBarrelScreen::new);
+        // The two condensers each draw their own panel (water tank fill + flame + brew bar), replacing the legacy
+        // GuiCondenser / GuiCondenserAdvanced pair.
+        event.register(RusticMenus.CONDENSER.get(), RusticCondenserScreen::new);
+        event.register(RusticMenus.CONDENSER_ADVANCED.get(), RusticCondenserAdvancedScreen::new);
     }
 
     /**
