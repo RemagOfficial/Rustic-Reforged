@@ -59,8 +59,8 @@ public final class RusticCreativeTabs {
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> FARMING =
             CREATIVE_MODE_TABS.register("farming", () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.rustic.farming"))
-                    // TODO Phase 5: replace with the rustic olives item (1.12.2: new ItemStack(ModItems.OLIVES))
-                    .icon(() -> new ItemStack(Items.WHEAT))
+                    // 1.12.2 icon: new ItemStack(ModItems.OLIVES) - the farming tab leads with olives.
+                    .icon(() -> new ItemStack(RusticItems.OLIVES.get()))
                     .displayItems((parameters, output) -> {
                         // 1.12.2 filled this tab the same way, through setCreativeTab(farmingTab) in the
                         // log, leaves and sapling constructors. The wood family's agriculture half is that
@@ -91,6 +91,11 @@ public final class RusticCreativeTabs {
                         output.accept(RusticItems.GRAPES.get());
                         // Phase 5 berry bush: the placeable bush came through blockItemEntries(); its produce here.
                         output.accept(RusticItems.WILDBERRIES.get());
+                        // Phase 6 tree fruits: the two potion-foods the olives/ironberries leaf drop yields.
+                        // OLIVES is also the tab icon (legacy ModItems.OLIVES); IRONBERRIES carries the stacking
+                        // FULLMETAL effect. Both were in legacy's farmingTab through setCreativeTab.
+                        output.accept(RusticItems.OLIVES.get());
+                        output.accept(RusticItems.IRONBERRIES.get());
                         // Phase 6 fluid buckets. 1.12.2 overrode displayAllRelevantItems to add a filled universal
                         // bucket for every Rustic fluid; this port instead registers nine per-fluid buckets (the seven
                         // boozes stay bucket-less, preserving the observable 9/7 split), and they are shown directly.

@@ -1,3 +1,8 @@
 {
-  "parent": "minecraft:item/generated"
+  "fluid": "minecraft:empty",
+  "loader": "neoforge:fluid_container",
+  "textures": {
+    "base": "rustic:item/alcohol_bottle",
+    "fluid": "rustic:item/alcohol_overlay"
+  }
 }

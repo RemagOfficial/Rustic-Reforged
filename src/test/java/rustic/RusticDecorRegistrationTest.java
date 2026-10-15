@@ -83,6 +83,7 @@ import rustic.content.blocks.BlockWoodLantern;
 import rustic.content.blocks.RusticBlocks;
 import rustic.content.blocks.RusticFarmBlocks;
 import rustic.content.blocks.RusticMachineBlocks;
+import rustic.content.fluids.RusticFluidBlocks;
 
 /**
  * Phase 2 characterisation test for the decor slice: the 33 blocks 1.12.2 built in
@@ -680,11 +681,15 @@ public class RusticDecorRegistrationTest {
         assertNotNull(RusticCreativeTabs.ALCHEMY.get());
         CreativeModeTab alchemy = RusticCreativeTabs.ALCHEMY.get();
         alchemy.buildContents(new CreativeModeTab.ItemDisplayParameters(FeatureFlags.DEFAULT_FLAGS, true, null));
-        assertEquals(List.of(), alchemy.getDisplayItems().stream()
+        // Phase 6 (Slice 6/7) deliberately populated the alchemy tab - the elixir default instance and the
+        // vanta oil filled bottle - so the old "still empty" guard is now a golden check of exactly that brew
+        // content. The condenser-recipe elixirs (Phase 7) will extend it then.
+        assertEquals(List.of("rustic:elixir", "rustic:fluid_bottle"), alchemy.getDisplayItems().stream()
                         .map(stack -> BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())
                         .filter(id -> id.startsWith("rustic:"))
+                        .sorted()
                         .toList(),
-                "the ALCHEMY tab already has rustic content, which the phase list does not expect");
+                "the ALCHEMY tab must hold exactly the Phase 6 brew content: the elixir default and the vanta bottle");
     }
 
     // ---------------------------------------------------------------- datagen output
@@ -1004,6 +1009,7 @@ public class RusticDecorRegistrationTest {
         return tag(name).stream()
                 .filter(id -> !machineIds().contains(id.substring(id.lastIndexOf(':') + 1)))
                 .filter(id -> !farmIds().contains(id.substring(id.lastIndexOf(':') + 1)))
+                .filter(id -> !phase6Ids().contains(id.substring(id.lastIndexOf(':') + 1)))
                 .distinct().sorted().toList();
     }
 
@@ -1013,7 +1019,7 @@ public class RusticDecorRegistrationTest {
         for (Block block : BuiltInRegistries.BLOCK) {
             ResourceLocation key = BuiltInRegistries.BLOCK.getKey(block);
             if (key != null && Rustic.MODID.equals(key.getNamespace()) && !machineIds().contains(key.getPath())
-                    && !farmIds().contains(key.getPath())) {
+                    && !farmIds().contains(key.getPath()) && !phase6Ids().contains(key.getPath())) {
                 out.put(key.getPath(), block);
             }
         }
@@ -1025,7 +1031,7 @@ public class RusticDecorRegistrationTest {
         for (Item item : BuiltInRegistries.ITEM) {
             ResourceLocation key = BuiltInRegistries.ITEM.getKey(item);
             if (key != null && Rustic.MODID.equals(key.getNamespace()) && !machineIds().contains(key.getPath())
-                    && !farmIds().contains(key.getPath())) {
+                    && !farmIds().contains(key.getPath()) && !phase6Ids().contains(key.getPath())) {
                 out.put(key.getPath(), item);
             }
         }
@@ -1056,6 +1062,25 @@ public class RusticDecorRegistrationTest {
         RusticFarmBlocks.entries().forEach(holder -> ids.add(holder.getId().getPath()));
         ids.addAll(List.of("tomato", "chili_pepper", "ghost_pepper", "tomato_seeds", "chili_pepper_seeds",
                 "grapes", "wildberries"));
+        return ids;
+    }
+
+    /**
+     * Phase 6's fluid/brew content lives in {@code RusticFluidBlocks} (the eight source fluid blocks, whose
+     * same-id block items {@code RusticItems} loops out) plus the standalone bucket/bottle/elixir/tree-fruit
+     * items, and is characterised by {@code RusticFluidRegistrationTest}, {@code RusticBoozeQualityTest} and
+     * {@code RusticThrownProduceTest}. The decor baseline excludes these ids exactly as it excludes the machine
+     * and farm ids, so the fluid slice cannot silently shift the decor block / item counts or the mineable-tag
+     * comparison. Fluid blocks are liquids and appear in no {@code minecraft:mineable/*} tag, so the tag filter
+     * is a defensive no-op rather than a correction.
+     */
+    private static java.util.Set<String> phase6Ids() {
+        java.util.Set<String> ids = new java.util.HashSet<>();
+        RusticFluidBlocks.entries().forEach(holder -> ids.add(holder.getId().getPath()));
+        ids.addAll(List.of("olive_oil_bucket", "ironberry_juice_bucket", "wildberry_juice_bucket",
+                "grape_juice_bucket", "apple_juice_bucket", "ale_wort_bucket", "honey_bucket",
+                "golden_apple_juice_bucket", "vanta_oil_bucket", "fluid_bottle", "elixir",
+                "olives", "ironberries"));
         return ids;
     }
 }

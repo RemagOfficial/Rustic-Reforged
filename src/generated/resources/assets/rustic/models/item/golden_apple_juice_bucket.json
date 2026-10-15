@@ -1,3 +1,8 @@
 {
-  "parent": "minecraft:item/bucket"
+  "fluid": "rustic:goldenapplejuice",
+  "loader": "neoforge:fluid_container",
+  "textures": {
+    "base": "minecraft:item/bucket",
+    "fluid": "neoforge:item/mask/bucket_fluid"
+  }
 }

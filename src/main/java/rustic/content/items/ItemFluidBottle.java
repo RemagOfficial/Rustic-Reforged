@@ -24,6 +24,7 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import rustic.content.fluids.DrinkableFluid;
+import rustic.content.fluids.FluidContent;
 import rustic.content.fluids.RusticBooze;
 import rustic.content.fluids.RusticDataComponents;
 import rustic.content.fluids.RusticFluids;
@@ -88,8 +89,8 @@ public class ItemFluidBottle extends Item {
 
     /** The bottle's content, or {@link FluidStack#EMPTY} when the bottle is empty. */
     public static FluidStack getFluidContent(ItemStack stack) {
-        FluidStack content = stack.get(RusticDataComponents.FLUID_CONTENT.get());
-        return content == null ? FluidStack.EMPTY : content;
+        FluidContent content = stack.get(RusticDataComponents.FLUID_CONTENT.get());
+        return content == null ? FluidStack.EMPTY : content.stack();
     }
 
     private static boolean isDrinkable(ItemStack stack) {
@@ -108,7 +109,7 @@ public class ItemFluidBottle extends Item {
             if (quality != null) {
                 content.set(RusticDataComponents.QUALITY.get(), quality);
             }
-            bottle.set(RusticDataComponents.FLUID_CONTENT.get(), content);
+            bottle.set(RusticDataComponents.FLUID_CONTENT.get(), new FluidContent(content));
             if (fluid.getFluidType().getRarity() == Rarity.EPIC) {
                 bottle.set(DataComponents.RARITY, Rarity.EPIC);
             }
@@ -246,7 +247,7 @@ public class ItemFluidBottle extends Item {
             }
             if (action.execute()) {
                 FluidStack content = resource.copyWithAmount(CAPACITY);
-                container.set(RusticDataComponents.FLUID_CONTENT.get(), content);
+                container.set(RusticDataComponents.FLUID_CONTENT.get(), new FluidContent(content));
                 container.set(DataComponents.RARITY,
                         resource.getFluid().getFluidType().getRarity() == Rarity.EPIC ? Rarity.EPIC : Rarity.COMMON);
             }
@@ -277,7 +278,7 @@ public class ItemFluidBottle extends Item {
             }
             FluidStack drained = content.copyWithAmount(CAPACITY);
             if (action.execute()) {
-                container.set(RusticDataComponents.FLUID_CONTENT.get(), FluidStack.EMPTY);
+                container.set(RusticDataComponents.FLUID_CONTENT.get(), FluidContent.empty());
                 container.set(DataComponents.RARITY, Rarity.COMMON);
             }
             return drained;

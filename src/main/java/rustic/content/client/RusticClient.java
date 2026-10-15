@@ -1,17 +1,26 @@
 package rustic.content.client;
 
 import net.minecraft.client.renderer.entity.NoopRenderer;
+import net.minecraft.client.renderer.entity.ThrownItemRenderer;
+import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
+import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
+import rustic.Rustic;
 import rustic.content.client.screen.RusticChestScreen;
 import rustic.content.entities.RusticEntities;
+import rustic.content.fluids.RusticFluids;
 import rustic.content.menu.RusticMenus;
 import rustic.content.network.RusticPayloads;
 import rustic.content.potions.RusticMobEffects;
@@ -33,6 +42,12 @@ public final class RusticClient {
     public static void register(IEventBus modEventBus) {
         modEventBus.addListener(RusticClient::registerRenderers);
         modEventBus.addListener(RusticClient::registerScreens);
+        // Without a client extension every Rustic FluidType answers IClientFluidTypeExtensions.DEFAULT, whose
+        // getStillTexture() returns null; FluidSpriteCache then does Map.of().getOrDefault(null, ...) and the render
+        // thread throws "Cannot invoke Object.hashCode() because pk is null" the moment a placed fluid is in view,
+        // crashing every subsequent world load too. Supplying each fluid's sprites here is the 1.21 replacement for
+        // the deprecated FluidType#initializeClient and must run on the mod bus, client side only.
+        modEventBus.addListener(RusticClient::registerFluidExtensions);
         // Phase 6 fire power: the client's left-clicks into empty space and onto blocks are not visible to the
         // server, so they ping RusticPayloads.FirePowerAttackPayload back. Registered on the game bus because these
         // are NeoForge gameplay events; this method only runs on the client dist, so a server never sees them.
@@ -85,7 +100,12 @@ public final class RusticClient {
      * 1.12.2's {@code ModEntities.initRenderers()}, whose chair line was commented out - the engine at
      * the time drew an entity with no registered handler as nothing, so a seat needed no entry.
      *
-     * <p><b>Forced deviation:</b> 1.21.1 does not tolerate that omission. {@code EntityRenderDispatcher}
+     * <p>The tomato keeps its legacy renderer in spirit: {@code RenderTomato} drew the tomato item in
+     * the GROUND transform against the block atlas, which is exactly what vanilla's own snowball, egg
+     * and thrown potion use - {@link ThrownItemRenderer} at the default scale, rendering the entity's
+     * synced item stack, and {@code EntityTomato.getDefaultItem} answers {@code rustic:tomato}.
+     *
+     * <p><b>Forced deviation (chair):</b> 1.21.1 does not tolerate that omission. {@code EntityRenderDispatcher}
      * hands back whatever its map lookup returns ({@code return (EntityRenderer<? super T>)this.renderers
      * .get(entity.getType());}) and calls into it without testing it, so an unregistered type makes the
      * client throw {@code NullPointerException: ... because "entityrenderer" is null} from inside
@@ -99,6 +119,70 @@ public final class RusticClient {
      */
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(RusticEntities.CHAIR.get(), NoopRenderer::new);
+        // The P3 NoopRenderer lesson in reverse: an entity with no renderer at all crashes the client
+        // lookup, so the tomato gets the vanilla projectile renderer the moment it becomes throwable.
+        event.registerEntityRenderer(RusticEntities.TOMATO.get(), ThrownItemRenderer::new);
+    }
+
+    /**
+     * Registers a still/flow/overlay {@link IClientFluidTypeExtensions} for every Rustic fluid type so
+     * {@code FluidSpriteCache.getFluidSprites} never receives a null sprite location. The eight placeables plus
+     * vanta oil render as blocks and so need all three sprites; the seven boozes are source-only, never place, and
+     * correctly carry a null overlay (see {@code RusticFluidTextureTest} for the headless guard on these paths).
+     */
+    private static void registerFluidExtensions(RegisterClientExtensionsEvent event) {
+        placeableExtension(event, RusticFluids.OLIVE_OIL_TYPE, "olive_oil");
+        placeableExtension(event, RusticFluids.IRONBERRY_JUICE_TYPE, "ironberry_juice");
+        placeableExtension(event, RusticFluids.WILDBERRY_JUICE_TYPE, "wildberry_juice");
+        placeableExtension(event, RusticFluids.GRAPE_JUICE_TYPE, "grape_juice");
+        placeableExtension(event, RusticFluids.APPLE_JUICE_TYPE, "apple_juice");
+        placeableExtension(event, RusticFluids.ALE_WORT_TYPE, "ale_wort");
+        placeableExtension(event, RusticFluids.HONEY_TYPE, "honey");
+        placeableExtension(event, RusticFluids.GOLDEN_APPLE_JUICE_TYPE, "golden_apple_juice");
+        placeableExtension(event, RusticFluids.VANTA_OIL_TYPE, "vanta_oil");
+        boozeExtension(event, RusticFluids.ALE_TYPE, "ale");
+        boozeExtension(event, RusticFluids.CIDER_TYPE, "cider");
+        boozeExtension(event, RusticFluids.IRON_WINE_TYPE, "iron_wine");
+        boozeExtension(event, RusticFluids.MEAD_TYPE, "mead");
+        boozeExtension(event, RusticFluids.WILDBERRY_WINE_TYPE, "wildberry_wine");
+        boozeExtension(event, RusticFluids.WINE_TYPE, "wine");
+        boozeExtension(event, RusticFluids.AMBROSIA_TYPE, "ambrosia");
+    }
+
+    /** A placeable fluid: still/flow/overlay sprites under {@code block/fluids/}. */
+    private static void placeableExtension(RegisterClientExtensionsEvent event, Holder<FluidType> type, String name) {
+        String base = "block/fluids/" + name;
+        event.registerFluidType(fluidTextures(base + "_still", base + "_flow", base + "_overlay"), type);
+    }
+
+    /** A booze fluid: still/flow sprites under {@code block/fluids/booze/}, deliberately no overlay. */
+    private static void boozeExtension(RegisterClientExtensionsEvent event, Holder<FluidType> type, String name) {
+        String base = "block/fluids/booze/" + name;
+        event.registerFluidType(fluidTextures(base + "_still", base + "_flow", null), type);
+    }
+
+    /** Builds the extension returning the given sprite locations; {@code overlay} may be null. */
+    private static IClientFluidTypeExtensions fluidTextures(String still, String flowing, @Nullable String overlay) {
+        ResourceLocation stillLoc = ResourceLocation.parse(Rustic.MODID + ":" + still);
+        ResourceLocation flowingLoc = ResourceLocation.parse(Rustic.MODID + ":" + flowing);
+        ResourceLocation overlayLoc = overlay == null ? null : ResourceLocation.parse(Rustic.MODID + ":" + overlay);
+        return new IClientFluidTypeExtensions() {
+            @Override
+            public ResourceLocation getStillTexture() {
+                return stillLoc;
+            }
+
+            @Override
+            public ResourceLocation getFlowingTexture() {
+                return flowingLoc;
+            }
+
+            @Override
+            @Nullable
+            public ResourceLocation getOverlayTexture() {
+                return overlayLoc;
+            }
+        };
     }
 
     private RusticClient() {

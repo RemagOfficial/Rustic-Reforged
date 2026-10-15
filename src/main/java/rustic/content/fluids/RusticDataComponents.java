@@ -38,16 +38,20 @@ public final class RusticDataComponents {
 
     /**
      * The fluid inside a {@code rustic:fluid_bottle}, replacing the legacy {@code ItemFluidBottle.FLUID_NBT_KEY}
-     * {@code "Fluid"} compound tag. It is a whole {@link FluidStack} - and the {@code rustic:quality} component of a
-     * booze rides <em>inside</em> this stack's own components, exactly where legacy stored it under the fluid tag's
-     * nested {@code Tag} compound - so {@link RusticBooze#getQuality} reads it straight off the bottle's content.
-     * {@link FluidStack#OPTIONAL_CODEC} / {@link FluidStack#OPTIONAL_STREAM_CODEC} are used (not the non-optional
-     * forms) so an emptied bottle serialises as absent rather than throwing on an empty stack.
+     * {@code "Fluid"} compound tag. It holds a whole {@link FluidStack} wrapped in {@link FluidContent} - and the
+     * {@code rustic:quality} component of a booze rides <em>inside</em> that stack's own components, exactly where
+     * legacy stored it under the fluid tag's nested {@code Tag} compound - so {@link RusticBooze#getQuality} reads
+     * it straight off the bottle's content. The {@link FluidContent} wrapper (not the raw {@code FluidStack}) is
+     * what NeoForge 21.1.259 demands as a component value: its {@code FluidStack} is identity-based and fails the
+     * engine's {@code equals}/{@code hashCode} immutability check, which throws the moment a filled bottle lands in
+     * a creative tab. The wrapper delegates its codecs to {@link FluidStack#OPTIONAL_CODEC}/
+     * {@link FluidStack#OPTIONAL_STREAM_CODEC}, so an emptied bottle still serialises as absent rather than
+     * throwing on an empty stack.
      */
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<FluidStack>> FLUID_CONTENT =
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<FluidContent>> FLUID_CONTENT =
             COMPONENTS.registerComponentType("fluid_content",
-                    builder -> builder.persistent(FluidStack.OPTIONAL_CODEC)
-                            .networkSynchronized(FluidStack.OPTIONAL_STREAM_CODEC));
+                    builder -> builder.persistent(FluidContent.CODEC)
+                            .networkSynchronized(FluidContent.STREAM_CODEC));
 
     /**
      * The effects stored in an elixir, the 1.21 form of the legacy {@code ElixirUtils} {@code "ElixirEffects"}

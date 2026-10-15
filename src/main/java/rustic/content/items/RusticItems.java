@@ -28,8 +28,9 @@ import rustic.content.fluids.RusticFluids;
  * name. That implicit loop is what this class reproduces explicitly - one {@link BlockItem} per
  * Rustic block, same id - which also means a later phase cannot add a block and forget its item.
  *
- * <p>The non-block items of {@code ModItems} (olives, tomato, seeds, buckets, bottle, book, ...) are
- * not here yet; they belong to the phases that port the items themselves.
+ * <p>The non-block items of {@code ModItems} arrive phase by phase with the content they belong to:
+ * the Phase 5 produce and herbs, then the Phase 6 buckets, bottles, elixir and tree fruits - the book,
+ * the bee products and the dusts are still ahead of them.
  *
  * <p>Ordering note: this class must be touched from the mod constructor, like
  * {@link RusticBlocks}, so that both registers are attached to the bus before the loader fires
@@ -44,16 +45,24 @@ public final class RusticItems {
     // Phase 5 produce, from 1.12.2's ModItems. The hunger/saturation numbers are the legacy
     // ItemFoodBase constructor arguments (nutrition, saturation modifier) read off each field:
     // tomato (4, 0.4), chili pepper (3, 0.4), ghost pepper (4, 0.7). 1.21 folded the old
-    // setPotionEffect food effects into FoodProperties, but none of these three had one, so they are
-    // plain foods. The potion-carrying edibles (nausea, fullmetal, fire-power) are Phase 6 and are
-    // deliberately not here.
+    // setPotionEffect food effects into FoodProperties; the ones a FoodProperties cannot hold - the
+    // tomato's sneak-throw, the ghost pepper's burn damage, the ironberries' stacking fullmetal -
+    // arrived with Phase 6 as item subclasses, and the nausea-carrying olives came with them as
+    // plain FoodProperties data.
     // ------------------------------------------------------------------
-    public static final DeferredItem<Item> TOMATO =
-            ITEMS.registerItem("tomato", Item::new, food(4, 0.4F));
+    public static final DeferredItem<ItemTomato> TOMATO = ITEMS.register("tomato",
+            () -> new ItemTomato(food(4, 0.4F)));
     public static final DeferredItem<Item> CHILI_PEPPER =
             ITEMS.registerItem("chili_pepper", Item::new, food(3, 0.4F));
-    public static final DeferredItem<Item> GHOST_PEPPER =
-            ITEMS.registerItem("ghost_pepper", Item::new, food(4, 0.7F));
+    // TODO Phase 5 handoff: the chili's legacy bite (alwaysEdible, 20 s speed, 1-in-24 burn) and the
+    // tomato-crop harvest bonus (getCrop's 1-in-42 ghost pepper) were left out when P5 kept the
+    // registrations only; they belong to this produce group and are parked with the phase-tail polish.
+    public static final DeferredItem<ItemGhostPepper> GHOST_PEPPER = ITEMS.register("ghost_pepper",
+            () -> new ItemGhostPepper(new Item.Properties().food(new FoodProperties.Builder()
+                    .nutrition(4)
+                    .saturationModifier(0.7F)
+                    .alwaysEdible()
+                    .build())));
 
     // The seeds that plant the stake crops. Each carries its crop as a lazy supplier, because the crop
     // block lives in RusticFarmBlocks and neither register can read the other's fields while its own
@@ -108,6 +117,35 @@ public final class RusticItems {
                     .saturationModifier(0.5F)
                     .fast()
                     .build()));
+
+    // ------------------------------------------------------------------
+    // Phase 6 tree fruits, the potion-food half of 1.12.2's ModItems. Both were anonymous
+    // ItemFoodBase subclasses; the leaf-drop chances that produce them (1/6 olives, 1/16 ironberries,
+    // shrinking with fortune) live in RusticBlockLoot, the trees that bear the leaves stay Phase 8.
+    //
+    // OLIVES: (1, 0.4), the legacy setPotionEffect(NAUSEA, 200, 1, 0.95F) folds onto FoodProperties as
+    // a probabilistic effect (1.20.5 renamed NAUSEA to CONFUSION), and the 24-tick eat override is code
+    // in ItemOlives - 1.21.1's FoodProperties.Builder has no eatSeconds setter, only fast() (16 ticks,
+    // the ironberries' number). No always-edible - the legacy initFood override only set the potion.
+    // Legacy lore: "Raw, unprocessed olives should not be consumed" - the nausea IS that lore, still one
+    // of the mod's strangest foods.
+    // ------------------------------------------------------------------
+    public static final DeferredItem<ItemOlives> OLIVES = ITEMS.register("olives",
+            () -> new ItemOlives(new Item.Properties().food(new FoodProperties.Builder()
+                    .nutrition(1)
+                    .saturationModifier(0.4F)
+                    .effect(() -> new MobEffectInstance(MobEffects.CONFUSION, 200, 1), 0.95F)
+                    .build())));
+
+    // IRONBERRIES: (2, 0.4), always edible per the legacy initFood override, the 16-tick eat override
+    // is fast(), and the stacking-fullmetal onFoodEaten is code - see ItemIronberries.
+    public static final DeferredItem<ItemIronberries> IRONBERRIES = ITEMS.register("ironberries",
+            () -> new ItemIronberries(new Item.Properties().food(new FoodProperties.Builder()
+                    .nutrition(2)
+                    .saturationModifier(0.4F)
+                    .alwaysEdible()
+                    .fast()
+                    .build())));
 
     /** 1.12.2's {@code ItemFoodBase(hunger, saturation)} pair, built into a plain 1.21 food. */
     private static Item.Properties food(int nutrition, float saturationModifier) {

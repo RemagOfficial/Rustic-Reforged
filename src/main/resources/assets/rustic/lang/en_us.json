@@ -143,6 +143,8 @@
   "item.rustic.ghost_pepper": "Ghost Pepper",
   "item.rustic.grapes": "Grapes",
   "item.rustic.wildberries": "Wildberries",
+  "item.rustic.olives": "Olives",
+  "item.rustic.ironberries": "Ironberries",
   "item.rustic.tomato_seeds": "Tomato Seeds",
   "item.rustic.chili_pepper_seeds": "Chili Pepper Seeds",
 
@@ -159,6 +161,23 @@
   "block.rustic.ale_wort": "Ale Wort",
   "block.rustic.honey": "Honey",
   "block.rustic.golden_apple_juice": "Golden Apple Juice",
+
+  "fluid_type.rustic.oliveoil": "Olive Oil",
+  "fluid_type.rustic.ironberryjuice": "Ironberry Juice",
+  "fluid_type.rustic.wildberryjuice": "Wildberry Juice",
+  "fluid_type.rustic.grapejuice": "Grape Juice",
+  "fluid_type.rustic.applejuice": "Apple Juice",
+  "fluid_type.rustic.alewort": "Ale Wort",
+  "fluid_type.rustic.honey": "Honey",
+  "fluid_type.rustic.goldenapplejuice": "Golden Apple Juice",
+  "fluid_type.rustic.vantaoil": "Vanta Oil",
+  "fluid_type.rustic.ale": "Ale",
+  "fluid_type.rustic.cider": "Cider",
+  "fluid_type.rustic.ironwine": "Iron Wine",
+  "fluid_type.rustic.mead": "Mead",
+  "fluid_type.rustic.wildberrywine": "Wildberry Wine",
+  "fluid_type.rustic.wine": "Wine",
+  "fluid_type.rustic.ambrosia": "Ambrosia",
 
   "item.rustic.olive_oil_bucket": "Olive Oil Bucket",
   "item.rustic.ironberry_juice_bucket": "Ironberry Juice Bucket",
@@ -190,5 +209,6 @@
   "rustic.elixir.prefix": "Elixir of ",
   "rustic.elixir.separator": ", ",
   "tooltip.rustic.drinkable": "Drinkable",
-  "tooltip.rustic.quality": "Quality"
+  "tooltip.rustic.quality": "Quality",
+  "tooltip.rustic.ghost_pepper": "Warning: Extremely Hot"
 }
