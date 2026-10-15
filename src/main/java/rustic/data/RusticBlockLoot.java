@@ -23,6 +23,7 @@ import rustic.content.blocks.RusticFarmBlocks;
 import rustic.content.blocks.RusticMachineBlocks;
 import rustic.content.blocks.HerbBlock;
 import rustic.content.blocks.BerryBushBlock;
+import rustic.content.blocks.BlockBeehive;
 import rustic.content.blocks.GrapeLeavesBlock;
 import rustic.content.blocks.StakeCropBlock;
 import rustic.content.blocks.StakeTiedBlock;
@@ -60,6 +61,14 @@ public class RusticBlockLoot extends BlockLootSubProvider {
         for (RusticBlocks.WoodFamily wood : RusticBlocks.WOOD_FAMILIES) {
             add(wood.leaves().get(), leavesDrops(wood.leaves().get(), wood.sapling().get()));
         }
+        // Phase 8: the apple tree's foliage drops an apple sapling on the same one-in-twenty roll as the wood
+        // family (BlockLeavesApple.getItemDropped returned ModBlocks.APPLE_SAPLING), and its world-generated
+        // beehive drops honeycomb (0..4) plus bees (1..2) rather than itself - the legacy getDrops roll, which
+        // never returned the hive block.
+        add(RusticFarmBlocks.APPLE_LEAVES.get(),
+                leavesDrops(RusticFarmBlocks.APPLE_LEAVES.get(), RusticFarmBlocks.APPLE_SAPLING.get()));
+        add(RusticFarmBlocks.BEEHIVE.get(),
+                beehiveDrops(RusticItems.HONEYCOMB.get(), RusticItems.BEE.get()));
         // Phase 5 crops: the legacy BlockStakeCrop.getDrops rolled 1-2 seeds and, at max age, one crop -
         // the chili's getCrop(rand) rolled a ghost pepper one in forty-two, which is expressed here as a
         // second weighted entry rather than as Java randomness (the loot table's uniform roll replaces the
@@ -96,9 +105,11 @@ public class RusticBlockLoot extends BlockLootSubProvider {
 
         for (Block block : knownBlocks()) {
             if (block instanceof StakeCropBlock || block instanceof StakeTiedBlock || block instanceof HerbBlock
-                    || block instanceof GrapeLeavesBlock || block instanceof BerryBushBlock) {
-                // Written above with bespoke tables; skip the drop-myself default so crops stay picked-as-seed and
-                // a grape leaf (which has no block item) never emits one.
+                    || block instanceof GrapeLeavesBlock || block instanceof BerryBushBlock
+                    || block instanceof BlockBeehive) {
+                // Written above with bespoke tables; skip the drop-myself default so crops stay picked-as-seed,
+                // a grape leaf (which has no block item) never emits one, and the beehive drops its loot rather
+                // than itself.
                 continue;
             }
             if (block instanceof SlabBlock) {
@@ -203,6 +214,21 @@ public class RusticBlockLoot extends BlockLootSubProvider {
                         .when(BonusLevelTableCondition.bonusLevelFlatChance(
                                 registries.lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.FORTUNE),
                                 NORMAL_LEAVES_SAPLING_CHANCES)));
+    }
+
+    /**
+     * 1.12.2's {@code BlockBeehive.getDrops}: honeycomb in a {@code rand.nextInt(5)} stack (0..4, the hive can
+     * yield nothing) plus a bee in a {@code rand.nextInt(2) + 1} stack (always one or two). The hive never
+     * dropped itself, so neither pool falls back to the block item.
+     */
+    private LootTable.Builder beehiveDrops(Item honeycomb, Item bee) {
+        return LootTable.lootTable()
+                .withPool(LootPool.lootPool()
+                        .add(LootItem.lootTableItem(honeycomb)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(0.0F, 4.0F)))))
+                .withPool(LootPool.lootPool()
+                        .add(LootItem.lootTableItem(bee)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 2.0F)))));
     }
 
     @Override

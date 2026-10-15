@@ -213,17 +213,17 @@ public class RusticFarmRegistrationTest {
                 BuiltInRegistries.BLOCK.getKey(crop) + " must not have a block item");
     }
 
-    /** Every farm block registers under its legacy id: two poles, two vines and thirteen herbs. */
+    /** Every farm block registers under its legacy id: two poles, two vines, thirteen herbs and the Phase 8 beehive/apple trio. */
     @Test
     public void everyLegacyFarmBlockIsRegistered() {
         List<String> ids = new ArrayList<>();
         RusticFarmBlocks.entries().forEach(holder -> ids.add(holder.getId().getPath()));
         assertEquals(List.of(
-                "aloe_vera", "blood_orchid", "chamomile", "chili_crop", "cloudsbluff", "cohosh", "core_root",
-                "crop_stake", "deathstalk_mushroom", "ginseng", "grape_leaves", "grape_stem", "horsetail",
-                "marsh_mallow", "mooncap_mushroom", "stake_tied", "tomato_crop", "vanta_lily", "wildberry_bush",
-                "wind_thistle"),
-                ids.stream().sorted().toList(), "the full Phase 5 farm register");
+                "aloe_vera", "beehive", "blood_orchid", "chamomile", "chili_crop", "cloudsbluff", "cohosh",
+                "core_root", "crop_stake", "deathstalk_mushroom", "ginseng", "grape_leaves", "grape_stem",
+                "horsetail", "leaves_apple", "marsh_mallow", "mooncap_mushroom", "sapling_apple", "stake_tied",
+                "tomato_crop", "vanta_lily", "wildberry_bush", "wind_thistle"),
+                ids.stream().sorted().toList(), "the full farm register (Phase 5 crops plus the Phase 8 beehive/apple blocks)");
     }
 
     // ------------------------------------------------------------------ seeds and produce

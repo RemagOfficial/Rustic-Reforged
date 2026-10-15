@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_grapes": {
+      "conditions": {
+        "items": [
+          {
+            "items": "rustic:grapes"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "rustic:grape_stem"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_grapes"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "rustic:grape_stem"
+    ]
+  }
+}

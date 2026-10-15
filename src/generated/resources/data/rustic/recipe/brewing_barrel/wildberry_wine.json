@@ -1,0 +1,11 @@
+{
+  "type": "rustic:brewing_barrel",
+  "ingredient": {
+    "amount": 1,
+    "id": "rustic:wildberryjuice"
+  },
+  "result": {
+    "amount": 1,
+    "id": "rustic:wildberrywine"
+  }
+}

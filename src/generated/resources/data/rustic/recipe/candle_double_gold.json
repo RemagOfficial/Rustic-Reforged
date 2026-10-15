@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": {
+      "tag": "c:ingots/gold"
+    },
+    "S": {
+      "item": "minecraft:string"
+    },
+    "W": {
+      "tag": "c:wax"
+    }
+  },
+  "pattern": [
+    "S S",
+    "W W",
+    " I "
+  ],
+  "result": {
+    "count": 4,
+    "id": "rustic:candle_double_gold"
+  }
+}

@@ -1,14 +1,20 @@
 package rustic.content.client;
 
+import net.minecraft.client.color.block.BlockColor;
+import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.level.FoliageColor;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
@@ -22,6 +28,8 @@ import rustic.content.client.screen.RusticBrewingBarrelScreen;
 import rustic.content.client.screen.RusticChestScreen;
 import rustic.content.client.screen.RusticCondenserScreen;
 import rustic.content.client.screen.RusticCondenserAdvancedScreen;
+import rustic.content.blocks.RusticBlocks;
+import rustic.content.blocks.RusticFarmBlocks;
 import rustic.content.entities.RusticEntities;
 import rustic.content.fluids.RusticFluids;
 import rustic.content.menu.RusticMenus;
@@ -51,6 +59,16 @@ public final class RusticClient {
         // crashing every subsequent world load too. Supplying each fluid's sprites here is the 1.21 replacement for
         // the deprecated FluidType#initializeClient and must run on the mod bus, client side only.
         modEventBus.addListener(RusticClient::registerFluidExtensions);
+        // Phase 8 worldgen: vanilla BlockColors uses an IdentityHashMap keyed by Block instance and only registers
+        // the foliage tint for its own OAK_LEAVES / JUNGLE_LEAVES / etc. Rustic's olive, ironwood and apple leaves
+        // are distinct instances (plain LeavesBlock or BlockLeavesApple subclass) that do not match any vanilla key,
+        // so getColor returns -1 (white) and the grayscale textures render without biome tinting.
+        modEventBus.addListener(RusticClient::registerBlockColors);
+        // Companion to registerBlockColors: ItemColors is a separate IdentityHashMap keyed by Item instance and
+        // vanilla only registers the leaf-item handler for its own OAK_LEAVES / JUNGLE_LEAVES / etc. items. Without
+        // an equivalent registration for our leaf items the inventory / hand model resolves tintIndex against a
+        // null handler and the icon renders flat gray even though the placed block tints correctly.
+        modEventBus.addListener(RusticClient::registerItemColors);
         // Phase 6 fire power: the client's left-clicks into empty space and onto blocks are not visible to the
         // server, so they ping RusticPayloads.FirePowerAttackPayload back. Registered on the game bus because these
         // are NeoForge gameplay events; this method only runs on the client dist, so a server never sees them.
@@ -193,6 +211,43 @@ public final class RusticClient {
                 return overlayLoc;
             }
         };
+    }
+
+    /**
+     * Registers the same foliage-tint handler that vanilla applies to OAK_LEAVES, JUNGLE_LEAVES, etc. for the three
+     * Rustic leaf blocks. Without this the IdentityHashMap in BlockColors returns -1 for our non-vanilla instances
+     * and the grayscale leaf textures render flat white/gray.
+     */
+    private static void registerBlockColors(RegisterColorHandlersEvent.Block event) {
+        // Mirrors vanilla BlockColors.create() line for OAK_LEAVES:
+        // (state, level, pos, tintIndex) -> level != null && pos != null
+        //         ? BiomeColors.getAverageFoliageColor(level, pos)
+        //         : FoliageColor.getDefaultColor()
+        BlockColor foliageTint = (state, level, pos, tintIndex) ->
+                level != null && pos != null
+                        ? BiomeColors.getAverageFoliageColor(level, pos)
+                        : FoliageColor.getDefaultColor();
+        event.register(foliageTint,
+                RusticBlocks.olive().leaves().get(),
+                RusticBlocks.ironwood().leaves().get(),
+                RusticFarmBlocks.APPLE_LEAVES.get());
+    }
+
+    /**
+     * The companion item-tint registration. Mirrors vanilla ItemColors.create() for Blocks.OAK_LEAVES and friends:
+     * the item handler delegates to the block handler with {@code level = pos = null}, which in our foliage lambda
+     * falls through to {@link FoliageColor#getDefaultColor()} - the fixed green inventory icon. Without this the
+     * inventory stack's tintIndex resolves to -1 (white) and the icon renders gray even though the placed block
+     * tints correctly.
+     */
+    private static void registerItemColors(RegisterColorHandlersEvent.Item event) {
+        event.register((stack, tintIndex) -> {
+            BlockState blockstate = ((BlockItem) stack.getItem()).getBlock().defaultBlockState();
+            return event.getBlockColors().getColor(blockstate, null, null, tintIndex);
+        },
+                RusticBlocks.olive().leaves().get(),
+                RusticBlocks.ironwood().leaves().get(),
+                RusticFarmBlocks.APPLE_LEAVES.get());
     }
 
     private RusticClient() {

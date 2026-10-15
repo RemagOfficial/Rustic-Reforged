@@ -57,6 +57,10 @@
   "block.rustic.stairs_olive": "Olive Wood Stairs",
   "block.rustic.stairs_ironwood": "Ironwood Stairs",
 
+  "block.rustic.sapling_apple": "Apple Sapling",
+  "block.rustic.leaves_apple": "Apple Leaves",
+  "block.rustic.beehive": "Beehive",
+
   "block.rustic.chain": "Iron Chain",
   "block.rustic.candle": "Iron Candle",
   "block.rustic.candle_double": "Iron Candelabra",
@@ -163,6 +167,15 @@
   "item.rustic.ginseng": "Ginseng",
   "item.rustic.marsh_mallow": "Marsh Mallow",
 
+  "item.rustic.honeycomb": "Honeycomb",
+  "item.rustic.beeswax": "Beeswax",
+  "item.rustic.bee": "Bee",
+  "item.rustic.tallow": "Tallow",
+  "item.rustic.dust_tiny_iron": "Tiny Pile of Iron Dust",
+  "item.rustic.dust_gold": "Gold Dust",
+  "item.rustic.apple_seeds": "Apple Seeds",
+  "item.rustic.grape_seeds": "Grape Seeds",
+
   "block.rustic.olive_oil": "Olive Oil",
   "block.rustic.ironberry_juice": "Ironberry Juice",
   "block.rustic.wildberry_juice": "Wildberry Juice",
@@ -221,5 +234,9 @@
   "tooltip.rustic.drinkable": "Drinkable",
   "tooltip.rustic.empty": "Empty",
   "tooltip.rustic.quality": "Quality",
-  "tooltip.rustic.ghost_pepper": "Warning: Extremely Hot"
+ "tooltip.rustic.ghost_pepper": "Warning: Extremely Hot",
+
+  "jei.rustic.non_ingredient_return": "Emptying Fluid Containers",
+  "jei.rustic.olive_oiling": "Oiling Food (Olive Oil)",
+  "jei.rustic.vanta_oiling": "Imbuing Weapons (Vanta Oil)"
 }

@@ -1,0 +1,45 @@
+{
+  "type": "rustic:condenser",
+  "advanced": true,
+  "bottle": {
+    "count": 1,
+    "id": "minecraft:glass_bottle"
+  },
+  "ingredients": [
+    {
+      "item": "rustic:ginseng"
+    },
+    {
+      "item": "minecraft:bone"
+    },
+    {
+      "item": "minecraft:gunpowder"
+    }
+  ],
+  "modifier": {
+    "item": "rustic:marsh_mallow"
+  },
+  "result": {
+    "components": {
+      "rustic:elixir_effects": [
+        {
+          "amplifier": 1,
+          "duration": 1800,
+          "id": "minecraft:strength",
+          "neoforge:cures": [
+            "protected_by_totem",
+            "milk"
+          ],
+          "show_icon": true
+        }
+      ]
+    },
+    "count": 1,
+    "id": "rustic:elixir"
+  },
+  "time": 300,
+  "water": {
+    "amount": 125,
+    "id": "minecraft:water"
+  }
+}

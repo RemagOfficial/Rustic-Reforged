@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_planks_ironwood": {
+      "conditions": {
+        "items": [
+          {
+            "items": "rustic:planks_ironwood"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "rustic:ironwood_slab"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_planks_ironwood"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "rustic:ironwood_slab"
+    ]
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "type": "rustic:condenser",
+  "bottle": {
+    "count": 1,
+    "id": "minecraft:glass_bottle"
+  },
+  "ingredients": [
+    {
+      "item": "rustic:wind_thistle"
+    },
+    {
+      "item": "minecraft:sugar"
+    }
+  ],
+  "result": {
+    "components": {
+      "rustic:elixir_effects": [
+        {
+          "duration": 3600,
+          "id": "minecraft:speed",
+          "neoforge:cures": [
+            "protected_by_totem",
+            "milk"
+          ],
+          "show_icon": true
+        }
+      ]
+    },
+    "count": 1,
+    "id": "rustic:elixir"
+  },
+  "time": 400,
+  "water": {
+    "amount": 125,
+    "id": "minecraft:water"
+  }
+}

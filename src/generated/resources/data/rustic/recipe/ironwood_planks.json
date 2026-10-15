@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "group": "planks",
+  "ingredients": [
+    {
+      "item": "rustic:log_ironwood"
+    }
+  ],
+  "result": {
+    "count": 4,
+    "id": "rustic:planks_ironwood"
+  }
+}

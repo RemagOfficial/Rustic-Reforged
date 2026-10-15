@@ -30,3 +30,13 @@ type = "required"
 versionRange = "${ minecraft_version_range }"
 ordering = "NONE"
 side = "BOTH"
+
+# JEI is an optional client-side compat dependency (the 1.21.1 port of the legacy "after:jei" ordering).
+# The @JeiPlugin is only ever loaded when JEI is present, so the mod runs fine without it; this entry just makes
+# Rustic load after JEI when both are installed so the recipe categories register cleanly.
+[[dependencies.${ mod_id }]]
+modId = "jei"
+type = "optional"
+versionRange = "[${ jei_version_range },)"
+ordering = "AFTER"
+side = "CLIENT"

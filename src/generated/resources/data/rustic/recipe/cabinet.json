@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "rustic_cabinet",
+  "key": {
+    "P": {
+      "tag": "minecraft:planks"
+    },
+    "T": {
+      "tag": "minecraft:wooden_trapdoors"
+    }
+  },
+  "pattern": [
+    "PPP",
+    "P T",
+    "PPP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "rustic:cabinet"
+  }
+}

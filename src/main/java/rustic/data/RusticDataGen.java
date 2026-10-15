@@ -41,7 +41,21 @@ public final class RusticDataGen {
         generator.addProvider(event.includeServer(), new LootTableProvider(output, Set.of(),
                 List.of(new LootTableProvider.SubProviderEntry(RusticBlockLoot::new, LootContextParamSets.BLOCK)),
                 lookupProvider));
-        generator.addProvider(event.includeServer(), new RusticBlockTags(output, lookupProvider, existingFileHelper));
+        RusticBlockTags blockTags = new RusticBlockTags(output, lookupProvider, existingFileHelper);
+        generator.addProvider(event.includeServer(), blockTags);
+        // Phase 7: the item tags that finish the old ore-dict story on the ItemStack side - the wood class
+        // tags RusticBlockTags opened on the blocks, plus the dye/wax/tallow/dust/produce interop names the
+        // recipe datagen reads. Chained on the block tags so it can mirror vanilla entries for free.
+        generator.addProvider(event.includeServer(),
+                new RusticItemTags(output, lookupProvider, blockTags.contentsGetter(), existingFileHelper));
+        // Phase 7: the crafting/smelting JSON replacing 1.12.2's code-built Recipes.init().
+        generator.addProvider(event.includeServer(), new RusticRecipeProvider(output, lookupProvider));
+        // Phase 7: the legacy IFuelHandler as the neoforge:furnace_fuels item data map.
+        generator.addProvider(event.includeServer(), new RusticFuels(output, lookupProvider));
+        // Phase 8: the world-generation dynamic-registry entries - slate ore and the olive/ironwood/apple trees as
+        // rustic:config_gated configured features, their placed features, and the neoforge:add_features biome
+        // modifiers. Chained last because it bootstraps three registries that reference each other by key.
+        generator.addProvider(event.includeServer(), new RusticWorldGenProvider(output, lookupProvider));
     }
 
     private RusticDataGen() {

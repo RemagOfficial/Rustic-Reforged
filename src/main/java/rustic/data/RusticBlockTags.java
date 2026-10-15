@@ -113,5 +113,14 @@ public class RusticBlockTags extends BlockTagsProvider {
             tag(BlockTags.STAIRS).add(wood.stairs().get());
             tag(BlockTags.WOODEN_STAIRS).add(wood.stairs().get());
         }
+
+        // Phase 8: the apple tree's parts join the wood family in the class tags - vanilla leaf decay and other
+        // mods' recipes read them - and the beehive takes the axe like the wooden decor it is (legacy
+        // Material.GOURD, harvest tool the plan fixes as an axe). The apple sapling is a sapling and the apple
+        // leaves are leaves; none declared a harvest level, so all still drop by hand.
+        tag(BlockTags.MINEABLE_WITH_AXE)
+                .add(RusticFarmBlocks.BEEHIVE.get(), RusticFarmBlocks.APPLE_SAPLING.get(), RusticFarmBlocks.APPLE_LEAVES.get());
+        tag(BlockTags.SAPLINGS).add(RusticFarmBlocks.APPLE_SAPLING.get());
+        tag(BlockTags.LEAVES).add(RusticFarmBlocks.APPLE_LEAVES.get());
     }
 }

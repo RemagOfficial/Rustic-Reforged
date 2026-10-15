@@ -1,0 +1,13 @@
+{
+  "values": {
+    "rustic:sapling_ironwood": {
+      "burn_time": 100
+    },
+    "rustic:sapling_olive": {
+      "burn_time": 100
+    },
+    "rustic:wildberry_bush": {
+      "burn_time": 200
+    }
+  }
+}

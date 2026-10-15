@@ -1019,7 +1019,8 @@ public class RusticDecorRegistrationTest {
         for (Block block : BuiltInRegistries.BLOCK) {
             ResourceLocation key = BuiltInRegistries.BLOCK.getKey(block);
             if (key != null && Rustic.MODID.equals(key.getNamespace()) && !machineIds().contains(key.getPath())
-                    && !farmIds().contains(key.getPath()) && !phase6Ids().contains(key.getPath())) {
+                    && !farmIds().contains(key.getPath()) && !phase6Ids().contains(key.getPath())
+                    && !phase7Ids().contains(key.getPath())) {
                 out.put(key.getPath(), block);
             }
         }
@@ -1031,7 +1032,8 @@ public class RusticDecorRegistrationTest {
         for (Item item : BuiltInRegistries.ITEM) {
             ResourceLocation key = BuiltInRegistries.ITEM.getKey(item);
             if (key != null && Rustic.MODID.equals(key.getNamespace()) && !machineIds().contains(key.getPath())
-                    && !farmIds().contains(key.getPath()) && !phase6Ids().contains(key.getPath())) {
+                    && !farmIds().contains(key.getPath()) && !phase6Ids().contains(key.getPath())
+                    && !phase7Ids().contains(key.getPath())) {
                 out.put(key.getPath(), item);
             }
         }
@@ -1055,13 +1057,15 @@ public class RusticDecorRegistrationTest {
      * Phase 5's crop content lives in its own register ({@code RusticFarmBlocks}) plus a handful of
      * standalone produce / seed items, and is characterised by {@code RusticFarmRegistrationTest}. The decor
      * baseline excludes these ids exactly as it excludes the machine ids, so a new crop cannot silently
-     * shift the decor block / item counts or the mineable-tag comparison.
+     * shift the decor block / item counts or the mineable-tag comparison. Phase 8 added the beehive and the
+     * apple tree's leaves/sapling to that same register, so their block items drop out via {@code entries()}
+     * above; the beehive's {@code bee} drop is a plain standalone item and is parked here alongside the produce.
      */
     private static java.util.Set<String> farmIds() {
         java.util.Set<String> ids = new java.util.HashSet<>();
         RusticFarmBlocks.entries().forEach(holder -> ids.add(holder.getId().getPath()));
         ids.addAll(List.of("tomato", "chili_pepper", "ghost_pepper", "tomato_seeds", "chili_pepper_seeds",
-                "grapes", "wildberries"));
+                "grapes", "wildberries", "bee"));
         return ids;
     }
 
@@ -1082,5 +1086,17 @@ public class RusticDecorRegistrationTest {
                 "golden_apple_juice_bucket", "vanta_oil_bucket", "fluid_bottle", "elixir",
                 "olives", "ironberries"));
         return ids;
+    }
+
+    /**
+     * Phase 7's prerequisite items - the two bee products, the flesh tallow, the two smelting dusts and the
+     * two crushing-tub / viney seed byproducts - are plain ingredient items with no block behind them, so they
+     * are later-phase work exactly like the produce the farm and phase-6 exclusions already park. The decor
+     * baseline counts only blocks and their same-id block items, so adding these seven here keeps that
+     * block == item identity honest and stops the recipe slice from silently shifting the decor count.
+     */
+    private static java.util.Set<String> phase7Ids() {
+        return java.util.Set.of("honeycomb", "beeswax", "tallow", "dust_tiny_iron", "dust_gold",
+                "apple_seeds", "grape_seeds");
     }
 }

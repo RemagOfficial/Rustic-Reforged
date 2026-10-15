@@ -1,0 +1,7 @@
+{
+  "type": "rustic:config_gated",
+  "config": {
+    "inner": "rustic:herbs_cave",
+    "knob": "CAVE_HERB"
+  }
+}

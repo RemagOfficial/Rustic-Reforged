@@ -43,7 +43,8 @@ import rustic.content.menu.RusticMenus;
  * feed the deferred door {@code CabinetRenderer}; with no door to animate the counter's open-count callback
  * is left empty, exactly as vanilla's {@code BarrelBlockEntity} leaves it, and no {@code BlockEntityTicker}
  * or {@code triggerEvent} is needed. The Quark {@code IDropoffManager} interface and the {@code material}
- * stack (the {@code RecipeCabinet} craft, Phase 7) are both dropped with the compat/recipe phases.
+ * stack (which the legacy dynamic cabinet craft stamped) are both dropped: the port's shaped recipe carries no
+ * material, and the Quark compat half belongs to Phase 10.
  */
 public class CabinetBlockEntity extends RandomizableContainerBlockEntity {
 

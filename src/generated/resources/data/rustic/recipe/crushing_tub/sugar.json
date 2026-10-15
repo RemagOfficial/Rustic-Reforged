@@ -1,0 +1,14 @@
+{
+  "type": "rustic:crushing_tub",
+  "byproduct": {
+    "count": 2,
+    "id": "minecraft:sugar"
+  },
+  "ingredient": {
+    "item": "minecraft:sugar_cane"
+  },
+  "result": {
+    "amount": 250,
+    "id": "minecraft:water"
+  }
+}

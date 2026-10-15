@@ -1,0 +1,11 @@
+{
+  "type": "rustic:evaporating_basin",
+  "fluid": {
+    "amount": 500,
+    "id": "rustic:ironberryjuice"
+  },
+  "result": {
+    "count": 1,
+    "id": "rustic:dust_tiny_iron"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": {
+      "item": "rustic:candle_gold"
+    },
+    "R": {
+      "tag": "c:dusts/redstone"
+    }
+  },
+  "pattern": [
+    "C",
+    "R"
+  ],
+  "result": {
+    "count": 1,
+    "id": "rustic:candle_lever_gold"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_slate_tile": {
+      "conditions": {
+        "items": [
+          {
+            "items": "rustic:slate_tile"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "rustic:slate_brick"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_slate_tile"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "rustic:slate_brick"
+    ]
+  }
+}

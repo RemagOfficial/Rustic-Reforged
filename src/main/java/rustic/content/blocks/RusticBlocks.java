@@ -1,6 +1,7 @@
 package rustic.content.blocks;
 
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.DyeColor;
@@ -16,6 +17,7 @@ import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.grower.TreeGrower;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -23,6 +25,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import rustic.Rustic;
 import rustic.config.ConfigPreread;
 import rustic.config.RusticConfig;
+import rustic.world.RusticWorldGen;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -197,14 +200,15 @@ public final class RusticBlocks {
      * Registers one wood type. The sapling is the only entry that needs a supplier rather than
      * {@code registerBlock}: 1.21's {@link SaplingBlock} takes a {@link TreeGrower} next to its properties.
      *
-     * <p>That grower is deliberately empty. Growing the olive and ironwood trees is Phase 8's worldgen
-     * work - 1.12.2 built them in code with {@code WorldGenMultiTypeTree} plus a fruit handler - and
-     * {@link TreeGrower#growTree} answers false when its configured feature key is absent, which leaves
-     * the sapling maturing to nothing but otherwise behaving exactly like the legacy one: the same light
-     * level, the same one-in-seven random tick roll and the same 0.45 bonemeal chance, all of which
-     * {@code SaplingBlock} implements and {@code BlockSaplingRustic} hand-wrote to the same numbers.
+     * <p>The grower names the {@code minecraft:tree} configured feature the sapling matures into - the olive
+     * and ironwood features {@code rustic.data.RusticWorldGenProvider} emits under the keys in
+     * {@link RusticWorldGen}. Growing those trees is Phase 8's worldgen work; before the feature exists at a
+     * key, {@link TreeGrower#growTree} resolves it to nothing and the sapling matures to nothing, but the
+     * random-tick light level, the one-in-seven roll and the 0.45 bonemeal chance are all vanilla
+     * {@code SaplingBlock} behaviour that {@code BlockSaplingRustic} hand-wrote to the same numbers.
      */
     private static WoodFamily woodFamily(String name) {
+        ResourceKey<ConfiguredFeature<?, ?>> tree = treeFeature(name);
         DeferredBlock<Block> planks = BLOCKS.registerBlock("planks_" + name, Block::new,
                 RusticBlockProperties.woodResistant(2.0F));
         DeferredBlock<RotatedPillarBlock> log = BLOCKS.registerBlock("log_" + name, RotatedPillarBlock::new,
@@ -212,7 +216,7 @@ public final class RusticBlocks {
         DeferredBlock<LeavesBlock> leaves = BLOCKS.registerBlock("leaves_" + name, LeavesBlock::new,
                 RusticBlockProperties.ofBase(Blocks.OAK_LEAVES));
         DeferredBlock<SaplingBlock> sapling = BLOCKS.register("sapling_" + name,
-                () -> new SaplingBlock(new TreeGrower(name, Optional.empty(), Optional.empty(), Optional.empty()),
+                () -> new SaplingBlock(new TreeGrower(name, Optional.empty(), Optional.of(tree), Optional.empty()),
                         RusticBlockProperties.ofBase(Blocks.OAK_SAPLING)));
         DeferredBlock<FenceBlock> fence = BLOCKS.registerBlock("fence_" + name, FenceBlock::new,
                 RusticBlockProperties.woodResistant(2.0F));
@@ -241,6 +245,21 @@ public final class RusticBlocks {
     /** The ironwood family, named out for the phases that need one particular block. */
     public static WoodFamily ironwood() {
         return WOOD_FAMILIES.get(1);
+    }
+
+    /**
+     * The configured-tree feature key a {@code sapling_<name>} matures into, the code half of the
+     * agreement between the {@link TreeGrower} and {@code rustic.data.RusticWorldGenProvider}. The only two
+     * Rustic woods with world-grown trees are olive and ironwood (1.12.2's {@code WorldGenAllTrees} placed
+     * exactly those two); the apple tree is sapling-grown only and its key lives with
+     * {@link RusticFarmBlocks#APPLE_SAPLING}.
+     */
+    private static ResourceKey<ConfiguredFeature<?, ?>> treeFeature(String name) {
+        return switch (name) {
+            case "olive" -> RusticWorldGen.OLIVE_TREE;
+            case "ironwood" -> RusticWorldGen.IRONWOOD_TREE;
+            default -> throw new IllegalArgumentException("No Rustic tree feature for wood: " + name);
+        };
     }
 
     // ------------------------------------------------------------------
@@ -409,6 +428,14 @@ public final class RusticBlocks {
      * and {@code SILVER_DECOR} is null to say so. Consumers have to check it, which is what the legacy
      * code did too - its {@code ModBlocks.CANDLE_SILVER} field was simply null in that case, and
      * {@code addSilverCraftingRecipes()} opened with the same config test before touching it.
+     *
+     * <p>TODO (deferred): consider also gating the silver <em>block registration</em> on whether
+     * {@code c:ingots/silver} is actually populated at registry time. Today the blocks always register
+     * (when the config flag is on) but their recipes are condition-dropped, so a Rustic-only install
+     * shows silver decor in JEI/creative tab with no way to craft it. Legacy had the same display
+     * quirk, but a one-line {@code if (TagEmpty(c:ingots/silver)) return null} in {@code silverDecor()}
+     * would eliminate it cleanly once the data lifecycle allows the check (blocks register before tags
+     * resolve, so this needs either a lazy holder or a registry-completion event).
      */
     @Nullable
     public static final SilverDecor SILVER_DECOR = silverDecor();

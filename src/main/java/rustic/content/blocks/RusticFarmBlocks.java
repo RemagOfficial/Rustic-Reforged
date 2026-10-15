@@ -4,15 +4,22 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FireBlock;
+import net.minecraft.world.level.block.SaplingBlock;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.grower.TreeGrower;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.MapColor;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import rustic.Rustic;
 import rustic.content.items.RusticItems;
+import rustic.world.RusticWorldGen;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -103,6 +110,43 @@ public final class RusticFarmBlocks {
             properties -> new BerryBushBlock(properties, () -> RusticItems.WILDBERRIES.get()),
             RusticBlockProperties.crop().strength(0.2F, 0.0F));
 
+    // ------------------------------------------------------------------
+    // Phase 8 prerequisite blocks: the world-generated beehive and the apple tree's own parts.
+    //
+    // BEEHIVE is 1.12.2's BlockBeehive - a horizontal-facing hive that hangs under leaves and drops honeycomb
+    // plus bees (see BlockBeehive for why the leaves-above rule lives in the feature, not the block, and
+    // RusticBlockLoot for the drop roll). The legacy Material.GOURD had no SoundType.SLIME equivalent in 1.21,
+    // so the sound/map-colour below approximate it; hardness is the legacy 0.5F and the tool is an axe.
+    //
+    // APPLE_SAPLING + APPLE_LEAVES are the sapling-grown apple line the legacy WorldGenAllTrees never placed
+    // in the world: the tree is vanilla OAK_LOG plus APPLE_LEAVES (BlockLeavesApple, its fruit AGE kept as a
+    // state the future harvest hook reads) and grows only from this sapling, whose TreeGrower names the
+    // configured feature emitted by RusticWorldGenProvider. See RusticWorldGen for the shared key.
+    // ------------------------------------------------------------------
+    public static final DeferredBlock<BlockBeehive> BEEHIVE = FARM_BLOCKS.registerBlock(
+            "beehive", BlockBeehive::new, beehiveProperties());
+    public static final DeferredBlock<BlockLeavesApple> APPLE_LEAVES = FARM_BLOCKS.registerBlock(
+            "leaves_apple", BlockLeavesApple::new, RusticBlockProperties.ofBase(Blocks.OAK_LEAVES));
+    public static final DeferredBlock<SaplingBlock> APPLE_SAPLING = FARM_BLOCKS.register(
+            "sapling_apple",
+            () -> new SaplingBlock(new TreeGrower("apple", Optional.empty(),
+                    Optional.of(RusticWorldGen.APPLE_TREE), Optional.empty()),
+                    RusticBlockProperties.ofBase(Blocks.OAK_SAPLING)));
+
+    /**
+     * The legacy beehive's properties: {@code Material.GOURD} at hardness 0.5F, {@code SoundType.SLIME} (which
+     * 1.21 has no name for, hence the closest plant sound here), {@code setLightOpacity(0)} and a
+     * non-opaque/non-full-cube shape, so {@code noOcclusion()} and the narrower {@link BlockBeehive} box.
+     * No harvest level was set in 1.12.2, so the hive always dropped its loot even by hand.
+     */
+    private static BlockBehaviour.Properties beehiveProperties() {
+        return BlockBehaviour.Properties.of()
+                .mapColor(MapColor.PLANT)
+                .sound(SoundType.GRASS)
+                .strength(0.5F, 0.0F)
+                .noOcclusion();
+    }
+
     /** A self-herb: a {@link HerbBlock} whose herb item is its own block item (the legacy {@code hasItemBlock} case). */
     private static DeferredBlock<HerbBlock> selfHerb(String name) {
         return FARM_BLOCKS.registerBlock(name, p -> new HerbBlock(p, null), RusticBlockProperties.crop());
@@ -135,7 +179,9 @@ public final class RusticFarmBlocks {
     public static List<DeferredHolder<Block, ? extends Block>> blockItemEntries() {
         return List.of(CROP_STAKE, STAKE_TIED,
                 ALOE_VERA, BLOOD_ORCHID, CHAMOMILE, COHOSH, DEATHSTALK_MUSHROOM, HORSETAIL,
-                MOONCAP_MUSHROOM, VANTA_LILY, WIND_THISTLE, GRAPE_STEM, WILDBERRY_BUSH);
+                MOONCAP_MUSHROOM, VANTA_LILY, WIND_THISTLE, GRAPE_STEM, WILDBERRY_BUSH,
+                // Phase 8: the placeable beehive and the apple tree's own parts, all giveable in creative.
+                BEEHIVE, APPLE_SAPLING, APPLE_LEAVES);
     }
 
     /** Every herb block, so the blockstate, item-model and loot generators can iterate the family. */
@@ -161,6 +207,9 @@ public final class RusticFarmBlocks {
         fire.setFlammable(GRAPE_LEAVES.get(), 30, 60);
         // 1.12.2 setFireInfo on the wildberry bush: 40/80.
         fire.setFlammable(WILDBERRY_BUSH.get(), 40, 80);
+        // 1.12.2's BlockLeavesApple constructor asked for Blocks.FIRE.setFireInfo(this, 30, 60) - the same
+        // pair the wood-family leaves carry, because an apple tree's foliage burns like any other leaf.
+        fire.setFlammable(APPLE_LEAVES.get(), 30, 60);
     }
 
     /** Every farm block, for the loot generator, which special-cases the crops and the tied stake. */

@@ -1,0 +1,41 @@
+{
+  "type": "rustic:condenser",
+  "advanced": true,
+  "bottle": {
+    "count": 1,
+    "id": "minecraft:glass_bottle"
+  },
+  "ingredients": [
+    {
+      "item": "rustic:deathstalk_mushroom"
+    },
+    {
+      "item": "minecraft:soul_sand"
+    }
+  ],
+  "modifier": {
+    "item": "rustic:horsetail"
+  },
+  "result": {
+    "components": {
+      "rustic:elixir_effects": [
+        {
+          "duration": 1800,
+          "id": "minecraft:wither",
+          "neoforge:cures": [
+            "protected_by_totem",
+            "milk"
+          ],
+          "show_icon": true
+        }
+      ]
+    },
+    "count": 1,
+    "id": "rustic:elixir"
+  },
+  "time": 300,
+  "water": {
+    "amount": 125,
+    "id": "minecraft:water"
+  }
+}

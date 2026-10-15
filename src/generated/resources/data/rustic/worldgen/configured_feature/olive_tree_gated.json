@@ -1,0 +1,7 @@
+{
+  "type": "rustic:config_gated",
+  "config": {
+    "inner": "rustic:olive_tree",
+    "knob": "OLIVE"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "type": "rustic:crushing_tub",
+  "byproduct": {
+    "count": 1,
+    "id": "rustic:apple_seeds"
+  },
+  "ingredient": {
+    "item": "minecraft:enchanted_golden_apple"
+  },
+  "result": {
+    "amount": 1000,
+    "id": "rustic:goldenapplejuice"
+  }
+}

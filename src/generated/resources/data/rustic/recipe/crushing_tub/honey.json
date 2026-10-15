@@ -1,0 +1,10 @@
+{
+  "type": "rustic:crushing_tub",
+  "ingredient": {
+    "item": "rustic:honeycomb"
+  },
+  "result": {
+    "amount": 250,
+    "id": "rustic:honey"
+  }
+}

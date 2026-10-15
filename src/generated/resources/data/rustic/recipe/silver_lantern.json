@@ -1,0 +1,35 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:ingots/silver"
+      }
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": [
+      {
+        "item": "minecraft:coal"
+      },
+      {
+        "item": "minecraft:charcoal"
+      }
+    ],
+    "I": {
+      "tag": "c:ingots/silver"
+    }
+  },
+  "pattern": [
+    "I",
+    "C",
+    "I"
+  ],
+  "result": {
+    "count": 4,
+    "id": "rustic:silver_lantern"
+  }
+}

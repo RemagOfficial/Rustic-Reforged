@@ -71,6 +71,9 @@
     "rustic:fence_ironwood",
     "rustic:fence_gate_ironwood",
     "rustic:ironwood_slab",
-    "rustic:stairs_ironwood"
+    "rustic:stairs_ironwood",
+    "rustic:beehive",
+    "rustic:sapling_apple",
+    "rustic:leaves_apple"
   ]
 }

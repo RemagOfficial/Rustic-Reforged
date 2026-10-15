@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": {
+      "item": "rustic:clay_wall"
+    },
+    "P": {
+      "tag": "minecraft:planks"
+    }
+  },
+  "pattern": [
+    "P P",
+    " C ",
+    "P P"
+  ],
+  "result": {
+    "count": 1,
+    "id": "rustic:clay_wall_cross"
+  }
+}

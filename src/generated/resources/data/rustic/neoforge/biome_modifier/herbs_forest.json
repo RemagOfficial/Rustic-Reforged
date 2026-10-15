@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#c:is_forest",
+  "features": "rustic:herbs_forest_placed",
+  "step": "vegetal_decoration"
+}

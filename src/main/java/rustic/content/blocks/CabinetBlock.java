@@ -39,8 +39,9 @@ import rustic.content.blockentity.CabinetBlockEntity;
  * <p>Two 1.12.2 details that vanish rather than translate: the {@code BOTTOM} property existed only for the
  * renderer to know which half drew the lower doors, so a static cube needs neither it nor the
  * {@code getActualState} that computed it; and the {@code onBlockPlacedBy}/{@code addInformation} pair that
- * copied a {@code material} stack into the tile entity belonged to the {@code RecipeCabinet} craft, which is
- * Phase 7's, so no material is read or shown yet.
+ * copied a {@code material} stack into the tile entity belonged to the legacy dynamic cabinet craft. The port
+ * builds the cabinet with a plain {@code minecraft:crafting_shaped} recipe that carries no wood material, so
+ * neither is read or shown (per-wood appearance stays a Phase 9 nicety).
  */
 public class CabinetBlock extends BlockRusticChest {
 

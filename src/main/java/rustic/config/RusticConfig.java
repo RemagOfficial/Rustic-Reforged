@@ -63,6 +63,7 @@ public final class RusticConfig {
     public static final ModConfigSpec.IntValue MAX_OLIVE_GEN_ATTEMPTS;
     public static final ModConfigSpec.DoubleValue IRONWOOD_GEN_CHANCE;
     public static final ModConfigSpec.IntValue MAX_IRONWOOD_GEN_ATTEMPTS;
+    public static final ModConfigSpec.BooleanValue NATURAL_TREE_PLACEMENT;
     public static final ModConfigSpec.DoubleValue HERB_GEN_CHANCE;
     public static final ModConfigSpec.IntValue MAX_HERB_ATTEMPTS;
     public static final ModConfigSpec.DoubleValue WILDBERRY_GEN_CHANCE;
@@ -229,6 +230,15 @@ public final class RusticConfig {
         MAX_IRONWOOD_GEN_ATTEMPTS = BUILDER
                 .comment("maximum number of times the generator will attempt to place an ironwood tree in a chunk")
                 .defineInRange("max_ironwood_generation_attempts", 4, 0, 128);
+
+        // 1.21-only addition; there is no 1.12.2 counterpart, hence it lives outside the golden baseline pair.
+        // Default false preserves the exact legacy behaviour so the port stays faithful until a user opts in.
+        NATURAL_TREE_PLACEMENT = BUILDER
+                .comment("when true, olive and ironwood trees roll their generation chance once per scatter attempt",
+                        "spreading a low density of trees evenly across the biome for a more natural forest;",
+                        "when false the 1.12.2 behaviour is reproduced: a single roll per chunk decides everything,",
+                        "so a full burst of trees lands in the few chunks that win and the rest stay bare (clumpy).")
+                .define("natural_tree_placement", false);
 
         HERB_GEN_CHANCE = BUILDER
                 .comment("chance for an herb to try to generate in a chunk")

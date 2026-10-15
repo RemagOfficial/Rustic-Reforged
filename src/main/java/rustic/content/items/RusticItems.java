@@ -29,8 +29,8 @@ import rustic.content.fluids.RusticFluids;
  * Rustic block, same id - which also means a later phase cannot add a block and forget its item.
  *
  * <p>The non-block items of {@code ModItems} arrive phase by phase with the content they belong to:
- * the Phase 5 produce and herbs, then the Phase 6 buckets, bottles, elixir and tree fruits - the book,
- * the bee products and the dusts are still ahead of them.
+ * the Phase 5 produce and herbs, then the Phase 6 buckets, bottles, elixir and tree fruits, and finally
+ * the Phase 7 prerequisite bee products, dusts and seed items (below). The book is still ahead of them.
  *
  * <p>Ordering note: this class must be touched from the mod constructor, like
  * {@link RusticBlocks}, so that both registers are attached to the bus before the loader fires
@@ -191,6 +191,37 @@ public final class RusticItems {
     // ------------------------------------------------------------------
     public static final DeferredItem<ItemElixir> ELIXIR = ITEMS.register("elixir",
             () -> new ItemElixir(new Item.Properties()));
+
+    // ------------------------------------------------------------------
+    // Phase 7 prerequisite items. These seven were named in every earlier phase's doc as "still ahead",
+    // but the recipe datagen now lists them as real ingredients and outputs, so they register here.
+    // None carried behaviour in 1.12.2 beyond being an ingredient: honeycomb/beeswax/tallow are the bee
+    // and flesh products (honeycomb smelts to beeswax, rotten flesh smelts to tallow), dust_tiny_iron/
+    // dust_gold are the evaporating-basin outputs that then smelt to an iron nugget / gold ingot, and the
+    // two seed items are the crushing-tub apple byproduct and the viney's grape seed.
+    //
+    // Deviation note: legacy apple_seeds was a growable {@code BlockAppleSeeds} crop that matured into an
+    // apple sapling, but that whole apple-tree line belongs to Phase 8 worldgen; here it is only the plain
+    // byproduct item the tub drops, and the placeable crop is deferred with the trees. The ids match the
+    // legacy registry names ({@code dust_tiny_iron}, {@code dust_gold}) so the existing item textures and
+    // every downstream reference resolve unchanged.
+    // ------------------------------------------------------------------
+    public static final DeferredItem<Item> HONEYCOMB = plainItem("honeycomb");
+    public static final DeferredItem<Item> BEESWAX = plainItem("beeswax");
+    // The bee the legacy beehive dropped alongside its honeycomb (ModItems.BEE, a placeable-to-bee item used
+    // by the apiary). The apiary bee-simulation is Phase 4/out of scope here, so only the plain loot item
+    // lands; the beehive's loot table (RusticBlockLoot) drops one or two of these exactly as legacy did.
+    public static final DeferredItem<Item> BEE = plainItem("bee");
+    public static final DeferredItem<Item> TALLOW = plainItem("tallow");
+    public static final DeferredItem<Item> IRON_DUST_TINY = plainItem("dust_tiny_iron");
+    public static final DeferredItem<Item> GOLD_DUST = plainItem("dust_gold");
+    public static final DeferredItem<Item> APPLE_SEEDS = plainItem("apple_seeds");
+    public static final DeferredItem<Item> GRAPE_SEEDS = plainItem("grape_seeds");
+
+    /** A stack-of-64 ingredient item with no behaviour, the port of 1.12.2's plain {@code ItemBase}. */
+    private static DeferredItem<Item> plainItem(String name) {
+        return ITEMS.register(name, () -> new Item(new Item.Properties()));
+    }
 
     private static DeferredItem<BucketItem> bucket(String name,
                                                    DeferredHolder<net.minecraft.world.level.material.Fluid, ? extends net.minecraft.world.level.material.Fluid> content) {

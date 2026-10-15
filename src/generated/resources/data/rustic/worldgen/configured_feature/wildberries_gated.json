@@ -1,0 +1,7 @@
+{
+  "type": "rustic:config_gated",
+  "config": {
+    "inner": "rustic:wildberries",
+    "knob": "WILDBERRY"
+  }
+}

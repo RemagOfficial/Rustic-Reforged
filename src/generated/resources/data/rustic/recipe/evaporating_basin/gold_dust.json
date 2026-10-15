@@ -1,0 +1,11 @@
+{
+  "type": "rustic:evaporating_basin",
+  "fluid": {
+    "amount": 100,
+    "id": "rustic:goldenapplejuice"
+  },
+  "result": {
+    "count": 1,
+    "id": "rustic:dust_gold"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "type": "rustic:condenser",
+  "advanced": true,
+  "bottle": {
+    "count": 1,
+    "id": "minecraft:glass_bottle"
+  },
+  "ingredients": [
+    {
+      "item": "rustic:blood_orchid"
+    },
+    {
+      "item": "minecraft:rotten_flesh"
+    },
+    {
+      "item": "minecraft:redstone"
+    }
+  ],
+  "result": {
+    "components": {
+      "rustic:elixir_effects": [
+        {
+          "duration": 3600,
+          "id": "minecraft:health_boost",
+          "neoforge:cures": [
+            "protected_by_totem",
+            "milk"
+          ],
+          "show_icon": true
+        }
+      ]
+    },
+    "count": 1,
+    "id": "rustic:elixir"
+  },
+  "time": 300,
+  "water": {
+    "amount": 125,
+    "id": "minecraft:water"
+  }
+}

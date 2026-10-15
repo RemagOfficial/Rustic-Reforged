@@ -87,6 +87,7 @@ public class RusticBlockStates extends BlockStateProvider {
         herbs();
         grape();
         berry();
+        worldgen();
         fluidBlocks();
     }
 
@@ -229,6 +230,40 @@ public class RusticBlockStates extends BlockStateProvider {
     private void berry() {
         ModelFile bush = models().cross(path(RusticFarmBlocks.WILDBERRY_BUSH), tex("wildberry_bush_leaves")).renderType("cutout");
         simpleBlockWithItem(RusticFarmBlocks.WILDBERRY_BUSH.get(), bush);
+    }
+
+    // ------------------------------------------------------------------
+    // Phase 8 prerequisite blocks: the world-generated beehive and the sapling-grown apple parts.
+    //
+    // The beehive was a CUTOUT multi-element model in 1.12.2 (its legacy models/block/beehive.json is a
+    // MrCrayfish six-cube stack), so - exactly as the barrel/cabinet placeholders and the whole deferred-art
+    // set above - it gets a plain cube borrowing the existing block/beehive texture this phase and its real
+    // art lands with the model-conversion phase. It carries a horizontal facing, so every facing state is
+    // mapped (the legacy blockstate turned north=0, east=90, south=180, west=270, which is the same
+    // authored-as-a-north-wall quarter turn the diagonal clay wall uses).
+    //
+    // The apple leaves and sapling have no Rustic art at all: the legacy blockstates pointed straight at the
+    // vanilla oak_leaves / oak_sapling models (an apple tree *is* an oak tree with fruit), so they borrow the
+    // vanilla textures. The legacy apple-fruit overlays (apple_0/apple_1/apple_2 submodels per leaf age) are
+    // deferred with the fruit lifecycle, so every leaf age resolves to the one vanilla leaf cube; the sapling
+    // item is a flat sprite on the vanilla oak_sapling texture, mirroring the wood-family sapling below.
+    // ------------------------------------------------------------------
+    private void worldgen() {
+        ModelFile beehive = models().cubeAll(path(RusticFarmBlocks.BEEHIVE), tex("beehive"));
+        horizontalBlock(RusticFarmBlocks.BEEHIVE.get(), beehive, WALL_ANGLE_NORTH);
+        simpleBlockItem(RusticFarmBlocks.BEEHIVE.get(), beehive);
+
+        ModelFile appleLeaves = models().leaves(path(RusticFarmBlocks.APPLE_LEAVES), vanillaTex("oak_leaves"));
+        getVariantBuilder(RusticFarmBlocks.APPLE_LEAVES.get())
+                .forAllStates(state -> ConfiguredModel.builder().modelFile(appleLeaves).build());
+        simpleBlockItem(RusticFarmBlocks.APPLE_LEAVES.get(), appleLeaves);
+
+        ModelFile appleSapling = models().cross(path(RusticFarmBlocks.APPLE_SAPLING), vanillaTex("oak_sapling"))
+                .renderType("cutout");
+        getVariantBuilder(RusticFarmBlocks.APPLE_SAPLING.get())
+                .forAllStates(state -> ConfiguredModel.builder().modelFile(appleSapling).build());
+        itemModels().withExistingParent(path(RusticFarmBlocks.APPLE_SAPLING), mcLoc("item/generated"))
+                .texture("layer0", vanillaTex("oak_sapling"));
     }
 
     // ------------------------------------------------------------------

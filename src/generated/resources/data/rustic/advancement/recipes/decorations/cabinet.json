@@ -1,0 +1,43 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_planks": {
+      "conditions": {
+        "items": [
+          {
+            "items": "#minecraft:planks"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "rustic:cabinet"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    },
+    "has_trapdoor": {
+      "conditions": {
+        "items": [
+          {
+            "items": "#minecraft:wooden_trapdoors"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_planks",
+      "has_trapdoor"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "rustic:cabinet"
+    ]
+  }
+}

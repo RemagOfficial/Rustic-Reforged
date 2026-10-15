@@ -79,6 +79,18 @@ public final class RusticDataComponents {
                     builder -> builder.persistent(MobEffectInstance.CODEC)
                             .networkSynchronized(MobEffectInstance.STREAM_CODEC));
 
+    /**
+     * The {@code rustic:oiled} marker written onto a food by the olive-oiling crafting recipe. 1.12.2 stamped a
+     * valueless {@code NBTTagByte("oiled", 0)} onto the food and only ever tested {@code hasKey("oiled")}; 1.21
+     * replaces the loose tag with a typed {@code Boolean} component (present-and-true once oiled), read by
+     * {@code stack.has(OILED)}. Only the marker is carried here - the downstream oiled-food saturation effect lived
+     * in the legacy {@code EventHandlerCommon}, which the plan defers, so this component is the data half of the
+     * faithful port and the behaviour is flagged for the compat pass rather than invented.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> OILED =
+            COMPONENTS.registerComponentType("oiled",
+                    builder -> builder.persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL));
+
     /** Attaches the component register to the mod event bus. Called from the mod constructor. */
     public static void register(IEventBus modEventBus) {
         COMPONENTS.register(modEventBus);

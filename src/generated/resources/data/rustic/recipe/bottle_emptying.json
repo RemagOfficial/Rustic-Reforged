@@ -1,0 +1,12 @@
+{
+  "type": "rustic:non_ingredient_return",
+  "ingredients": [
+    {
+      "item": "rustic:fluid_bottle"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "minecraft:glass_bottle"
+  }
+}

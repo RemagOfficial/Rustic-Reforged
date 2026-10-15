@@ -104,6 +104,22 @@ public class RusticItemModels extends ItemModelProvider {
         // ElixirUtils.getColor (IColoredItem); that effect-colour handler is deferred polish, so the elixir shows
         // as a filled-looking bottle off its own art rather than the earlier texture-less generated placeholder.
         withExistingParent("elixir", mcLoc("item/generated")).texture("layer0", modLoc("item/elixir_bottle"));
+
+        // Phase 7 prerequisite items: the two bee products, the flesh tallow, the two smelting dusts and the
+        // two crushing-tub/viney seed byproducts. All seven are flat inventory sprites on their own existing
+        // item textures (item/honeycomb, item/beeswax, item/tallow, item/dust_tiny_iron, item/dust_gold,
+        // item/apple_seeds, item/grape_seeds), so basicItem writes each one-parent/one-texture model and
+        // validates the PNG at datagen time. The grape_seeds sprite is shared with the grape_stem block item
+        // above, but the two models live under different item ids and cannot collide.
+        basicItem(RusticItems.HONEYCOMB.get());
+        basicItem(RusticItems.BEESWAX.get());
+        // Phase 8: the beehive's bee drop, a flat sprite on the existing item/bee art (legacy ModItems.BEE).
+        basicItem(RusticItems.BEE.get());
+        basicItem(RusticItems.TALLOW.get());
+        basicItem(RusticItems.IRON_DUST_TINY.get());
+        basicItem(RusticItems.GOLD_DUST.get());
+        basicItem(RusticItems.APPLE_SEEDS.get());
+        basicItem(RusticItems.GRAPE_SEEDS.get());
     }
 
     /**

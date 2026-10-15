@@ -28,6 +28,7 @@ import rustic.content.menu.RusticMenus;
 import rustic.content.network.RusticPayloads;
 import rustic.content.potions.RusticEventHandlerPotions;
 import rustic.content.potions.RusticMobEffects;
+import rustic.content.world.RusticWorldGenFeatures;
 import rustic.data.RusticDataGen;
 import rustic.registry.RusticRegistries;
 
@@ -105,6 +106,10 @@ public class Rustic {
         RusticCreativeTabs.register(modEventBus);
         // Phase 6: the eleven Rustic potion effects (PotionsRustic.init()), on their own register.
         RusticMobEffects.register(modEventBus);
+        // Phase 8: the two code world-generation features (the config gate and the beehive), so the data-driven
+        // configured features RusticWorldGenProvider emits can name their "type". Replaces GameRegistry
+        // .registerWorldGenerator(WorldGeneratorRustic) from the legacy CommonProxy.init().
+        RusticWorldGenFeatures.register(modEventBus);
         // Phase 6: the mod's custom network payloads (the 1.21 form of PacketHandler.registerMessages), mod bus.
         RusticPayloads.register(modEventBus);
 

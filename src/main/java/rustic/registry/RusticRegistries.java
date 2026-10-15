@@ -18,6 +18,9 @@ import rustic.content.crafting.BrewingBarrelRecipe;
 import rustic.content.crafting.CondenserRecipe;
 import rustic.content.crafting.CrushingTubRecipe;
 import rustic.content.crafting.EvaporatingBasinRecipe;
+import rustic.content.crafting.RecipeNonIngredientReturn;
+import rustic.content.crafting.RecipeOliveOil;
+import rustic.content.crafting.RecipeVantaOil;
 
 /**
  * The registry handles every content class registers into. Phase 1 only wires the plumbing up;
@@ -89,6 +92,22 @@ public final class RusticRegistries {
             RECIPE_SERIALIZERS.register("brewing_barrel", BrewingBarrelRecipe.Serializer::new);
     public static final DeferredHolder<RecipeSerializer<?>, CondenserRecipe.Serializer> CONDENSER_SERIALIZER =
             RECIPE_SERIALIZERS.register("condenser", CondenserRecipe.Serializer::new);
+
+    // ------------------------------------------------------------------
+    // Phase 7.3 crafting-table recipes. The cabinet is now an ordinary shaped minecraft:crafting_shaped recipe (see
+    // RusticRecipeProvider), so only the three genuinely dynamic crafting-table recipes are registered here. They craft
+    // in the vanilla crafting table, so their Recipe implementations report {@link RecipeType#CRAFTING} (like vanilla
+    // armor-dye / map-clone) rather than a dedicated type - only the serializers are registered. The JSON "type"
+    // discriminator is the serializer id (rustic:olive_oil etc); the recipe folds into the vanilla CRAFTING type at
+    // load time, which is what lets a crafting table match it. Each is {@code isSpecial()} so it never shows in the
+    // recipe book, as legacy {@code isDynamic()} did.
+    // ------------------------------------------------------------------
+    public static final DeferredHolder<RecipeSerializer<?>, RecipeNonIngredientReturn.Serializer> NON_INGREDIENT_RETURN_SERIALIZER =
+            RECIPE_SERIALIZERS.register("non_ingredient_return", RecipeNonIngredientReturn.Serializer::new);
+    public static final DeferredHolder<RecipeSerializer<?>, RecipeOliveOil.Serializer> OLIVE_OIL_SERIALIZER =
+            RECIPE_SERIALIZERS.register("olive_oil", RecipeOliveOil.Serializer::new);
+    public static final DeferredHolder<RecipeSerializer<?>, RecipeVantaOil.Serializer> VANTA_OIL_SERIALIZER =
+            RECIPE_SERIALIZERS.register("vanta_oil", RecipeVantaOil.Serializer::new);
 
     /**
      * Attaches every {@link DeferredRegister} above to the mod event bus. Must be called from the

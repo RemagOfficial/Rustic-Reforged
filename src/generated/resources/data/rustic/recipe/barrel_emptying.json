@@ -1,0 +1,12 @@
+{
+  "type": "rustic:non_ingredient_return",
+  "ingredients": [
+    {
+      "item": "rustic:liquid_barrel"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "rustic:liquid_barrel"
+  }
+}
