@@ -61,7 +61,9 @@ public class LiquidBarrelBlock extends BaseEntityBlock {
 
     @Override
     protected RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
+        // S9.1: the stored-fluid surface is a BlockEntityRenderer, which only runs under ENTITYBLOCK_ANIMATED; the
+        // renderer also redraws the open-topped barrel model via renderSingleBlock so the fluid reads as held inside.
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Override

@@ -260,19 +260,21 @@ public class RusticMachineRegistrationTest {
 
     /**
      * The datagen that makes the cabinet render and drop. Its blockstate enumerates every facing/mirror/top
-     * combination but each one resolves to the same static placeholder cube (the doors are Phase 9), so the
+     * combination but each one still resolves to the same static cube model (kept for particles/loot), so the
      * assertion is "every referenced model is rustic:block/cabinet", not a single empty-variant key like the
-     * property-less barrel. Re-run {@code runData} when this fails; do not hand-write the files.
+     * property-less barrel. From S9.2 the ITEM model is different: the door is now drawn by the cabinet BER, so
+     * the hand-held/inventory item parents {@code minecraft:builtin/entity} to route through that renderer.
+     * Re-run {@code runData} when this fails; do not hand-write the files.
      */
     @Test
     public void datagenProducedTheCabinetStateModelLootAndTag() {
         Set<String> models = blockstateModels("/assets/rustic/blockstates/cabinet.json");
         assertEquals(Set.of("rustic:block/cabinet"), models,
-                "every cabinet state should draw the one static cube while the door art is deferred");
+                "every cabinet state should draw the one static cube (retained for particles/loot)");
 
         JsonObject itemModel = json("/assets/rustic/models/item/cabinet.json");
-        assertEquals("rustic:block/cabinet", itemModel.get("parent").getAsString(),
-                "the cabinet item model parents the block model");
+        assertEquals("minecraft:builtin/entity", itemModel.get("parent").getAsString(),
+                "the cabinet item model defers to the BER now that S9.2 animates the door");
 
         JsonObject loot = json("/data/rustic/loot_table/blocks/cabinet.json");
         JsonElement entry = loot.getAsJsonArray("pools").get(0).getAsJsonObject()

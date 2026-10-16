@@ -292,7 +292,11 @@ public class RusticBlockStates extends BlockStateProvider {
         ModelFile cabinet = models().cubeAll(path(RusticMachineBlocks.CABINET), tex("cabinet"));
         getVariantBuilder(RusticMachineBlocks.CABINET.get())
                 .forAllStates(state -> ConfiguredModel.builder().modelFile(cabinet).build());
-        simpleBlockItem(RusticMachineBlocks.CABINET.get(), cabinet);
+        // Phase 9 S9.2: the cabinet item is the 3D animated body, not the cube, so its item model is builtin/entity and
+        // the CabinetBlockItemRenderer (registered via a client item extension) draws it. The world block uses the same
+        // BER (getRenderShape ENTITYBLOCK_ANIMATED); the cube model above stays only for the break particles.
+        itemModels().getBuilder(path(RusticMachineBlocks.CABINET))
+                .parent(new ModelFile.UncheckedModelFile("builtin/entity"));
 
         ModelFile vase = models().cubeAll(path(RusticMachineBlocks.VASE), tex("vase_side_0"));
         getVariantBuilder(RusticMachineBlocks.VASE.get())
@@ -300,23 +304,26 @@ public class RusticBlockStates extends BlockStateProvider {
         simpleBlockItem(RusticMachineBlocks.VASE.get(), vase);
 
         // ------------------------------------------------------------------
-        // Phase 4b fluid machines. These are functional shells this phase; their 1.8-era machine models
-        // (multi-part barrels, the condenser column, the basin dish) are Phase 11 art, so - exactly as the
-        // barrel/cabinet/vase placeholders above - every state resolves to one cube. runData runs against an
-        // ExistingFileHelper, so each placeholder borrows a texture that is already on disk rather than naming
-        // a machine texture that has not migrated yet: a missing reference would fail datagen outright, while a
-        // borrowed one simply renders a plain block until the real assets land (expected, not a defect).
-        //   - liquid barrel: a fluid-holding barrel, and no liquid_barrel.png exists, so it borrows the wooden barrel.
-        //   - evaporating basin: Material.ROCK in 1.12.2 with no evaporating_basin.png, so it borrows the slate cube.
-        //   - crushing tub / brewing barrel / condenser / advanced condenser each have a *_side-ish texture that was
-        //     migrated with the decor, so the placeholder uses that directly and already reads as the machine.
+        // Phase 4b fluid machines.
+        //
+        // The three fluid tanks (crushing tub, evaporating basin, liquid barrel) now render faithfully. Their
+        // 1.12.2 originals were hand-authored multi-element models (MrCrayfish exports) that the earlier openVessel
+        // auto-projection placeholder could not reproduce: the tub and the barrel each use TWO textures (a vanilla
+        // oak_planks base/top plate plus the rustic side sheet) and the basin is a stepped 13-element dish in
+        // vanilla terracotta, none of which a single-texture box generator could express. Those three authentic
+        // models are restored verbatim as static assets under models/block/ and referenced here; only the 1.12.2
+        // texture paths were remapped for 1.21 (blocks/ -> block/, planks_oak -> oak_planks, hardened_clay ->
+        // terracotta). They stay open-topped so the ENTITYBLOCK_ANIMATED BER's translucent fluid surface and
+        // stacked items are not depth-hidden inside them; the BER math itself is unchanged (already verbatim).
         // ------------------------------------------------------------------
-        simpleBlockWithItem(RusticMachineBlocks.LIQUID_BARREL.get(),
-                models().cubeAll(path(RusticMachineBlocks.LIQUID_BARREL), tex("barrel")));
-        simpleBlockWithItem(RusticMachineBlocks.CRUSHING_TUB.get(),
-                models().cubeAll(path(RusticMachineBlocks.CRUSHING_TUB), tex("crushing_tub")));
-        simpleBlockWithItem(RusticMachineBlocks.EVAPORATING_BASIN.get(),
-                models().cubeAll(path(RusticMachineBlocks.EVAPORATING_BASIN), tex("slate")));
+        simpleBlockWithItem(RusticMachineBlocks.CRUSHING_TUB.get(), existing("crushing_tub"));
+        simpleBlockWithItem(RusticMachineBlocks.EVAPORATING_BASIN.get(), existing("evaporating_basin"));
+        simpleBlockWithItem(RusticMachineBlocks.LIQUID_BARREL.get(), existing("liquid_barrel"));
+
+        // The brewing barrel and the two condensers are still functional shells: their 1.8-era machine art is
+        // Phase 11, so - exactly as the barrel/cabinet/vase placeholders above - each resolves to one cube that
+        // borrows a texture already on disk (a missing reference would fail runData outright; a borrowed one simply
+        // renders a plain block until the real assets land, which is expected rather than a defect).
         simpleBlockWithItem(RusticMachineBlocks.BREWING_BARREL.get(),
                 models().cubeAll(path(RusticMachineBlocks.BREWING_BARREL), tex("brewing_barrel_side")));
         simpleBlockWithItem(RusticMachineBlocks.CONDENSER.get(),

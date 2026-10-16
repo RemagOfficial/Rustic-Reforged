@@ -1,35 +1,66 @@
 package rustic.content.client;
 
 import net.minecraft.client.color.block.BlockColor;
+import net.minecraft.client.player.Input;
 import net.minecraft.client.renderer.BiomeColors;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
+import net.minecraft.client.renderer.entity.player.PlayerRenderer;
+import net.minecraft.client.resources.PlayerSkin;
 import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.FoliageColor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.neoforge.client.event.ComputeFovModifierEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
+import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import rustic.Rustic;
+import rustic.config.RusticConfig;
+import rustic.content.client.IronSkinRenderPolicy;
 import rustic.content.client.screen.RusticBrewingBarrelScreen;
 import rustic.content.client.screen.RusticChestScreen;
 import rustic.content.client.screen.RusticCondenserScreen;
 import rustic.content.client.screen.RusticCondenserAdvancedScreen;
 import rustic.content.blocks.RusticBlocks;
 import rustic.content.blocks.RusticFarmBlocks;
+import rustic.content.blocks.RusticMachineBlocks;
+import rustic.content.blockentity.RusticBlockEntities;
+import rustic.content.client.hud.ArmorOverflowLayer;
+import rustic.content.client.hud.ArmorToughnessLayer;
+import rustic.content.client.highlight.RotatedPlacementHighlight;
+import rustic.content.client.overlay.FullmetalOverlayLayer;
+import rustic.content.client.overlay.FluidOverlayLayer;
+import rustic.content.client.model.CabinetModel;
+import rustic.content.client.renderer.CabinetBlockItemRenderer;
+import rustic.content.client.renderer.CabinetRenderer;
+import rustic.content.client.renderer.CrushingTubRenderer;
+import rustic.content.client.renderer.EvaporatingBasinRenderer;
+import rustic.content.client.renderer.IronSkinRenderLayer;
+import rustic.content.client.renderer.LiquidBarrelRenderer;
 import rustic.content.entities.RusticEntities;
 import rustic.content.fluids.RusticFluids;
 import rustic.content.menu.RusticMenus;
@@ -52,6 +83,11 @@ public final class RusticClient {
     /** Attaches the client listeners to the mod event bus. Call only on the client dist. */
     public static void register(IEventBus modEventBus) {
         modEventBus.addListener(RusticClient::registerRenderers);
+        modEventBus.addListener(RusticClient::registerLayerDefinitions);
+        modEventBus.addListener(RusticClient::addLayers);
+        // Phase 9 S9.5: the extra armour rows (vanilla clips the bar at 20 points) and the custom toughness meter,
+        // both as GuiLayers so they slot into 1.21's LayeredDraw pipeline instead of the legacy overlay-event hooks.
+        modEventBus.addListener(RusticClient::registerGuiLayers);
         modEventBus.addListener(RusticClient::registerScreens);
         // Without a client extension every Rustic FluidType answers IClientFluidTypeExtensions.DEFAULT, whose
         // getStillTexture() returns null; FluidSpriteCache then does Map.of().getOrDefault(null, ...) and the render
@@ -59,6 +95,7 @@ public final class RusticClient {
         // crashing every subsequent world load too. Supplying each fluid's sprites here is the 1.21 replacement for
         // the deprecated FluidType#initializeClient and must run on the mod bus, client side only.
         modEventBus.addListener(RusticClient::registerFluidExtensions);
+        modEventBus.addListener(RusticClient::registerItemExtensions);
         // Phase 8 worldgen: vanilla BlockColors uses an IdentityHashMap keyed by Block instance and only registers
         // the foliage tint for its own OAK_LEAVES / JUNGLE_LEAVES / etc. Rustic's olive, ironwood and apple leaves
         // are distinct instances (plain LeavesBlock or BlockLeavesApple subclass) that do not match any vanilla key,
@@ -74,6 +111,13 @@ public final class RusticClient {
         // are NeoForge gameplay events; this method only runs on the client dist, so a server never sees them.
         NeoForge.EVENT_BUS.addListener(RusticClient::onLeftClickEmpty);
         NeoForge.EVENT_BUS.addListener(RusticClient::onLeftClickBlock);
+        // Phase 9 S9.6: fullmetal FOV clamp + movement freeze. Both events fire on the game bus, client side only,
+        // so they are registered the same way as the fire-power click handlers above.
+        NeoForge.EVENT_BUS.addListener(RusticClient::onComputeFovModifier);
+        NeoForge.EVENT_BUS.addListener(RusticClient::onMovementInput);
+        // Phase 9 S9.7: the rotated-placement marker, an extra pair of diagonal lines painted on top of the vanilla
+        // selection box when a Y face of an AdvancedRotationPlacement block is hovered with that block in hand.
+        NeoForge.EVENT_BUS.addListener(RotatedPlacementHighlight::render);
     }
 
     /** Left click on nothing, client only. */
@@ -99,6 +143,43 @@ public final class RusticClient {
             return;
         }
         PacketDistributor.sendToServer(RusticPayloads.FirePowerAttackPayload.INSTANCE);
+    }
+
+    /**
+     * S9.6: {@code onFullmetalFov}. While the client player is under the fullmetal effect the FOV is pinned to a
+     * stable {@code 1.0} (cancelling sprint/scope/etc. modifiers, exactly as the legacy HIGHEST-priority override
+     * did) and only re-clamped by the vanilla bow-draw shrink, so a fullmetal archer still gets the zoom-in while
+     * drawing.
+     */
+    private static void onComputeFovModifier(ComputeFovModifierEvent event) {
+        Player player = event.getPlayer();
+        if (!player.hasEffect(RusticMobEffects.FULLMETAL)) {
+            return;
+        }
+        float fov = 1.0F;
+        if (player.isUsingItem() && player.getUseItem().is(Items.BOW)) {
+            float draw = player.getTicksUsingItem() / 20.0F;
+            if (draw > 1.0F) {
+                draw = 1.0F;
+            } else {
+                draw = draw * draw;
+            }
+            fov *= 1.0F - draw * 0.15F;
+        }
+        event.setNewFovModifier(fov);
+    }
+
+    /**
+     * S9.6: {@code onPlayerInputEvent}. Fullmetal roots the player in place - no jump, no forward, no strafe -
+     * the 1.21 {@link Input}-impulse equivalent of the legacy {@code MovementInput} zeroing.
+     */
+    private static void onMovementInput(MovementInputUpdateEvent event) {
+        if (event.getEntity().hasEffect(RusticMobEffects.FULLMETAL)) {
+            Input input = event.getInput();
+            input.jumping = false;
+            input.forwardImpulse = 0.0F;
+            input.leftImpulse = 0.0F;
+        }
     }
 
     /**
@@ -150,6 +231,70 @@ public final class RusticClient {
         // The P3 NoopRenderer lesson in reverse: an entity with no renderer at all crashes the client
         // lookup, so the tomato gets the vanilla projectile renderer the moment it becomes throwable.
         event.registerEntityRenderer(RusticEntities.TOMATO.get(), ThrownItemRenderer::new);
+        // Phase 9 S9.1: the fluid-tank BERs replacing the legacy TileEntitySpecialRenderer trio. Each draws the
+        // tank fluid as a top surface quad; the tub and basin additionally stack their held item as flat layers.
+        event.registerBlockEntityRenderer(RusticBlockEntities.CRUSHING_TUB.get(), CrushingTubRenderer::new);
+        event.registerBlockEntityRenderer(RusticBlockEntities.EVAPORATING_BASIN.get(), EvaporatingBasinRenderer::new);
+        event.registerBlockEntityRenderer(RusticBlockEntities.LIQUID_BARREL.get(), LiquidBarrelRenderer::new);
+        // Phase 9 S9.2: the cabinet door BER. Its four body layers are baked via registerLayerDefinitions below.
+        event.registerBlockEntityRenderer(RusticBlockEntities.CABINET.get(), CabinetRenderer::new);
+    }
+
+    /**
+     * The four cabinet body layers (single/single-mirror/double/double-mirror) the {@code CabinetRenderer} bakes.
+     * Mirror moves the door hinge to the opposite vertical edge, exactly as the legacy {@code ModelCabinet(boolean)}
+     * chose its box signs; the double is the two-block-tall variant whose texture sheet is twice as tall.
+     */
+    private static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
+        event.registerLayerDefinition(CabinetModel.SINGLE, () -> CabinetModel.createBodyLayer(false, false));
+        event.registerLayerDefinition(CabinetModel.SINGLE_MIRROR, () -> CabinetModel.createBodyLayer(true, false));
+        event.registerLayerDefinition(CabinetModel.DOUBLE, () -> CabinetModel.createBodyLayer(false, true));
+        event.registerLayerDefinition(CabinetModel.DOUBLE_MIRROR, () -> CabinetModel.createBodyLayer(true, true));
+    }
+
+    /**
+     * Phase 9 S9.4: attaches the iron-skin / fullmetal metal-plate overlay to both player renderers
+     * (the regular and slim skins), replacing the legacy {@code ClientProxy.postInit} loop that reached into
+     * {@code RenderManager.entityRenderMap}/{@code getSkinMap} and called {@code addLayer} on every living renderer.
+     *
+     * <p>Scope narrowed to players on purpose: the legacy layer picked its metal texture size from
+     * {@code model.textureWidth/textureHeight}, fields 1.21 entity models no longer expose to a render layer, so only
+     * the fixed 64x32 player sheet can be reproduced faithfully (see {@code IronSkinRenderPolicy}). The
+     * {@code ironskin_render_entity_blacklist} is honoured here - adding {@code minecraft:player} disables the paint -
+     * preserving the config's contract even though its slime/shulker defaults target renderers we no longer touch.
+     */
+    private static void addLayers(EntityRenderersEvent.AddLayers event) {
+        List<? extends String> blacklist = RusticConfig.IRONSKIN_RENDER_ENTITY_BLACKLIST.get();
+        if (IronSkinRenderPolicy.isEntityBlacklisted(BuiltInRegistries.ENTITY_TYPE.getKey(EntityType.PLAYER), blacklist)) {
+            return;
+        }
+        for (PlayerSkin.Model skin : event.getSkins()) {
+            PlayerRenderer renderer = event.getSkin(skin);
+            if (renderer != null) {
+                renderer.addLayer(new IronSkinRenderLayer(renderer));
+            }
+        }
+    }
+
+    /**
+     * S9.5: slots the two HUD meters into 1.21's {@code LayeredDraw} pipeline. The 1.12.2 equivalents were
+     * {@code RenderGameOverlayEvent} hooks in {@code EventHandlerClient}. {@link VanillaGuiLayers#ARMOR_LEVEL}
+     * already paints the first armour row, so {@link ArmorOverflowLayer} registers immediately above it and adds only
+     * the rows vanilla omits; {@link VanillaGuiLayers#FOOD_LEVEL} anchors {@link ArmorToughnessLayer} on the
+     * right-hand stack (vanilla draws no toughness meter at all).
+     */
+    private static void registerGuiLayers(RegisterGuiLayersEvent event) {
+        event.registerAbove(VanillaGuiLayers.ARMOR_LEVEL,
+                ResourceLocation.fromNamespaceAndPath(Rustic.MODID, "armor_overflow"), new ArmorOverflowLayer());
+        event.registerAbove(VanillaGuiLayers.FOOD_LEVEL,
+                ResourceLocation.fromNamespaceAndPath(Rustic.MODID, "armor_toughness"), new ArmorToughnessLayer());
+        // Fullmetal first-person screen tint: bottom-most layer so the entire HUD (and the crosshair) still draw over it.
+        event.registerBelowAll(ResourceLocation.fromNamespaceAndPath(Rustic.MODID, "fullmetal_overlay"),
+                new FullmetalOverlayLayer());
+        // Fluid-submersion screen tint: also bottom-most. Owned by the mod (not the engine's faint renderFluid pass)
+        // so it is actually visible; see FluidOverlayLayer and FLUID_RENDER_OVERLAYS.
+        event.registerBelowAll(ResourceLocation.fromNamespaceAndPath(Rustic.MODID, "fluid_overlay"),
+                new FluidOverlayLayer());
     }
 
     /**
@@ -181,6 +326,10 @@ public final class RusticClient {
     private static void placeableExtension(RegisterClientExtensionsEvent event, Holder<FluidType> type, String name) {
         String base = "block/fluids/" + name;
         event.registerFluidType(fluidTextures(base + "_still", base + "_flow", base + "_overlay"), type);
+        // Standalone file location (assets/rustic/textures/...) that FluidOverlayLayer paints full-screen when the
+        // camera is submerged in this fluid type. Keyed by the FluidType instance getEyeInFluidType() returns.
+        FLUID_RENDER_OVERLAYS.put(type.value(),
+                ResourceLocation.parse(Rustic.MODID + ":textures/" + base + "_overlay.png"));
     }
 
     /** A booze fluid: still/flow sprites under {@code block/fluids/booze/}, deliberately no overlay. */
@@ -194,6 +343,11 @@ public final class RusticClient {
         ResourceLocation stillLoc = ResourceLocation.parse(Rustic.MODID + ":" + still);
         ResourceLocation flowingLoc = ResourceLocation.parse(Rustic.MODID + ":" + flowing);
         ResourceLocation overlayLoc = overlay == null ? null : ResourceLocation.parse(Rustic.MODID + ":" + overlay);
+        // The camera-submersion screen tint is deliberately NOT routed through getRenderOverlayTexture: vanilla's
+        // ScreenEffectRenderer#renderFluid composites it at a hard-coded 0.1 alpha, far too faint to read as an
+        // overlay. The mod owns the effect instead - FluidOverlayLayer paints the same overlay sheet (addressed as a
+        // standalone file in FLUID_RENDER_OVERLAYS) as a full-screen quad at a clearly-visible alpha. Leaving
+        // getRenderOverlayTexture at its null default suppresses the engine pass so the two never double up.
         return new IClientFluidTypeExtensions() {
             @Override
             public ResourceLocation getStillTexture() {
@@ -249,6 +403,34 @@ public final class RusticClient {
                 RusticBlocks.ironwood().leaves().get(),
                 RusticFarmBlocks.APPLE_LEAVES.get());
     }
+
+    /** The cabinet block item is drawn as the 3D cabinet body (its animated BER model), replacing the legacy
+     * {@code CabinetTEISR}. {@code builtin/entity} on the item model plus this extension is what routes the inventory
+     * stack through the shared {@link CabinetBlockItemRenderer}; the renderer instance is cached so it is built once. */
+    private static void registerItemExtensions(RegisterClientExtensionsEvent event) {
+        event.registerItem(new IClientItemExtensions() {
+            @Override
+            public BlockEntityWithoutLevelRenderer getCustomRenderer() {
+                // Lazily built: Minecraft.getInstance() is only valid once the client is up, and this getter is first
+                // called during item rendering, well after the extension registration itself.
+                if (cabinetItemRenderer == null) {
+                    cabinetItemRenderer = new CabinetBlockItemRenderer();
+                }
+                return cabinetItemRenderer;
+            }
+        }, RusticMachineBlocks.CABINET.get().asItem());
+    }
+
+    /** A single BEWLR for the cabinet block item, built on first use and reused across every inventory draw. */
+    @Nullable
+    private static BlockEntityWithoutLevelRenderer cabinetItemRenderer;
+
+    /**
+     * FluidType -> the standalone overlay texture {@code FluidOverlayLayer} paints full-screen when the camera is
+     * submerged in that fluid. Populated during {@link #registerFluidExtensions} (client only) and read on the render
+     * thread; keyed by the same {@code FluidType} instance {@code Entity#getEyeInFluidType()} hands back.
+     */
+    public static final Map<FluidType, ResourceLocation> FLUID_RENDER_OVERLAYS = new HashMap<>();
 
     private RusticClient() {
     }

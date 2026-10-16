@@ -8,7 +8,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -19,6 +22,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import rustic.content.blockentity.CabinetBlockEntity;
+import rustic.content.blockentity.RusticBlockEntities;
 
 /**
  * 1.12.2's {@code BlockCabinet}: a two-block-tall wooden chest-like storage block that merges vertically
@@ -142,5 +146,31 @@ public class CabinetBlock extends BlockRusticChest {
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new CabinetBlockEntity(pos, state);
+    }
+
+    /**
+     * Phase 9: the cabinet is no longer a static cube. The swinging doors are drawn by the {@code CabinetRenderer}
+     * {@code BlockEntityRenderer}, so (exactly as vanilla's chest and barrel) the render shape is
+     * {@link RenderShape#ENTITYBLOCK_ANIMATED} - overriding the {@link RenderShape#MODEL} that
+     * {@link BlockRusticChest} pins for the inventory-only chests. The generated blockstate cube stays for the break
+     * particles and loot.
+     */
+    @Override
+    protected RenderShape getRenderShape(BlockState state) {
+        return RenderShape.ENTITYBLOCK_ANIMATED;
+    }
+
+    /**
+     * The client-only lid ticker: eases the door angle toward the current opener count between the {@code blockEvent}
+     * sync and the render. The server half has nothing to tick (the {@code ContainerOpenersCounter} drives it), so the
+     * ticker is returned only on the client, mirroring vanilla's chest/barrel tick.
+     */
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
+                                                                  BlockEntityType<T> type) {
+        return level.isClientSide()
+                ? createTickerHelper(type, RusticBlockEntities.CABINET.get(), CabinetBlockEntity::lidAnimateTick)
+                : null;
     }
 }

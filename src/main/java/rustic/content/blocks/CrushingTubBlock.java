@@ -5,6 +5,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
@@ -12,8 +14,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityTicker;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -24,13 +24,12 @@ import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import org.jetbrains.annotations.Nullable;
 import rustic.content.blockentity.CrushingTubBlockEntity;
-import rustic.content.blockentity.RusticBlockEntities;
 
 /**
  * 1.12.2's {@code BlockCrushingTub}: the input/tank machine behind {@link CrushingTubBlockEntity}. No GUI - the block
- * is an interaction surface. Dropping the legacy {@code onFallenUpon} crush trigger, the crushing runs on the
- * server tick ({@link CrushingTubBlockEntity#serverTick}); right-click inserts an input item or draws fluid out with
- * a bucket, and sneak-right-click pulls the input item back out.
+ * is an interaction surface. Right-click inserts an input item or draws fluid out with a bucket, sneak-right-click
+ * pulls the input item back out, and - exactly as the legacy {@code onFallenUpon} trigger - a living entity landing
+ * on the tub (a player hopping onto it) runs one {@link CrushingTubBlockEntity#crush()} cycle.
  */
 public class CrushingTubBlock extends BaseEntityBlock {
 
@@ -56,7 +55,9 @@ public class CrushingTubBlock extends BaseEntityBlock {
 
     @Override
     protected RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
+        // S9.1: the crushing tub's fluid surface and stacked items are a BlockEntityRenderer, which only runs under
+        // ENTITYBLOCK_ANIMATED; the renderer also redraws this block's own open-vessel model via renderSingleBlock.
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Override
@@ -64,12 +65,19 @@ public class CrushingTubBlock extends BaseEntityBlock {
         return SHAPE;
     }
 
-    @Nullable
+    /**
+     * The legacy {@code BlockCrushingTub.onFallenUpon} hook (1.21.1 renamed it {@code fallOn}): a living entity that
+     * lands on the tub after a fall (a player hopping on, a mob dropping onto it) drives one crush cycle. {@code fallOn}
+     * only fires when the entity arrives with a nonzero fall distance, so simply walking onto the half-height tub does
+     * not crush - the player has to jump on it, matching 1.12.2.
+     */
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
-                                                                  BlockEntityType<T> type) {
-        return level.isClientSide ? null
-                : createTickerHelper(type, RusticBlockEntities.CRUSHING_TUB.get(), CrushingTubBlockEntity::serverTick);
+    public void fallOn(Level level, BlockState state, BlockPos pos, Entity entity, float fallDistance) {
+        super.fallOn(level, state, pos, entity, fallDistance);
+        if (!level.isClientSide && entity instanceof LivingEntity
+                && level.getBlockEntity(pos) instanceof CrushingTubBlockEntity tub) {
+            tub.crush();
+        }
     }
 
     @Override

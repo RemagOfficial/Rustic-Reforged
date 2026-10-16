@@ -2,10 +2,13 @@ package rustic.content.blockentity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.particles.ItemParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Containers;
@@ -27,13 +30,14 @@ import rustic.registry.RusticRegistries;
 import java.util.Optional;
 
 /**
- * 1.12.2's {@code TileEntityCrushingTub}: a single input slot over an output fluid tank. An item placed in the slot
- * is, on the server tick, matched against the {@link CrushingTubRecipe} set; a match fills the tank with the recipe
- * fluid, consumes one input item, drops the byproduct and plays the slime sound.
+ * 1.12.2's {@code TileEntityCrushingTub}: a single input slot over an output fluid tank.
  *
- * <p><b>Behaviour deviation.</b> Legacy crushed only when a living entity fell onto the tub
- * ({@code BlockCrushingTub.onFallenUpon}). The plan's M2 contract replaces that with tick-driven auto-crush, so the
- * port ticks and consumes whenever an input is loaded and the tank has room.
+ * <p>Crushing is driven by the legacy trigger, not a ticker: {@link rustic.content.blocks.CrushingTubBlock} calls
+ * {@link #crush()} from its entity-landing hook when a living entity falls onto the tub (the 1.12.2
+ * {@code BlockCrushingTub.onFallenUpon -> TileEntityCrushingTub.crush} pair), so the player must hop on the loaded
+ * tub to crush a single input item. A {@code crush()} pass matches the slot against the {@link CrushingTubRecipe}
+ * set; on a match it fills the tank with the recipe fluid, consumes one input item, drops the byproduct and plays
+ * the slime sound - exactly one cycle per landing.
  *
  * <p>The tank is a drain-only output, mirroring legacy {@code setCanFill(false)}/{@code setCanDrain(true)}: the
  * machine writes into {@link #tank} directly, while the {@code Capabilities.FluidHandler.BLOCK} provider hands out
@@ -119,9 +123,21 @@ public class CrushingTubBlockEntity extends BlockEntity {
         }
     }
 
-    /** Server tick: consume one input item into tank fluid + byproduct when a recipe matches and there is room. */
-    public static void serverTick(Level level, BlockPos pos, BlockState state, CrushingTubBlockEntity be) {
-        ItemStack input = be.itemHandler.getStackInSlot(INPUT_SLOT);
+    /**
+     * Run one crush cycle: match the loaded input against the {@link CrushingTubRecipe} set and, on a match with
+     * room in the tank, fill the tank, consume one item, drop the byproduct, burst item-crack particles and play the
+     * slime sound. This is the 1.12.2 {@code TileEntityCrushingTub.crush} body, invoked from the block's entity-landing
+     * hook (a player or mob falling onto the tub), not from a ticker. Legacy spawned the {@code ITEM_CRACK} particles on
+     * the client half of the same call; since the port runs the crush server-side, the particles are broadcast to every
+     * tracking client through {@link ServerLevel#sendParticles}.
+     */
+    public void crush() {
+        Level level = this.level;
+        BlockPos pos = this.worldPosition;
+        if (level == null || level.isClientSide) {
+            return;
+        }
+        ItemStack input = this.itemHandler.getStackInSlot(INPUT_SLOT);
         if (input.isEmpty()) {
             return;
         }
@@ -136,11 +152,12 @@ public class CrushingTubBlockEntity extends BlockEntity {
             return;
         }
         // Only crush when the tank can take the whole output in one go (same fluid, enough space).
-        if (be.tank.fill(output, IFluidHandler.FluidAction.SIMULATE) < output.getAmount()) {
+        if (this.tank.fill(output, IFluidHandler.FluidAction.SIMULATE) < output.getAmount()) {
             return;
         }
-        be.tank.fill(output, IFluidHandler.FluidAction.EXECUTE);
-        be.itemHandler.extractItem(INPUT_SLOT, 1, false);
+        this.tank.fill(output, IFluidHandler.FluidAction.EXECUTE);
+        ItemStack crushed = input.copyWithCount(1);
+        this.itemHandler.extractItem(INPUT_SLOT, 1, false);
         ItemStack byproduct = recipe.getByproduct();
         if (!byproduct.isEmpty()) {
             Containers.dropItemStack(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, byproduct);
@@ -148,6 +165,12 @@ public class CrushingTubBlockEntity extends BlockEntity {
         level.playSound(null, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D,
                 SoundEvents.SLIME_BLOCK_FALL, SoundSource.BLOCKS, 0.5F,
                 0.8F + level.getRandom().nextFloat() * 0.2F);
+        // Legacy {@code crush} client branch: {@code rand.nextInt(8) + 8} ITEM_CRACK particles of the input item.
+        if (level instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(new ItemParticleOption(ParticleTypes.ITEM, crushed),
+                    pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D,
+                    level.getRandom().nextInt(8) + 8, 0.1D, 0.1D, 0.1D, 0.05D);
+        }
     }
 
     @Override

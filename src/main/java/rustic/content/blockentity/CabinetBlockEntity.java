@@ -17,7 +17,10 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.ChestLidController;
 import net.minecraft.world.level.block.entity.ContainerOpenersCounter;
+import net.minecraft.world.level.block.entity.LidBlockEntity;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import rustic.content.blocks.CabinetBlock;
@@ -39,19 +42,26 @@ import rustic.content.menu.RusticMenus;
  * <p>The chest open/close sound is kept (the user asked for behaviour now, art later) and reproduced the way
  * 1.21's own chest and barrel do it - a {@link ContainerOpenersCounter} driven from {@link #startOpen} /
  * {@link #stopOpen}, whose {@code isOwnContainer} test understands a {@link CompoundContainer} so a shared
- * double counts its openers correctly. The lid-angle ticking of the legacy {@code update()} only existed to
- * feed the deferred door {@code CabinetRenderer}; with no door to animate the counter's open-count callback
- * is left empty, exactly as vanilla's {@code BarrelBlockEntity} leaves it, and no {@code BlockEntityTicker}
- * or {@code triggerEvent} is needed. The Quark {@code IDropoffManager} interface and the {@code material}
- * stack (which the legacy dynamic cabinet craft stamped) are both dropped: the port's shaped recipe carries no
- * material, and the Quark compat half belongs to Phase 10.
+ * double counts its openers correctly. Phase 9 grew the deferred door back, so the open-count is now fed to a
+ * {@link ChestLidController} exactly as vanilla's {@code ChestBlockEntity} does: {@link #openerCountChanged}
+ * signals the count to clients through {@link Level#blockEvent}, {@link #triggerEvent} turns it into
+ * {@code shouldBeOpen}, and the client {@link #lidAnimateTick ticker} eases the angle every frame. The renderer
+ * reads the interpolated value through {@link LidBlockEntity#getOpenNess(float)}. The Quark
+ * {@code IDropoffManager} interface and the {@code material} stack (which the legacy dynamic cabinet craft
+ * stamped) stay dropped: the port's shaped recipe carries no material, and the Quark compat half belongs to
+ * Phase 10.
  */
-public class CabinetBlockEntity extends RandomizableContainerBlockEntity {
+public class CabinetBlockEntity extends RandomizableContainerBlockEntity implements LidBlockEntity {
+
+    /** The 1.21 chest lid-easing controller: holds the open/closed target and the interpolated angle. */
+    private static final int EVENT_SET_OPEN_COUNT = 1;
 
     /** The 27 slots the legacy {@code ItemStackHandlerRustic(27)} used; a double pairs two of these. */
     private static final int CONTAINER_SIZE = 27;
 
     private NonNullList<ItemStack> items = NonNullList.withSize(CONTAINER_SIZE, ItemStack.EMPTY);
+
+    private final ChestLidController lidController = new ChestLidController();
 
     private final ContainerOpenersCounter openersCounter = new ContainerOpenersCounter() {
         @Override
@@ -66,8 +76,9 @@ public class CabinetBlockEntity extends RandomizableContainerBlockEntity {
 
         @Override
         protected void openerCountChanged(Level level, BlockPos pos, BlockState state, int previous, int count) {
-            // The legacy lid-angle sync lived here; the door renderer that read it is deferred, so nothing
-            // has to be signalled - matching vanilla's BarrelBlockEntity, whose override is empty too.
+            // Mirror vanilla's ChestBlockEntity: push the live opener count to every tracking client so each half's
+            // lid controller starts or stops easing. The door renderer reads the angle back through getOpenNess.
+            CabinetBlockEntity.this.signalOpenCount(level, pos, state, previous, count);
         }
 
         @Override
@@ -168,5 +179,39 @@ public class CabinetBlockEntity extends RandomizableContainerBlockEntity {
     private void playSound(Level level, BlockPos pos, SoundEvent sound) {
         level.playSound(null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, sound, SoundSource.BLOCKS,
                 0.5F, level.random.nextFloat() * 0.1F + 0.9F);
+    }
+
+    /**
+     * Client-side lid easing the block's ticker runs every frame; identical to vanilla's {@code lidAnimateTick}. It
+     * advances the {@link ChestLidController} toward its open/closed target so {@link #getOpenNess} can interpolate.
+     */
+    public static void lidAnimateTick(Level level, BlockPos pos, BlockState state, CabinetBlockEntity blockEntity) {
+        blockEntity.lidController.tickLid();
+    }
+
+    /** The interpolated lid openness ({@code 0} closed, {@code 1} open) the door renderer reads. */
+    @Override
+    public float getOpenNess(float partialTicks) {
+        return this.lidController.getOpenness(partialTicks);
+    }
+
+    /**
+     * The client half of the opener-count sync: {@link #signalOpenCount} fires a block event with the new count, and
+     * this turns it into the controller's open/closed target. Kept on the block entity rather than a shared static
+     * because there is no {@code ChestBlock.getConnectedDirection} equivalent to fold the double halves together.
+     */
+    @Override
+    public boolean triggerEvent(int id, int count) {
+        if (id == EVENT_SET_OPEN_COUNT) {
+            this.lidController.shouldBeOpen(count > 0);
+            return true;
+        }
+        return super.triggerEvent(id, count);
+    }
+
+    /** Server -> client signal, the same {@code level.blockEvent(pos, block, 1, count)} vanilla's chest sends. */
+    protected void signalOpenCount(Level level, BlockPos pos, BlockState state, int previous, int count) {
+        Block block = state.getBlock();
+        level.blockEvent(pos, block, EVENT_SET_OPEN_COUNT, count);
     }
 }

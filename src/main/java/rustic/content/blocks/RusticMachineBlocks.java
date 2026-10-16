@@ -55,13 +55,26 @@ public final class RusticMachineBlocks {
     // ------------------------------------------------------------------
     // Processing machines. 1.12.2: BlockCrushingTub, Material.WOOD, hardness 1.5 - a one-slot input over a
     // drain-only fluid tank, no GUI.
+    // Faithful 1.12.2 contract: legacy BlockCrushingTub declared isOpaqueCube=false, so it never occluded a neighbour.
+    // The tub's getShape is a full-footprint box (0..1 x/z, 0..0.5625 y), so left opaque its DOWN face culls the grass
+    // top beneath it, exactly like the basin. The tub MODEL's base plate is [1,0,1]->[15,1,15], so the dropped grass
+    // shows through as a thin ring of missing ground at the block edges/corners. noOcclusion() reproduces the legacy
+    // non-opaque contract (its DOWN=SOLID getBlockFaceShape only ever governed connection/stand-on logic, not the
+    // 1.21 neighbour face-cull, so it is not a reason to keep occlusion here).
     // ------------------------------------------------------------------
     public static final DeferredBlock<CrushingTubBlock> CRUSHING_TUB =
-            MACHINE_BLOCKS.registerBlock("crushing_tub", CrushingTubBlock::new, RusticBlockProperties.wood(1.5F));
+            MACHINE_BLOCKS.registerBlock("crushing_tub", CrushingTubBlock::new, RusticBlockProperties.wood(1.5F).noOcclusion());
 
     // 1.12.2: BlockEvaporatingBasin, Material.ROCK, hardness 1.5 - a fluid-in / dust-out basin, no GUI.
+    // The legacy block declared isOpaqueCube=false and getBlockFaceShape=UNDEFINED on EVERY side, i.e. it never
+    // occludes a neighbour. That must be reproduced here: the basin's getShape is a full-footprint shallow box
+    // (0..1 x/z, 0..0.25 y), and 1.21's Block.shouldRenderFace derives the neighbour-cull test from getOcclusionShape
+    // (which defaults to getShape). Left as a normal opaque block that full DOWN face exactly coincides with the
+    // grass top beneath it, so the chunk builder drops the grass face - and because the basin MODEL's base plate only
+    // covers the inner 10/16 footprint, the dropped face shows through the outer rim as a hole in the ground.
+    // noOcclusion() sets canOcclude=false so shouldRenderFace short-circuits to "render", matching the legacy contract.
     public static final DeferredBlock<EvaporatingBasinBlock> EVAPORATING_BASIN =
-            MACHINE_BLOCKS.registerBlock("evaporating_basin", EvaporatingBasinBlock::new, RusticBlockProperties.stone(1.5F));
+            MACHINE_BLOCKS.registerBlock("evaporating_basin", EvaporatingBasinBlock::new, RusticBlockProperties.stone(1.5F).noOcclusion());
 
     // 1.12.2: BlockBrewingBarrel, Material.WOOD, hardness 1.5 - the fermenting barrel with the bespoke GUI.
     public static final DeferredBlock<BrewingBarrelBlock> BREWING_BARREL =
