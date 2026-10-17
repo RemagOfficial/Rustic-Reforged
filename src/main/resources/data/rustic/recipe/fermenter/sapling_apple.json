@@ -1,0 +1,14 @@
+{
+  "type": "forestry:fermenter",
+  "fermentationValue": 250,
+  "fluidResource": {
+    "amount": 1,
+    "id": "minecraft:water"
+  },
+  "id": "rustic:fermenter/sapling_apple",
+  "modifier": 1.0,
+  "output": "forestry:biomass",
+  "resource": {
+    "item": "rustic:sapling_apple"
+  }
+}

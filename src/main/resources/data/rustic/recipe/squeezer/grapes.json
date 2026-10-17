@@ -1,0 +1,17 @@
+{
+  "type": "forestry:squeezer",
+  "chance": 0.0,
+  "id": "rustic:squeezer/grapes",
+  "output": {
+    "stack": {
+      "amount": 250,
+      "id": "rustic:grapejuice"
+    }
+  },
+  "resources": [
+    {
+      "item": "rustic:grapes"
+    }
+  ],
+  "time": 10
+}

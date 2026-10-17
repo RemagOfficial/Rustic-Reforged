@@ -1,0 +1,17 @@
+{
+  "type": "forestry:squeezer",
+  "chance": 0.0,
+  "id": "rustic:squeezer/honeycomb",
+  "output": {
+    "stack": {
+      "amount": 250,
+      "id": "rustic:honey"
+    }
+  },
+  "resources": [
+    {
+      "item": "rustic:honeycomb"
+    }
+  ],
+  "time": 10
+}

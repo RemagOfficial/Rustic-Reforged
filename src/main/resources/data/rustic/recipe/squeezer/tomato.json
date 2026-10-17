@@ -1,0 +1,17 @@
+{
+  "type": "forestry:squeezer",
+  "chance": 0.0,
+  "id": "rustic:squeezer/tomato",
+  "output": {
+    "stack": {
+      "amount": 200,
+      "id": "forestry:fruit_juice"
+    }
+  },
+  "resources": [
+    {
+      "item": "rustic:tomato"
+    }
+  ],
+  "time": 10
+}

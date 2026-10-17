@@ -1,0 +1,17 @@
+{
+  "type": "forestry:squeezer",
+  "chance": 0.0,
+  "id": "rustic:squeezer/chili_pepper",
+  "output": {
+    "stack": {
+      "amount": 100,
+      "id": "forestry:fruit_juice"
+    }
+  },
+  "resources": [
+    {
+      "item": "rustic:chili_pepper"
+    }
+  ],
+  "time": 10
+}

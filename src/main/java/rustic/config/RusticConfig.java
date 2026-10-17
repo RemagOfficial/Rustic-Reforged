@@ -84,7 +84,10 @@ public final class RusticConfig {
     // all.compat -> [compat]
     // ------------------------------------------------------------------
     public static final ModConfigSpec.BooleanValue ENABLE_SILVER_DECOR;
-    public static final ModConfigSpec.BooleanValue ENABLE_FORESTRY_COMPAT;
+    // ENABLE_FORESTRY_COMPAT was dropped in S10.4: the Forestry CE compat ships as plain datapack data
+    // (forestry:squeezer / forestry:fermenter recipes + a forestry:biogas_fuels fluid data map). Data of an
+    // absent mod is inert - unknown recipe types are skipped with a log warning, unregistered data map types
+    // are never read - so there is nothing a toggle could protect and no Java glue to guard.
 
     static {
         BUILDER.push("General Options");
@@ -301,15 +304,6 @@ public final class RusticConfig {
         ENABLE_SILVER_DECOR = BUILDER
                 .comment("set this to false to disable silver chain, chandelier, candle, and lantern blocks")
                 .define("enable_silver_decoration_blocks", true);
-
-        // 1.12.2 shipped this as true (Forestry had a build). On 1.21.1 the only Forestry is the
-        // Community Edition FORK at 3.0.0-alpha6 - an alpha whose API is still moving - so the compat is
-        // opt-in and OFF by default (deliberate deviation from the legacy default, recorded in the baseline test).
-        ENABLE_FORESTRY_COMPAT = BUILDER
-                .comment("EXPERIMENTAL (alpha): adds Rustic-fluid recipes to some Forestry machines.",
-                        "Forestry has no official 1.21.1 build; this targets the Forestry: Community Edition fork (3.0.0-alpha6), whose API is still unstable.",
-                        "Disabled by default and opt-in only - turn it on when Forestry CE is installed and you accept the alpha risk.")
-                .define("enable_forestry_compat", false);
 
         BUILDER.pop();
     }

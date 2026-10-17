@@ -1,0 +1,21 @@
+{
+  "type": "forestry:squeezer",
+  "chance": 0.2,
+  "id": "rustic:squeezer/golden_apple",
+  "output": {
+    "stack": {
+      "amount": 100,
+      "id": "rustic:goldenapplejuice"
+    }
+  },
+  "remnant": {
+    "count": 1,
+    "id": "rustic:dust_gold"
+  },
+  "resources": [
+    {
+      "item": "minecraft:golden_apple"
+    }
+  ],
+  "time": 10
+}

@@ -1,0 +1,21 @@
+{
+  "type": "forestry:squeezer",
+  "chance": 0.05,
+  "id": "rustic:squeezer/ironberries",
+  "output": {
+    "stack": {
+      "amount": 250,
+      "id": "rustic:ironberryjuice"
+    }
+  },
+  "remnant": {
+    "count": 1,
+    "id": "rustic:dust_tiny_iron"
+  },
+  "resources": [
+    {
+      "item": "rustic:ironberries"
+    }
+  ],
+  "time": 10
+}

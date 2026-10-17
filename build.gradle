@@ -207,6 +207,19 @@ dependencies {
     // CC: Tweaked (used to auto generate jo-codes)
     compileOnly "maven.modrinth:gu7yAYhd:1ewzHZYg"
     localRuntime "maven.modrinth:gu7yAYhd:1ewzHZYg"
+
+    // Forestry: Community Edition (S10.4). The compat itself is delivered as DATA (datapack recipe JSON for
+    // forestry:squeezer / forestry:fermenter + a forestry:biogas_fuels fluid data map), NOT compiled Java, so
+    // there is no compileOnly dependency on the CE API. Both jars are placed on localRuntime so `gradlew runClient`
+    // boots Forestry CE alongside Rustic and the compat data loads without manual drops into run/mods. End users
+    // gain no dependency: nothing here reaches runtimeOnly/implementation, and there is deliberately no
+    // neoforge.mods.toml version coupling because the alpha version string "3.0.0-alpha8" sorts BELOW "[3.0.0,)"
+    // as a prerelease; if FML saw the range on an optional dep, it would reject the mod. Patchouli is Forestry's
+    // mandatory dep at [1.21.1-92,) and cursemaven's synthetic pom declares no transitive deps, so it is added
+    // explicitly here (Modrinth project nU0bVIaL, version BIogJv2D = 1.21.1-93-neoforge, read from the Modrinth
+    // v2 API filtered to game_versions=1.21.1 + loaders=neoforge).
+    localRuntime "curse.maven:forestry-${forestry_project_id}:${forestry_file_id}"
+    localRuntime "maven.modrinth:${patchouli_project_id}:${patchouli_version_id}"
 }
 
 // ---------------------------------------------------------------------------

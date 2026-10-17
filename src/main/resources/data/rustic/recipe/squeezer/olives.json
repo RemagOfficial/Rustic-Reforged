@@ -1,0 +1,17 @@
+{
+  "type": "forestry:squeezer",
+  "chance": 0.0,
+  "id": "rustic:squeezer/olives",
+  "output": {
+    "stack": {
+      "amount": 250,
+      "id": "rustic:oliveoil"
+    }
+  },
+  "resources": [
+    {
+      "item": "rustic:olives"
+    }
+  ],
+  "time": 10
+}

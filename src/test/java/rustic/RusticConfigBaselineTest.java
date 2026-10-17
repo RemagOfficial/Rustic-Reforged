@@ -40,7 +40,7 @@ public class RusticConfigBaselineTest {
 
     /**
      * Every property of the spec, hand-listed. The size check in
-     * {@link #theSpecIsExactlyTheFortyFourLegacyProperties()} is what turns this into a completeness
+     * {@link #theSpecIsExactlyTheFortyThreePortedLegacyProperties()} is what turns this into a completeness
      * assertion: change a property in {@code RusticConfig} without updating the baseline and this test
      * fails instead of quietly drifting.
      */
@@ -90,16 +90,16 @@ public class RusticConfigBaselineTest {
             RusticConfig.BEE_GROWTH_MULTIPLIER,
             RusticConfig.BEE_REPRODUCTION_MULTIPLIER,
             RusticConfig.BEE_HONEYCOMB_MULTIPLIER,
-            // compat
-            RusticConfig.ENABLE_SILVER_DECOR,
-            RusticConfig.ENABLE_FORESTRY_COMPAT);
+            // compat. The legacy 44th property, "Enable Forestry Compat", is deliberately not ported (S10.4):
+            // the Forestry CE compat is pure datapack data, inert when Forestry is absent, so it needs no toggle.
+            RusticConfig.ENABLE_SILVER_DECOR);
 
     // ---------------------------------------------------------------- shape of the spec
 
     @Test
-    public void theSpecIsExactlyTheFortyFourLegacyProperties() {
-        assertEquals(44, ALL.size(), "property count changed without a baseline update");
-        assertEquals(44L, ALL.stream().map(ConfigValue::getPath).distinct().count(), "two properties share a path");
+    public void theSpecIsExactlyTheFortyThreePortedLegacyProperties() {
+        assertEquals(43, ALL.size(), "property count changed without a baseline update");
+        assertEquals(43L, ALL.stream().map(ConfigValue::getPath).distinct().count(), "two properties share a path");
 
         for (ConfigValue<?> value : ALL) {
             List<String> path = value.getPath();
@@ -124,7 +124,9 @@ public class RusticConfigBaselineTest {
         assertEquals(24, countIn(GENERAL), GENERAL);
         assertEquals(13, countIn(WORLD), WORLD);
         assertEquals(5, countIn(BEES), BEES);
-        assertEquals(2, countIn(COMPAT), COMPAT);
+        // compat: only ENABLE_SILVER_DECOR remains after the legacy "Enable Forestry Compat" toggle was dropped
+        // (S10.4, Forestry CE compat is pure datapack data), so the category holds one property, not the legacy two.
+        assertEquals(1, countIn(COMPAT), COMPAT);
 
         assertNull(RusticConfig.SPEC.getLevelComment(List.of(GENERAL)));
         assertNull(RusticConfig.SPEC.getLevelComment(List.of(WORLD)));
@@ -182,10 +184,9 @@ public class RusticConfigBaselineTest {
         assertEquals(4, RusticConfig.MAX_BREW_QUALITY_CHANGE.getDefault().intValue());
         assertEquals(12000, RusticConfig.MAX_BREW_TIME.getDefault().intValue());
 
-        // compat. Forestry diverges from the legacy default on purpose: 1.12.2 defaulted true (Forestry had a
-        // build); on 1.21.1 the only option is the alpha Community Edition fork, so the compat is opt-in / off by
-        // default. ENABLE_SILVER_DECOR still matches the legacy true.
-        assertFalse(RusticConfig.ENABLE_FORESTRY_COMPAT.getDefault());
+        // compat. The legacy "Enable Forestry Compat" toggle has no ported counterpart (S10.4): the Forestry CE
+        // compat is pure datapack data and is inert when Forestry is absent, so there is nothing to opt into or
+        // disable. ENABLE_SILVER_DECOR still matches the legacy true.
         assertTrue(RusticConfig.ENABLE_SILVER_DECOR.getDefault());
     }
 

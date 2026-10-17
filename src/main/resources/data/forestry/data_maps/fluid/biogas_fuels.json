@@ -1,0 +1,34 @@
+{
+  "values": {
+    "rustic:oliveoil": {
+      "burn_duration": 2500,
+      "dissipation_multiplier": 1,
+      "power_per_cycle": 30
+    },
+    "rustic:honey": {
+      "burn_duration": 2500,
+      "dissipation_multiplier": 1,
+      "power_per_cycle": 20
+    },
+    "rustic:applejuice": {
+      "burn_duration": 2500,
+      "dissipation_multiplier": 1,
+      "power_per_cycle": 10
+    },
+    "rustic:grapejuice": {
+      "burn_duration": 2500,
+      "dissipation_multiplier": 1,
+      "power_per_cycle": 10
+    },
+    "rustic:ironberryjuice": {
+      "burn_duration": 2500,
+      "dissipation_multiplier": 1,
+      "power_per_cycle": 10
+    },
+    "rustic:wildberryjuice": {
+      "burn_duration": 2500,
+      "dissipation_multiplier": 1,
+      "power_per_cycle": 10
+    }
+  }
+}

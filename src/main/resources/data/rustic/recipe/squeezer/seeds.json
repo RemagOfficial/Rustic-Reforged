@@ -1,0 +1,28 @@
+{
+  "type": "forestry:squeezer",
+  "chance": 0.0,
+  "id": "rustic:squeezer/seeds",
+  "output": {
+    "stack": {
+      "amount": 10,
+      "id": "forestry:seed_oil"
+    }
+  },
+  "resources": [
+    [
+      {
+        "item": "rustic:tomato_seeds"
+      },
+      {
+        "item": "rustic:chili_pepper_seeds"
+      },
+      {
+        "item": "rustic:apple_seeds"
+      },
+      {
+        "item": "rustic:grape_seeds"
+      }
+    ]
+  ],
+  "time": 10
+}

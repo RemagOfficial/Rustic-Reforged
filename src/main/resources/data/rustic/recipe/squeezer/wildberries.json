@@ -1,0 +1,17 @@
+{
+  "type": "forestry:squeezer",
+  "chance": 0.0,
+  "id": "rustic:squeezer/wildberries",
+  "output": {
+    "stack": {
+      "amount": 250,
+      "id": "rustic:wildberryjuice"
+    }
+  },
+  "resources": [
+    {
+      "item": "rustic:wildberries"
+    }
+  ],
+  "time": 10
+}
