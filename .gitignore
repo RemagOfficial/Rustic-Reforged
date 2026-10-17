@@ -27,3 +27,4 @@ libs
 /new_gradle.txt
 /PORT_BASELINE.md
 /src/generated/resources/.cache
+/src/generated-dt/resources/.cache
