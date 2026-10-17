@@ -1,0 +1,7 @@
+{
+  "loader": "dynamictrees:branch",
+  "textures": {
+    "bark": "rustic:block/log_olive",
+    "rings": "rustic:block/log_olive_top"
+  }
+}

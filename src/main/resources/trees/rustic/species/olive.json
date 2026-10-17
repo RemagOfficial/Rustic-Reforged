@@ -1,0 +1,27 @@
+{
+  "family": "rustic:olive",
+  "tapering": 0.3,
+  "signal_energy": 12.0,
+  "growth_rate": 0.6,
+  "leaves_properties": "rustic:olive",
+  "preferred_climate": "temperate",
+  "climate_tolerance": 0.5,
+  "primitive_sapling": "rustic:sapling_olive",
+  "fruits": [
+    "rustic:olives"
+  ],
+  "features": [
+    {
+      "name": "fruit",
+      "properties": {
+        "fruit": "rustic:olives"
+      }
+    }
+  ],
+  "lang_overrides": {
+    "seed": "Olive Pit"
+  },
+  "texture_overrides": {
+    "seed": "rustic:item/oliveseed"
+  }
+}

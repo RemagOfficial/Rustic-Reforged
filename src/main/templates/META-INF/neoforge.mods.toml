@@ -15,7 +15,9 @@ authors = "cadaverous-eris, RemagOfficial"
 description = '''A medieval themed Minecraft mod based around decoration, exploration, agriculture, and alchemy. Ported to NeoForge 1.21.1.'''
 
 # The 1.12.2 mod declared "after:dynamictrees@[1.12.2-0.9.1e,);after:dynamictreesbop;before:dynamictreestc".
-# Dynamic Trees has no 1.21.1 build yet, so the dependency is dropped here and re-added in Phase 10 if it lands.
+# Dynamic Trees now has a NeoForge 1.21.1 build; the optional dependency block below reflects the version read off
+# the resolved jar (S10.3), so the range is never guessed. The old bop/tc ordering constraints were for addons that
+# no longer apply here and are intentionally dropped.
 
 [[dependencies.${ mod_id }]]
 modId = "neoforge"
@@ -40,3 +42,25 @@ type = "optional"
 versionRange = "[${ jei_version_range },)"
 ordering = "AFTER"
 side = "CLIENT"
+
+# CraftTweaker is an optional compat dependency: Rustic's ZenScript recipe managers are @ZenRegister classes that
+# CT discovers through its own runtime class scan, so they are only loaded when CT is present and the mod runs fine
+# without it (no manual ModList check). The AFTER ordering lets the managers register after CT has set up its own
+# recipe managers. CT acts on both sides (scripts apply server-side).
+[[dependencies.${ mod_id }]]
+modId = "crafttweaker"
+type = "optional"
+versionRange = "[${ crafttweaker_version_range },)"
+ordering = "AFTER"
+side = "BOTH"
+
+# Dynamic Trees is an optional compat dependency (S10.3). Rustic ships a DT tree-pack (data under trees/rustic/) plus
+# a one-class registry handler that lets DT register the generated olive/ironwood tree blocks. The tree-pack is inert
+# data unless DT is installed, so no manual presence guard is needed. AFTER ordering ensures Rustic's registry handler
+# is set up on the mod bus once DT is present. Tree blocks/worldgen apply on both sides.
+[[dependencies.${ mod_id }]]
+modId = "dynamictrees"
+type = "optional"
+versionRange = "[${ dynamic_trees_version_range },)"
+ordering = "AFTER"
+side = "BOTH"

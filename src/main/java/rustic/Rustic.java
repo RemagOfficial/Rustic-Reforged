@@ -5,6 +5,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -112,6 +113,19 @@ public class Rustic {
         RusticWorldGenFeatures.register(modEventBus);
         // Phase 6: the mod's custom network payloads (the 1.21 form of PacketHandler.registerMessages), mod bus.
         RusticPayloads.register(modEventBus);
+
+        // Phase 10 / S10.3: Dynamic Trees compat. The olive/ironwood trees are a data tree-pack (JSON under
+        // trees/rustic/) that DT loads by itself; all the Java needs to do is attach a registry handler for the
+        // 'rustic' namespace so DT can register the generated tree blocks. The class touches the DT API, which is
+        // compileOnly, so it is reached only when DT is present - the same presence gate CraftTweaker/JEI rely on.
+        if (ModList.get().isLoaded("dynamictrees")) {
+            rustic.dynamictrees.RusticDynamicTreesCompat.init(modEventBus);
+            // Dev/debug tool: /dtgen samples Dynamic Trees' live biome database for the biome the player is
+            // standing in and prints the species histogram, so natural-generation problems can be diagnosed
+            // in-game instead of guessed. Registered on the game bus, and only when DT is present, so the class
+            // that references the compileOnly DT API is never loaded without it.
+            NeoForge.EVENT_BUS.addListener(rustic.dynamictrees.RusticDynamicTreesCompat::registerCommands);
+        }
 
         modEventBus.addListener(Rustic::commonSetup);
         // NeoForge's replacement for the legacy getCapability overrides on the inventory tile entities.

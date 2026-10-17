@@ -5,6 +5,7 @@ import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.loot.LootTableProvider;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 
@@ -27,6 +28,18 @@ import java.util.concurrent.CompletableFuture;
 public final class RusticDataGen {
 
     public static void gatherData(GatherDataEvent event) {
+        // Phase 10 / S10.3: Dynamic Trees generates the branch / leaves / sapling / seed / fruit blockstates, models,
+        // item models and loot for the rustic tree-pack in a DEDICATED pass (runDtTreeData sets the marker property).
+        // Its DTBlockStateProvider / DTItemModelProvider / DTLootTableProvider reuse the "rustic" namespace, so their
+        // provider names ("Block States: rustic", "Item Models: rustic", "Loot Tables") are identical to the ones
+        // Rustic registers below and NeoForge rejects the duplicate in a single run. Running the two sets in separate
+        // invocations keeps the names unique per run while both accumulate into src/generated/resources, which datagen
+        // writes additively. Guarded by ModList so the DT classes are never loaded when the optional dependency is off.
+        if (ModList.get().isLoaded("dynamictrees") && System.getProperty("rustic.dtTreeDatagen") != null) {
+            rustic.dynamictrees.RusticDynamicTreesCompat.gatherData(event);
+            return;
+        }
+
         DataGenerator generator = event.getGenerator();
         PackOutput output = generator.getPackOutput();
         CompletableFuture<HolderLookup.Provider> lookupProvider = event.getLookupProvider();

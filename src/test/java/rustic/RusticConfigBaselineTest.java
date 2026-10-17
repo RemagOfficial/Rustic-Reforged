@@ -182,8 +182,10 @@ public class RusticConfigBaselineTest {
         assertEquals(4, RusticConfig.MAX_BREW_QUALITY_CHANGE.getDefault().intValue());
         assertEquals(12000, RusticConfig.MAX_BREW_TIME.getDefault().intValue());
 
-        // compat
-        assertTrue(RusticConfig.ENABLE_FORESTRY_COMPAT.getDefault());
+        // compat. Forestry diverges from the legacy default on purpose: 1.12.2 defaulted true (Forestry had a
+        // build); on 1.21.1 the only option is the alpha Community Edition fork, so the compat is opt-in / off by
+        // default. ENABLE_SILVER_DECOR still matches the legacy true.
+        assertFalse(RusticConfig.ENABLE_FORESTRY_COMPAT.getDefault());
         assertTrue(RusticConfig.ENABLE_SILVER_DECOR.getDefault());
     }
 

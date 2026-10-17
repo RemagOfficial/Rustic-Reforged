@@ -1,7 +1,0 @@
-{   "parent": "dynamictrees:block/sapling",
-    "textures": {
-        "particle": "rustic:blocks/leaves_ironwood",
-        "log": "rustic:blocks/log_ironwood",
-        "leaves": "rustic:blocks/leaves_ironwood"
-    }
-}

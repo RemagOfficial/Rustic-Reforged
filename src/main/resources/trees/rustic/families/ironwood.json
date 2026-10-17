@@ -1,0 +1,7 @@
+{
+  "common_leaves": "rustic:ironwood",
+  "common_species": "rustic:ironwood",
+  "primitive_log": "rustic:log_ironwood",
+  "max_branch_radius": 16,
+  "generate_surface_root": true
+}

@@ -1,0 +1,42 @@
+[
+  {
+    "_comment": "Rustic S10.3 world-gen: add olive + ironwood to temperate forests while KEEPING Dynamic Trees' own oak/birch. DT 1.21 has no merge operation: splice_before/splice_after layer a WHOLE selector and a non-empty random pool always 'handles', so it SHADOWS the biome's natives instead of adding to them. The only way to add species and keep the originals is a single REPLACE that re-specifies the full pool. The native weights (dynamictrees:oak:4, dynamictrees:birch:1) are copied verbatim from DT's own forest template; only 'species' is set here so density/chance/forestness are inherited from DT's forest entry. The file MUST be named 'default' so its resource path equals 'default': BiomePopulatorsResourceLoader.isDefaultPopulator(path)=='default' is the gate that routes a world_gen populator into BiomeDatabases.getDefault(); any other name is treated as a per-dimension populator the overworld never consults. NOTE: olive/ironwood only spawn once trees/rustic/jo_codes/{olive,ironwood}.txt supply their world-gen JoCodes (DT 1.21 world-gen replays baked JoCodes; with none, Species.generate returns false).",
+    "select": { "name": "minecraft:.*", "tag": "#minecraft:is_forest" },
+    "apply": {
+      "species": {
+        "method": "replace",
+        "random": { "dynamictrees:oak": 4, "dynamictrees:birch": 1, "rustic:olive": 1, "rustic:ironwood": 1 }
+      }
+    }
+  },
+  {
+    "_comment": "Rustic: olive + ironwood in plains, added to DT's plains pool (dynamictrees:oak:24, dynamictrees:apple_oak:1 copied verbatim). Plains density is 0 / chance 0.03 in DT by design, so trees (oak and rustic alike) are rare here; we inherit that rarity rather than override it.",
+    "select": { "name": "minecraft:.*", "tag": "#c:is_plains" },
+    "apply": {
+      "species": {
+        "method": "replace",
+        "random": { "dynamictrees:oak": 24, "dynamictrees:apple_oak": 1, "rustic:olive": 1, "rustic:ironwood": 1 }
+      }
+    }
+  },
+  {
+    "_comment": "Rustic: ironwood only in swamps (legacy: ironwood in SWAMP, olive not). DT's swamp entry uses a STATIC swamp_oak; we convert it to a weighted pool keeping swamp_oak dominant so we ADD ironwood instead of shadowing the native. density/chance inherited from DT's swamp entry (noise()*0.2, 0.75).",
+    "select": { "name": "minecraft:.*", "tag": "#c:is_swamp" },
+    "apply": {
+      "species": {
+        "method": "replace",
+        "random": { "dynamictrees:swamp_oak": 4, "rustic:ironwood": 1 }
+      }
+    }
+  },
+  {
+    "_comment": "Rustic: ironwood only in jungle (legacy: ironwood in JUNGLE, olive not). Added to DT's jungle pool (jungle:15, mega_jungle:3, cocoa:1 copied verbatim) so jungle trees + cocoa remain dominant and ironwood is a small addition. density/forestness/chance inherited from DT's jungle entry.",
+    "select": { "name": "minecraft:.*", "tag": "#minecraft:is_jungle" },
+    "apply": {
+      "species": {
+        "method": "replace",
+        "random": { "dynamictrees:jungle": 15, "dynamictrees:mega_jungle": 3, "dynamictrees:cocoa": 1, "rustic:ironwood": 1 }
+      }
+    }
+  }
+]

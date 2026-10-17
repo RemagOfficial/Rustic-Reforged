@@ -57,6 +57,14 @@
   "block.rustic.stairs_olive": "Olive Wood Stairs",
   "block.rustic.stairs_ironwood": "Ironwood Stairs",
 
+  "block.rustic.olive_branch": "Olive Tree",
+  "item.rustic.olive_seed": "Olive Pit",
+  "species.rustic.olive": "Olive",
+
+  "block.rustic.ironwood_branch": "Ironwood Tree",
+  "item.rustic.ironwood_seed": "Ironwood Seed",
+  "species.rustic.ironwood": "Ironwood",
+
   "block.rustic.sapling_apple": "Apple Sapling",
   "block.rustic.leaves_apple": "Apple Leaves",
   "block.rustic.beehive": "Beehive",

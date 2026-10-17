@@ -1,0 +1,29 @@
+{
+  "family": "rustic:ironwood",
+  "tapering": 0.4,
+  "signal_energy": 14.0,
+  "up_probability": 4,
+  "lowest_branch_height": 4,
+  "growth_rate": 1.0,
+  "leaves_properties": "rustic:ironwood",
+  "preferred_climate": "temperate",
+  "climate_tolerance": 0.5,
+  "primitive_sapling": "rustic:sapling_ironwood",
+  "fruits": [
+    "rustic:ironberries"
+  ],
+  "features": [
+    {
+      "name": "fruit",
+      "properties": {
+        "fruit": "rustic:ironberries"
+      }
+    }
+  ],
+  "lang_overrides": {
+    "seed": "Ironwood Seed"
+  },
+  "texture_overrides": {
+    "seed": "rustic:item/ironwoodseed"
+  }
+}
