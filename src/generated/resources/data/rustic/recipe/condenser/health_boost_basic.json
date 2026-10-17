@@ -23,8 +23,8 @@
           "duration": 3600,
           "id": "minecraft:health_boost",
           "neoforge:cures": [
-            "milk",
-            "protected_by_totem"
+            "protected_by_totem",
+            "milk"
           ],
           "show_icon": true
         }

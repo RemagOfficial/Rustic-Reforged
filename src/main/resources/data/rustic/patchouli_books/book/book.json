@@ -1,0 +1,12 @@
+{
+  "name": "item.rustic.book",
+  "landing_text": "book.rustic.landing",
+  "version": "1.0",
+  "i18n": true,
+  "use_resource_pack": true,
+  "advancements_tab": "rustic:main/root",
+  "creative_tab": "rustic:alchemy",
+  "model": "rustic:book",
+  "show_progress": false,
+  "pause_game": false
+}

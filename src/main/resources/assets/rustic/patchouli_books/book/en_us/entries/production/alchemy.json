@@ -1,0 +1,16 @@
+{
+  "name": "book.rustic.entry.alchemy",
+  "icon": "rustic:condenser",
+  "category": "rustic:production",
+  "readbydefault": true,
+  "related": ["rustic:elixirs", "rustic:herbs", "rustic:bees", "rustic:chili_peppers", "rustic:ironwood_trees"],
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.alchemy" },
+    { "type": "text", "text": "book.rustic.text.alchemy_basic" },
+    { "type": "text", "text": "book.rustic.text.alchemy_basic_1" },
+    { "type": "text", "text": "book.rustic.text.alchemy_basic_2" },
+    { "type": "text", "text": "book.rustic.text.alchemy_advanced" },
+    { "type": "text", "text": "book.rustic.text.alchemy_advanced_1" },
+    { "type": "text", "text": "book.rustic.text.alchemy_advanced_2" }
+  ]
+}

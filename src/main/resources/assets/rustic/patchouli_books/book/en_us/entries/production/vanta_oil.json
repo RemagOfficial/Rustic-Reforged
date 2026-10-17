@@ -1,0 +1,11 @@
+{
+  "name": "book.rustic.entry.vanta_oil",
+  "icon": "rustic:fluid_bottle",
+  "category": "rustic:production",
+  "readbydefault": true,
+  "related": ["rustic:herbs", "rustic:crushing", "rustic:elixirs"],
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.vanta_oil_weapons" },
+    { "type": "text", "text": "book.rustic.text.vanta_oil_weapons_1" }
+  ]
+}

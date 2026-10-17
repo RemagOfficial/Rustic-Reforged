@@ -1,0 +1,43 @@
+{
+  "neoforge:conditions": [
+    { "type": "neoforge:mod_loaded", "modid": "patchouli" }
+  ],
+  "parent": "rustic:main/root",
+  "criteria": {
+    "has_almanac": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "patchouli:guide_book"
+            ],
+            "components": {
+              "patchouli:book": "rustic:book"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "display": {
+    "icon": {
+      "id": "patchouli:guide_book",
+      "components": {
+        "patchouli:book": "rustic:book"
+      }
+    },
+    "title": {
+      "translate": "advancements.rustic.almanac"
+    },
+    "description": {
+      "translate": "advancements.rustic.almanac.desc"
+    }
+  },
+  "requirements": [
+    [
+      "has_almanac"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

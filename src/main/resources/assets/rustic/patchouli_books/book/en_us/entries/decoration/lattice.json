@@ -1,0 +1,10 @@
+{
+  "name": "book.rustic.entry.lattice",
+  "icon": "rustic:iron_lattice",
+  "category": "rustic:decoration",
+  "readbydefault": true,
+  "related": ["rustic:chain", "rustic:lanterns"],
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.lattice" }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "book.rustic.entry.slate",
+  "icon": "rustic:slate",
+  "category": "rustic:decoration",
+  "readbydefault": true,
+  "related": ["rustic:pillars"],
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.slate" }
+  ]
+}

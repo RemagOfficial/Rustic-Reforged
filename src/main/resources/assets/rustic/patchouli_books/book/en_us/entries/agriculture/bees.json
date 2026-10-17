@@ -1,0 +1,13 @@
+{
+  "name": "book.rustic.entry.bees",
+  "icon": "rustic:bee",
+  "category": "rustic:agriculture",
+  "readbydefault": true,
+  "related": ["rustic:candles", "rustic:crushing", "rustic:alchemy", "rustic:brewing"],
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.bees" },
+    { "type": "text", "text": "book.rustic.text.apiaries" },
+    { "type": "text", "text": "book.rustic.text.honeycomb" },
+    { "type": "text", "text": "book.rustic.text.honey" }
+  ]
+}

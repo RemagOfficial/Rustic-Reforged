@@ -1,0 +1,10 @@
+{
+  "name": "book.rustic.entry.elixirs",
+  "icon": "rustic:elixir",
+  "category": "rustic:production",
+  "readbydefault": true,
+  "related": ["rustic:alchemy", "rustic:vanta_oil"],
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.elixirs" }
+  ]
+}

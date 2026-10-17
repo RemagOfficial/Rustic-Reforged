@@ -1,0 +1,9 @@
+{
+  "name": "book.rustic.entry.cabinets",
+  "icon": "rustic:cabinet",
+  "category": "rustic:decoration",
+  "readbydefault": true,
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.cabinets" }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "criteria": {
+    "consumed_item": {
+      "trigger": "minecraft:consume_item"
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "background": "rustic:textures/block/planks_ironwood.png",
+    "description": {
+      "translate": "advancements.rustic.root.desc"
+    },
+    "icon": {
+      "id": "rustic:vase"
+    },
+    "show_toast": false,
+    "title": {
+      "translate": "advancements.rustic.root"
+    }
+  },
+  "requirements": [
+    [
+      "consumed_item"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

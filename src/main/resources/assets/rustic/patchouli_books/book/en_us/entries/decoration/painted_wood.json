@@ -1,0 +1,9 @@
+{
+  "name": "book.rustic.entry.painted_wood",
+  "icon": "rustic:painted_wood_red",
+  "category": "rustic:decoration",
+  "readbydefault": true,
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.painted_wood" }
+  ]
+}

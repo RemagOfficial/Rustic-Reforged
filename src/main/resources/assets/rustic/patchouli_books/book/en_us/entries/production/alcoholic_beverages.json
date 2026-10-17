@@ -1,0 +1,20 @@
+{
+  "name": "book.rustic.entry.alcoholic_beverages",
+  "icon": "rustic:fluid_bottle",
+  "category": "rustic:production",
+  "readbydefault": true,
+  "related": ["rustic:brewing", "rustic:bees", "rustic:ironwood_trees", "rustic:apple_trees", "rustic:grapes", "rustic:wildberries"],
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.alcoholic_beverages" },
+    { "type": "text", "text": "book.rustic.text.alcoholic_beverages_1" },
+    { "type": "text", "text": "book.rustic.text.alcoholic_beverages_2" },
+    { "type": "text", "text": "book.rustic.text.ale" },
+    { "type": "text", "text": "book.rustic.text.ale_wort" },
+    { "type": "text", "text": "book.rustic.text.cider" },
+    { "type": "text", "text": "book.rustic.text.iron_wine" },
+    { "type": "text", "text": "book.rustic.text.mead" },
+    { "type": "text", "text": "book.rustic.text.wildberry_wine" },
+    { "type": "text", "text": "book.rustic.text.wine" },
+    { "type": "text", "text": "book.rustic.text.ambrosia" }
+  ]
+}

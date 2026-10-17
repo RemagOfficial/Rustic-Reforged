@@ -1,0 +1,10 @@
+{
+  "name": "book.rustic.entry.crop_stakes",
+  "icon": "rustic:crop_stake",
+  "category": "rustic:agriculture",
+  "readbydefault": true,
+  "related": ["rustic:tomatoes", "rustic:chili_peppers", "rustic:rope"],
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.crop_stakes" }
+  ]
+}

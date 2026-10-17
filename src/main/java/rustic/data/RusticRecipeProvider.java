@@ -1,5 +1,7 @@
 package rustic.data;
 
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.RecipeCategory;
@@ -23,6 +25,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.common.Tags;
+import net.neoforged.neoforge.common.conditions.ModLoadedCondition;
 import net.neoforged.neoforge.common.conditions.NotCondition;
 import net.neoforged.neoforge.common.conditions.TagEmptyCondition;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -78,9 +81,10 @@ import java.util.concurrent.CompletableFuture;
  * <p><b>The JSON half.</b> 1.12.2 kept its recipes in two places: {@code Recipes.init()} and 43 data-driven files
  * under {@code assets/rustic/recipes/}. Porting only the first of those is what left the iron and gold mounts, the
  * Rustic wood slabs/stairs/fences, the workstations, the rope, the vase and the gargoyle with no recipe at all -
- * every one of those files whose result this build registers is now emitted here too. The six whose results do not
- * exist yet ({@code apiary}, {@code retort}, {@code retort_advanced}, the almanac {@code book} and the two door
- * rows) wait for the phases that add those blocks.
+ * every one of those files whose result this build registers is now emitted here too. The five whose results do not
+ * exist yet ({@code apiary}, {@code retort}, {@code retort_advanced} and the two door rows) wait for the phases
+ * that add those blocks. The one recipe that was still hand-written in {@code src/main/resources}, the Patchouli
+ * almanac, is emitted here too - see {@link #addAlmanac(RecipeOutput)}.
  */
 public class RusticRecipeProvider extends RecipeProvider {
 
@@ -114,6 +118,7 @@ public class RusticRecipeProvider extends RecipeProvider {
         addBrewingBarrel(recipeOutput);
         addCondenser(recipeOutput);
         addCraftingTableRecipes(recipeOutput);
+        addAlmanac(recipeOutput);
     }
 
     // ------------------------------------------------------------------
@@ -731,6 +736,36 @@ public class RusticRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_planks", has(ItemTags.PLANKS))
                 .unlockedBy("has_trapdoor", has(ItemTags.WOODEN_TRAPDOORS))
                 .save(out, id);
+    }
+
+    // ------------------------------------------------------------------
+    // The almanac (S11, replacing the last hand-written file under src/main/resources, recipe/almanac.json).
+    // The result is Patchouli's own guide_book item carrying the patchouli:book component pointed at
+    // data/rustic/patchouli_books/book, exactly as the manual JSON spelled it. Patchouli is a localRuntime-only
+    // dependency and is deliberately not on the compile classpath, so neither its item nor its component type
+    // can be named here; both are resolved out of the default registries instead, which are populated because
+    // runData boots with Patchouli loaded. The neoforge:mod_loaded condition the JSON carried is kept through
+    // out.withConditions, so a Patchouli-free install still drops the recipe (and its advancement) at load.
+    // ------------------------------------------------------------------
+    @SuppressWarnings("unchecked")
+    private void addAlmanac(RecipeOutput out) {
+        Item guideBook = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("patchouli", "guide_book"));
+        DataComponentType<ResourceLocation> bookComponent =
+                (DataComponentType<ResourceLocation>) (DataComponentType<?>) BuiltInRegistries.DATA_COMPONENT_TYPE.get(
+                        ResourceLocation.fromNamespaceAndPath("patchouli", "book"));
+        if (guideBook == Items.AIR || bookComponent == null) {
+            throw new IllegalStateException("almanac datagen requires Patchouli's guide_book item and book "
+                    + "component on the runData classpath (Patchouli is wired through localRuntime)");
+        }
+        ItemStack result = new ItemStack(guideBook);
+        result.set(bookComponent, rl("book"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, result)
+                .define('O', RusticItems.OLIVES.get())
+                .define('I', cTag("nuggets/iron"))
+                .define('B', Items.BOOK)
+                .pattern(" O ").pattern("IBI").pattern(" I ")
+                .unlockedBy(getHasName(RusticItems.OLIVES.get()), has(RusticItems.OLIVES.get()))
+                .save(out.withConditions(new ModLoadedCondition("patchouli")), rl("almanac"));
     }
 
     private void single(RecipeOutput out, ItemLike result, ItemLike base, String id) {

@@ -24,8 +24,8 @@
           "duration": 1,
           "id": "minecraft:instant_health",
           "neoforge:cures": [
-            "milk",
-            "protected_by_totem"
+            "protected_by_totem",
+            "milk"
           ],
           "show_icon": true
         }

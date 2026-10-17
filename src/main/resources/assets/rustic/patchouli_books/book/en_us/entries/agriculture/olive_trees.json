@@ -1,0 +1,11 @@
+{
+  "name": "book.rustic.entry.olive_trees",
+  "icon": "rustic:olives",
+  "category": "rustic:agriculture",
+  "readbydefault": true,
+  "related": ["rustic:crushing"],
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.olive_trees" },
+    { "type": "text", "text": "book.rustic.text.olive_oil" }
+  ]
+}

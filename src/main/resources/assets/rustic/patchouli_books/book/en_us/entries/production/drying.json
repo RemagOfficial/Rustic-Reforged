@@ -1,0 +1,11 @@
+{
+  "name": "book.rustic.entry.drying",
+  "icon": "rustic:evaporating_basin",
+  "category": "rustic:production",
+  "readbydefault": true,
+  "related": ["rustic:ironwood_trees"],
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.drying" },
+    { "type": "text", "text": "book.rustic.text.drying_1" }
+  ]
+}

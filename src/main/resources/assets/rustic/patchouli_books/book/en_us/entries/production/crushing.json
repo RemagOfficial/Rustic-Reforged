@@ -1,0 +1,11 @@
+{
+  "name": "book.rustic.entry.crushing",
+  "icon": "rustic:crushing_tub",
+  "category": "rustic:production",
+  "readbydefault": true,
+  "related": ["rustic:bees", "rustic:grapes", "rustic:apple_trees", "rustic:wildberries", "rustic:olive_trees", "rustic:ironwood_trees"],
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.crushing" },
+    { "type": "text", "text": "book.rustic.text.crushing_1" }
+  ]
+}

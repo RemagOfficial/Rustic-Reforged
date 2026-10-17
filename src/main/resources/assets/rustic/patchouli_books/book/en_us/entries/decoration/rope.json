@@ -1,0 +1,11 @@
+{
+  "name": "book.rustic.entry.rope",
+  "icon": "rustic:rope",
+  "category": "rustic:decoration",
+  "readbydefault": true,
+  "related": ["rustic:crop_stakes", "rustic:grapes", "rustic:chain", "rustic:chandeliers"],
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.rope" },
+    { "type": "text", "text": "book.rustic.text.rope_1" }
+  ]
+}

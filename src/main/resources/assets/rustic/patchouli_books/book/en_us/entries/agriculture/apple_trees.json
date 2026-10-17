@@ -1,0 +1,12 @@
+{
+  "name": "book.rustic.entry.apple_trees",
+  "icon": "minecraft:apple",
+  "category": "rustic:agriculture",
+  "readbydefault": true,
+  "related": ["rustic:crushing", "rustic:brewing"],
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.apple_trees" },
+    { "type": "text", "text": "book.rustic.text.apple_trees_1" },
+    { "type": "text", "text": "book.rustic.text.apple_juice" }
+  ]
+}

@@ -24,6 +24,7 @@ import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.fluids.FluidStack;
+import rustic.Rustic;
 import rustic.config.RusticConfig;
 import rustic.content.fluids.RusticFluids;
 import rustic.content.items.ItemFluidBottle;
@@ -190,11 +191,17 @@ public class RecipeVantaOil implements CraftingRecipe {
         List<? extends String> whitelist = RusticConfig.VANTA_OIL_WHITELIST.get();
         for (String entry : whitelist) {
             if (entry.startsWith("#")) {
-                String tag = entry.substring(1);
-                ResourceLocation rl = tag.indexOf(':') >= 0
-                        ? ResourceLocation.parse(tag)
-                        : ResourceLocation.withDefaultNamespace(tag);
-                if (stack.is(TagKey.create(Registries.ITEM, rl))) {
+                // tryParse returns null instead of throwing when the tag does not spell a valid 1.21 id
+                // (a bare name defaults to the minecraft namespace). This runs inside matches() for every
+                // grid slot, so an exception here would abort RecipeManager.getRecipeFor and ghost the whole
+                // crafting table for every recipe. The legacy OreDictionary.doesOreNameExist was lenient the
+                // same way, so an unspellable entry is simply ignored rather than allowed to break crafting.
+                ResourceLocation tag = ResourceLocation.tryParse(entry.substring(1));
+                if (tag == null) {
+                    Rustic.LOGGER.warn("Vanta oil whitelist entry '{}' is not a valid item tag id; ignoring it", entry);
+                    continue;
+                }
+                if (stack.is(TagKey.create(Registries.ITEM, tag))) {
                     return true;
                 }
             } else if (entry.equals(id)) {

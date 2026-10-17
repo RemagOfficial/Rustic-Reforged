@@ -1,0 +1,9 @@
+{
+  "name": "book.rustic.entry.pots",
+  "icon": "rustic:vase",
+  "category": "rustic:decoration",
+  "readbydefault": true,
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.pots" }
+  ]
+}

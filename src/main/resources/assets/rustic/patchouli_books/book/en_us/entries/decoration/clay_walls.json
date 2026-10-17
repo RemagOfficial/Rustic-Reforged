@@ -1,0 +1,9 @@
+{
+  "name": "book.rustic.entry.clay_walls",
+  "icon": "rustic:clay_wall",
+  "category": "rustic:decoration",
+  "readbydefault": true,
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.clay_walls" }
+  ]
+}

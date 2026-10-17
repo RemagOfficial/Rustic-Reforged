@@ -1,0 +1,12 @@
+{
+  "name": "book.rustic.entry.chili_peppers",
+  "icon": "rustic:chili_pepper",
+  "category": "rustic:agriculture",
+  "readbydefault": true,
+  "related": ["rustic:crop_stakes", "rustic:alchemy"],
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.chili_peppers" },
+    { "type": "text", "text": "book.rustic.text.chili_peppers_1" },
+    { "type": "text", "text": "book.rustic.text.chili_peppers_2" }
+  ]
+}

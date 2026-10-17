@@ -1,0 +1,12 @@
+{
+  "name": "book.rustic.entry.grapes",
+  "icon": "rustic:grapes",
+  "category": "rustic:agriculture",
+  "readbydefault": true,
+  "related": ["rustic:rope", "rustic:crushing", "rustic:brewing"],
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.grapes" },
+    { "type": "text", "text": "book.rustic.text.grapes_1" },
+    { "type": "text", "text": "book.rustic.text.grape_juice" }
+  ]
+}

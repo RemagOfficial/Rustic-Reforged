@@ -1,0 +1,11 @@
+{
+  "name": "book.rustic.entry.ironwood_trees",
+  "icon": "rustic:ironberries",
+  "category": "rustic:agriculture",
+  "readbydefault": true,
+  "related": ["rustic:crushing", "rustic:drying", "rustic:alchemy", "rustic:brewing"],
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.ironwood_trees" },
+    { "type": "text", "text": "book.rustic.text.ironberry_juice" }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "book.rustic.entry.herbs",
+  "icon": "rustic:marsh_mallow",
+  "category": "rustic:agriculture",
+  "readbydefault": true,
+  "related": ["rustic:alchemy", "rustic:crushing", "rustic:vanta_oil"],
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.herbs" },
+    { "type": "text", "text": "book.rustic.text.aloe" },
+    { "type": "text", "text": "book.rustic.text.blood_orchid" },
+    { "type": "text", "text": "book.rustic.text.chamomile" },
+    { "type": "text", "text": "book.rustic.text.cloudsbluff" },
+    { "type": "text", "text": "book.rustic.text.cohosh" },
+    { "type": "text", "text": "book.rustic.text.core_root" },
+    { "type": "text", "text": "book.rustic.text.deathstalk" },
+    { "type": "text", "text": "book.rustic.text.ginseng" },
+    { "type": "text", "text": "book.rustic.text.horsetail" },
+    { "type": "text", "text": "book.rustic.text.marsh_mallow" },
+    { "type": "text", "text": "book.rustic.text.mooncap" },
+    { "type": "text", "text": "book.rustic.text.wind_thistle" },
+    { "type": "text", "text": "book.rustic.text.vanta_lily" }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "patchouli"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "B": {
+      "item": "minecraft:book"
+    },
+    "I": {
+      "tag": "c:nuggets/iron"
+    },
+    "O": {
+      "item": "rustic:olives"
+    }
+  },
+  "pattern": [
+    " O ",
+    "IBI",
+    " I "
+  ],
+  "result": {
+    "components": {
+      "patchouli:book": "rustic:book"
+    },
+    "count": 1,
+    "id": "patchouli:guide_book"
+  }
+}

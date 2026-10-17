@@ -196,7 +196,10 @@ public class RusticConfigBaselineTest {
                 RusticConfig.IRONSKIN_RENDER_ENTITY_BLACKLIST.getDefault());
         assertEquals(List.of("minecraft:iron_hoe", "minecraft:diamond_hoe"),
                 RusticConfig.GRAPE_TOOL_WHITELIST.getDefault());
-        assertEquals(List.of("#stickWood", "minecraft:bone", "tconstruct:broadsword", "tconstruct:longsword",
+        // The legacy 1.12.2 default was the ore-dict name "#stickWood"; the port maps it to the 1.21
+        // common tag #c:rods/wooden (which contains exactly minecraft:stick), because ResourceLocation
+        // rejects the capital W in the old ore name and a # entry now has to spell a real item tag.
+        assertEquals(List.of("#c:rods/wooden", "minecraft:bone", "tconstruct:broadsword", "tconstruct:longsword",
                 "tconstruct:rapier", "tconstruct:frypan", "tconstruct:battlesign", "tconstruct:cleaver"),
                 RusticConfig.VANTA_OIL_WHITELIST.getDefault());
         assertTrue(RusticConfig.OLIVE_OIL_BLACKLIST.getDefault().isEmpty());

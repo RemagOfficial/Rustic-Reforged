@@ -1,0 +1,9 @@
+{
+  "name": "book.rustic.entry.gargoyles",
+  "icon": "rustic:gargoyle",
+  "category": "rustic:decoration",
+  "readbydefault": true,
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.gargoyles" }
+  ]
+}

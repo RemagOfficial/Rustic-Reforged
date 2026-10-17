@@ -1,0 +1,12 @@
+{
+  "name": "book.rustic.entry.wildberries",
+  "icon": "rustic:wildberries",
+  "category": "rustic:agriculture",
+  "readbydefault": true,
+  "related": ["rustic:crushing", "rustic:brewing"],
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.wildberries" },
+    { "type": "text", "text": "book.rustic.text.wildberries_1" },
+    { "type": "text", "text": "book.rustic.text.wildberry_juice" }
+  ]
+}

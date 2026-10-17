@@ -180,9 +180,10 @@ public final class RusticConfig {
 
         VANTA_OIL_WHITELIST = BUILDER
                 .comment("add an item's registry name to this list to make it craftable with vanta oil and elixirs",
-                        "entries starting with # are item tags, which is how ore dictionary names become 1.21 tags")
+                        "entries starting with # are item tags; the legacy 1.12.2 '#stickWood' ore name maps to the "
+                                + "1.21 common tag #c:rods/wooden (minecraft:stick)")
                 .defineList("vanta_oil_whitelist",
-                        List.of("#stickWood", "minecraft:bone", "tconstruct:broadsword", "tconstruct:longsword",
+                        List.of("#c:rods/wooden", "minecraft:bone", "tconstruct:broadsword", "tconstruct:longsword",
                                 "tconstruct:rapier", "tconstruct:frypan", "tconstruct:battlesign", "tconstruct:cleaver"),
                         () -> "minecraft:stick",
                         RusticConfig::isNonBlankString);

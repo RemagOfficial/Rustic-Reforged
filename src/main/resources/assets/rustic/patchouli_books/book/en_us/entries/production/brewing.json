@@ -1,0 +1,16 @@
+{
+  "name": "book.rustic.entry.brewing",
+  "icon": "rustic:brewing_barrel",
+  "category": "rustic:production",
+  "readbydefault": true,
+  "related": ["rustic:alcoholic_beverages", "rustic:bees", "rustic:ironwood_trees", "rustic:apple_trees", "rustic:grapes", "rustic:wildberries"],
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.brewing" },
+    { "type": "text", "text": "book.rustic.text.brewing_1" },
+    { "type": "text", "text": "book.rustic.text.brewing_2" },
+    { "type": "text", "text": "book.rustic.text.brewing_3" },
+    { "type": "text", "text": "book.rustic.text.brewing_4" },
+    { "type": "text", "text": "book.rustic.text.brewing_5" },
+    { "type": "text", "text": "book.rustic.text.brewing_6" }
+  ]
+}

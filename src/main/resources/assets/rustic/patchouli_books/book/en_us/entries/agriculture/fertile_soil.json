@@ -1,0 +1,9 @@
+{
+  "name": "book.rustic.entry.fertile_soil",
+  "icon": "rustic:fertile_soil",
+  "category": "rustic:agriculture",
+  "readbydefault": true,
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.fertile_soil" }
+  ]
+}

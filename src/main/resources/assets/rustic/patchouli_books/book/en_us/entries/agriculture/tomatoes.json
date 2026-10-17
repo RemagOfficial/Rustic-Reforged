@@ -1,0 +1,11 @@
+{
+  "name": "book.rustic.entry.tomatoes",
+  "icon": "rustic:tomato",
+  "category": "rustic:agriculture",
+  "readbydefault": true,
+  "related": ["rustic:crop_stakes"],
+  "pages": [
+    { "type": "text", "text": "book.rustic.text.tomatoes" },
+    { "type": "text", "text": "book.rustic.text.tomatoes_1" }
+  ]
+}

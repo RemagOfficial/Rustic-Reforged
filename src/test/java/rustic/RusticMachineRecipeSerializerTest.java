@@ -1,6 +1,7 @@
 package rustic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -309,6 +310,38 @@ public class RusticMachineRecipeSerializerTest {
 
         ItemStack bareElixir = new ItemStack(RusticItems.ELIXIR.get());
         assertTrue(RecipeVantaOil.getIngredientEffect(bareElixir) == null, "an effectless elixir supplies nothing");
+    }
+
+    /**
+     * Regression guard for the whole-crafting-table ghosting crash. {@link RecipeVantaOil} is a dynamic recipe, so
+     * its {@code matches()} runs for every slot of every grid before any other recipe resolves; when it threw on an
+     * unparseable {@code #} whitelist entry (the legacy {@code "#stickWood"} ore name, invalid as a 1.21 tag id) the
+     * exception aborted {@code RecipeManager.getRecipeFor} and left the client's placed ingredients unconfirmed -
+     * ghosts. The port now parses {@code #} entries with {@code ResourceLocation.tryParse} and skips nulls, exactly
+     * the graceful miss {@code OreDictionary.doesOreNameExist} used to give. This asserts matching an ordinary grid
+     * (a plain food item reaches the whitelist walk) never throws.
+     */
+    @Test
+    public void vantaOilMatchingAnOrdinaryGridNeverThrows() {
+        RecipeVantaOil recipe = new RecipeVantaOil();
+        CraftingInput grid = craftingInput(new ItemStack(Items.APPLE), new ItemStack(Items.BOOK),
+                new ItemStack(Items.IRON_NUGGET));
+        assertFalse(assertDoesNotThrow(() -> recipe.matches(grid, null),
+                "a non-oil grid must not throw out of matches() and abort every crafting recipe"));
+    }
+
+    /**
+     * The whitelist's id and class branches resolve without touching tag data, so they are safe to assert
+     * headlessly: {@code minecraft:bone} matches by raw id, swords/axes by class, and an unlisted plain item (or an
+     * empty stack) matches nothing. The {@code #c:rods/wooden} branch additionally needs loaded tags and is checked
+     * in the live-game checklist.
+     */
+    @Test
+    public void vantaOilWhitelistResolvesIdAndClassEntriesWithoutTags() {
+        assertTrue(RecipeVantaOil.isVantaOilableWeapon(new ItemStack(Items.BONE)), "a raw-id whitelist entry matches");
+        assertTrue(RecipeVantaOil.isVantaOilableWeapon(new ItemStack(Items.IRON_SWORD)), "a sword is oilable by class");
+        assertFalse(RecipeVantaOil.isVantaOilableWeapon(new ItemStack(Items.APPLE)), "an unlisted food is not oilable");
+        assertFalse(RecipeVantaOil.isVantaOilableWeapon(ItemStack.EMPTY), "an empty stack is not oilable");
     }
 
     /** A 3x3 crafting grid from the given stacks (empty padding to nine slots, row-major). */
