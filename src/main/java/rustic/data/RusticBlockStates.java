@@ -32,11 +32,13 @@ import rustic.content.blocks.BlockLantern;
 import rustic.content.blocks.BlockRopeBase;
 import rustic.content.blocks.BlockTable;
 import rustic.content.blocks.BlockWoodLantern;
+import rustic.content.blocks.CondenserAdvancedBlock;
 import rustic.content.blocks.GrapeStemBlock;
 import rustic.content.blocks.RusticBlocks;
 import rustic.content.blocks.HerbBlock;
 import rustic.content.blocks.RusticFarmBlocks;
 import rustic.content.blocks.RusticMachineBlocks;
+import rustic.content.blocks.VaseBlock;
 import rustic.content.fluids.RusticFluidBlocks;
 
 /**
@@ -122,35 +124,38 @@ public class RusticBlockStates extends BlockStateProvider {
     }
 
     // ------------------------------------------------------------------
-    // Phase 5 farm blocks: the stake-crop poles and the two vine crops.
+    // Phase 11 S11.2: the stake-crop poles and the two vine crops now draw their restored 1.12.2 art.
     //
-    // Same "behaviour now, all models later" call the Phase 4 machines made: the poles and the vine are
-    // registered and functional this phase, but the legacy per-age crop models (tomato_crop_0..3) and the
-    // multi-element stake models are Phase 9 art. The vine maps every AGE state to one cross model that
-    // borrows a texture which already exists (tomato_crop_0 / chili_crop_0), so datagen's existence check
-    // passes and the crop is visible in world; the poles are placeholders on a real plank texture.
+    // crop_stake.json (a single pole) and stake_tied.json (the pole plus the rope knot) were MrCrayfish exports
+    // restored verbatim as static assets; the four-way rope-attachment submodels the tied stake can sprout are still
+    // deferred, so every one of its sixteen connection states draws the one base knot model. The tomato and chili
+    // vines each map their four AGE states to the restored per-age models over the shared rustic:block/stake_crop
+    // parent (a pole plus four transparent crop-face panels, hence its cutout) - ages 0 and 1 share the seedling
+    // sprite and ages 2 and 3 draw the mid and ripe art, exactly as the legacy blockstate aliased age 1 onto age 0.
     //
     // The crops deliberately get NO block item and so NO item model here - only the two poles, which are
     // placeable, do.
     // ------------------------------------------------------------------
     private void farmBlocks() {
-        simpleBlockWithItem(RusticFarmBlocks.CROP_STAKE.get(),
-                models().cubeAll(path(RusticFarmBlocks.CROP_STAKE), tex("planks_olive")));
-        simpleBlockWithItem(RusticFarmBlocks.STAKE_TIED.get(),
-                models().cubeAll(path(RusticFarmBlocks.STAKE_TIED), tex("planks_olive")));
+        simpleBlockWithItem(RusticFarmBlocks.CROP_STAKE.get(), existing("crop_stake"));
 
-        cropCrop(RusticFarmBlocks.TOMATO_CROP, "tomato_crop_0");
-        cropCrop(RusticFarmBlocks.CHILI_CROP, "chili_crop_0");
+        ModelFile stakeTied = existing("stake_tied");
+        getVariantBuilder(RusticFarmBlocks.STAKE_TIED.get())
+                .forAllStates(state -> ConfiguredModel.builder().modelFile(stakeTied).build());
+        simpleBlockItem(RusticFarmBlocks.STAKE_TIED.get(), stakeTied);
+
+        cropCrop(RusticFarmBlocks.TOMATO_CROP, "tomato_crop");
+        cropCrop(RusticFarmBlocks.CHILI_CROP, "chili_crop");
     }
 
-    /** Every age of one stake crop resolves to a single cutout cross; the real per-age art is Phase 9. */
+    /** One stake crop's four ages each resolve to its restored per-age model over the stake_crop parent. */
     private void cropCrop(
             DeferredBlock<? extends rustic.content.blocks.StakeCropBlock> holder,
-            String texture
+            String modelPrefix
     ) {
-        ModelFile crop = models().cross(path(holder), tex(texture)).renderType("cutout");
-        getVariantBuilder(holder.get())
-                .forAllStates(state -> ConfiguredModel.builder().modelFile(crop).build());
+        IntegerProperty age = rustic.content.blocks.StakeCropBlock.AGE;
+        getVariantBuilder(holder.get()).forAllStates(state ->
+                ConfiguredModel.builder().modelFile(existing(modelPrefix + "_" + state.getValue(age))).build());
     }
 
     // ------------------------------------------------------------------
@@ -193,23 +198,21 @@ public class RusticBlockStates extends BlockStateProvider {
     }
 
     // ------------------------------------------------------------------
-    // Phase 5 vinery. Same "behaviour now, all models later" call as the stake crops: the stem and the leaves are
-    // registered and functional this phase, but the legacy per-age stem art (the age-3 model was a solid oak-log
-    // post), the multi-part leaf/vine/rope/grape assembly and the leaf foliage tint are all Phase 9. So the stem
-    // maps its four ages to two placeholder cutout crosses drawn from the existing grape_stem_0/_1 textures, and
-    // every leaf state (axis x/z, dangle, distance, grapes) resolves to one cross on the existing grape_vine art.
+    // Vinery. Phase 11 S11.2 restored the four grape-stem ages to their real 1.12.2 art - grape_stem_0/_1/_2 are
+    // cutout crosses on the matching texture and grape_stem_3 is the solid oak-log post the legacy age-3 model used
+    // (oak_log sides over an oak_log_top cap). The leaves are the exception that stays a placeholder: the multi-part
+    // leaf/vine/rope/grape assembly and, crucially, the biome foliage tint the leaf art's tintindex needs are not
+    // registered for grape_leaves in RusticClient, so restoring that model now would draw it white. It is deferred
+    // with the colour handlers (Phase 9); every leaf state still resolves to one grape_vine cross.
     //
     // The stem gets NO item model here: its block item is the legacy "Grape Seeds" flat sprite, generated in
     // RusticItemModels. The leaves have no block item at all (they pick and loot as grapes), so nothing is emitted
     // for either on the item side.
     // ------------------------------------------------------------------
     private void grape() {
-        String stem = path(RusticFarmBlocks.GRAPE_STEM);
-        ModelFile stemYoung = models().cross(stem, tex("grape_stem_0")).renderType("cutout");
-        ModelFile stemRipe = models().cross(stem + "_tall", tex("grape_stem_1")).renderType("cutout");
         IntegerProperty stemAge = GrapeStemBlock.AGE;
         getVariantBuilder(RusticFarmBlocks.GRAPE_STEM.get()).forAllStates(state ->
-                ConfiguredModel.builder().modelFile(state.getValue(stemAge) >= 3 ? stemRipe : stemYoung).build());
+                ConfiguredModel.builder().modelFile(existing("grape_stem_" + state.getValue(stemAge))).build());
 
         ModelFile leaves = models().cross(path(RusticFarmBlocks.GRAPE_LEAVES), tex("grape_vine")).renderType("cutout");
         getVariantBuilder(RusticFarmBlocks.GRAPE_LEAVES.get()).forAllStates(state ->
@@ -217,9 +220,11 @@ public class RusticBlockStates extends BlockStateProvider {
     }
 
     // ------------------------------------------------------------------
-    // Phase 5 wildberry bush. Same "behaviour now, all models later" call as the vinery: the bush is registered and
-    // harvestable this phase, but its multi-element legacy model (a block base plus eight per-age berry overlays)
-    // and the foliage tint are Phase 9. So every age resolves to one cutout cross drawn from the existing
+    // Wildberry bush, still a placeholder after the S11.2 audit. The bush is registered and harvestable, but its
+    // multi-element legacy model (a block base plus eight per-age berry overlays) reads its leaves through a
+    // tintindex the biome foliage colour supplies - and RusticClient.registerBlockColors does not list
+    // WILDBERRY_BUSH, so restoring that model now would draw the foliage white rather than green. It is deferred
+    // with the colour handlers (Phase 9), so every age resolves to one cutout cross on the existing
     // wildberry_bush_leaves art.
     //
     // Unlike the self-herbs and the grape stem, the bush's block item is a draw of the block itself - the legacy
@@ -235,12 +240,10 @@ public class RusticBlockStates extends BlockStateProvider {
     // ------------------------------------------------------------------
     // Phase 8 prerequisite blocks: the world-generated beehive and the sapling-grown apple parts.
     //
-    // The beehive was a CUTOUT multi-element model in 1.12.2 (its legacy models/block/beehive.json is a
-    // MrCrayfish six-cube stack), so - exactly as the barrel/cabinet placeholders and the whole deferred-art
-    // set above - it gets a plain cube borrowing the existing block/beehive texture this phase and its real
-    // art lands with the model-conversion phase. It carries a horizontal facing, so every facing state is
-    // mapped (the legacy blockstate turned north=0, east=90, south=180, west=270, which is the same
-    // authored-as-a-north-wall quarter turn the diagonal clay wall uses).
+    // The beehive was a multi-element model in 1.12.2 (its models/block/beehive.json is a MrCrayfish six-cube
+    // stack), restored verbatim as a static asset in Phase 11 and referenced here. It carries a horizontal facing,
+    // so every facing state is mapped (the legacy blockstate turned north=0, east=90, south=180, west=270, which is
+    // the same authored-as-a-north-wall quarter turn the diagonal clay wall uses).
     //
     // The apple leaves and sapling have no Rustic art at all: the legacy blockstates pointed straight at the
     // vanilla oak_leaves / oak_sapling models (an apple tree *is* an oak tree with fruit), so they borrow the
@@ -249,7 +252,7 @@ public class RusticBlockStates extends BlockStateProvider {
     // item is a flat sprite on the vanilla oak_sapling texture, mirroring the wood-family sapling below.
     // ------------------------------------------------------------------
     private void worldgen() {
-        ModelFile beehive = models().cubeAll(path(RusticFarmBlocks.BEEHIVE), tex("beehive"));
+        ModelFile beehive = existing("beehive");
         horizontalBlock(RusticFarmBlocks.BEEHIVE.get(), beehive, WALL_ANGLE_NORTH);
         simpleBlockItem(RusticFarmBlocks.BEEHIVE.get(), beehive);
 
@@ -269,10 +272,9 @@ public class RusticBlockStates extends BlockStateProvider {
     // ------------------------------------------------------------------
     // Phase 4 storage machines.
     //
-    // The barrel block was a CUTOUT custom model in 1.12.2 (BlockBarrelRustic's see-through top), but the
-    // port hands it an opaque cube so it can be registered before the baked-model rework in Phase 9; the
-    // orientation of the legacy model is not part of the behaviour contract. Generating a plain cube keeps
-    // runData from failing on a multi-element model this phase has no reason to reconstruct yet.
+    // The barrel block was a multi-element model in 1.12.2 (BlockBarrelRustic's banded stave stack); it is
+    // restored verbatim as the static models/block/barrel.json in Phase 11 and referenced here. It has no facing,
+    // so the single model covers its one state and the block item parents on the same file.
     //
     // The cabinet is the same deferral: its two animated doors were drawn by a CabinetRenderer over a
     // custom model (textures/models/cabinet*.png), which is Phase 9 art. Its facing/mirror/top properties
@@ -280,14 +282,15 @@ public class RusticBlockStates extends BlockStateProvider {
     // combination is mapped to one static cube - forAllStates rather than a single default variant, because
     // the block does declare properties and each state still has to resolve to a model.
     //
-    // The vase follows the cabinet again: it declares a scaffolded VARIANT(0-12) property whose thirteen real
-    // models are deferred to Phase 9, so all thirteen states resolve to one cube. There is no single vase.png
-    // in the legacy art - the styles were vase_side_N / _top_N / _bottom_N - so the placeholder borrows the
-    // brown-ceramic side texture (vase_side_0), which exists and still reads as a vase.
+    // The vase now draws its restored 1.12.2 art: six stacked-cube models vase_0..5 (self-contained on the
+    // vase_side_N/_top_N/_bottom_N textures), mapped from the scaffolded VARIANT(0-12) property. Only six styles
+    // were ever authored, so the legacy thirteen-variant blockstate aliased variants 6..12 onto style 0 and the
+    // ported builder does the same; the item shows vase_0. The per-style selection GUI (MessageVaseMeta) is still
+    // deferred with the recipe phase, so no placement path sets a variant above 0 yet - the property exists so the
+    // models can, not because the block cycles them.
     // ------------------------------------------------------------------
     private void machines() {
-        simpleBlockWithItem(RusticMachineBlocks.BARREL.get(),
-                models().cubeAll(path(RusticMachineBlocks.BARREL), tex("barrel")));
+        simpleBlockWithItem(RusticMachineBlocks.BARREL.get(), existing("barrel"));
 
         ModelFile cabinet = models().cubeAll(path(RusticMachineBlocks.CABINET), tex("cabinet"));
         getVariantBuilder(RusticMachineBlocks.CABINET.get())
@@ -298,10 +301,12 @@ public class RusticBlockStates extends BlockStateProvider {
         itemModels().getBuilder(path(RusticMachineBlocks.CABINET))
                 .parent(new ModelFile.UncheckedModelFile("builtin/entity"));
 
-        ModelFile vase = models().cubeAll(path(RusticMachineBlocks.VASE), tex("vase_side_0"));
-        getVariantBuilder(RusticMachineBlocks.VASE.get())
-                .forAllStates(state -> ConfiguredModel.builder().modelFile(vase).build());
-        simpleBlockItem(RusticMachineBlocks.VASE.get(), vase);
+        IntegerProperty vaseVariant = VaseBlock.VARIANT;
+        getVariantBuilder(RusticMachineBlocks.VASE.get()).forAllStates(state ->
+                // Six real styles were authored (vase_0..5); the scaffolded property runs to 12, so variants 6..12
+                // alias back onto style 0 (the block default) rather than clamping up to the last real model.
+                ConfiguredModel.builder().modelFile(existing(vaseModel(state.getValue(vaseVariant)))).build());
+        simpleBlockItem(RusticMachineBlocks.VASE.get(), existing("vase_0"));
 
         // ------------------------------------------------------------------
         // Phase 4b fluid machines.
@@ -320,23 +325,22 @@ public class RusticBlockStates extends BlockStateProvider {
         simpleBlockWithItem(RusticMachineBlocks.EVAPORATING_BASIN.get(), existing("evaporating_basin"));
         simpleBlockWithItem(RusticMachineBlocks.LIQUID_BARREL.get(), existing("liquid_barrel"));
 
-        // The brewing barrel and the two condensers are still functional shells: their 1.8-era machine art is
-        // Phase 11, so - exactly as the barrel/cabinet/vase placeholders above - each resolves to one cube that
-        // borrows a texture already on disk (a missing reference would fail runData outright; a borrowed one simply
-        // renders a plain block until the real assets land, which is expected rather than a defect).
-        simpleBlockWithItem(RusticMachineBlocks.BREWING_BARREL.get(),
-                models().cubeAll(path(RusticMachineBlocks.BREWING_BARREL), tex("brewing_barrel_side")));
-        simpleBlockWithItem(RusticMachineBlocks.CONDENSER.get(),
-                models().cubeAll(path(RusticMachineBlocks.CONDENSER), tex("condenser_side")));
+        // Phase 11 S11.1: the brewing barrel and the two condensers now render their restored 1.12.2 art.
+        // brewing_barrel.json is the MrCrayfish banded barrel (front on its two hoop faces, symmetric so the
+        // dropped FACING property costs nothing); condenser.json and condenser_adv.json were 1.12 block/orientable
+        // bodies, expanded here to explicit cubes because the port dropped the horizontal FACING they keyed off.
+        simpleBlockWithItem(RusticMachineBlocks.BREWING_BARREL.get(), existing("brewing_barrel"));
+        simpleBlockWithItem(RusticMachineBlocks.CONDENSER.get(), existing("condenser"));
 
-        // The advanced condenser is a two-block column: only the TOP property varies, and the top/bottom art
-        // distinction is Phase 11, so both states resolve to the one condenser_adv_side cube (the cabinet above is
-        // the same forAllStates placeholder for a property-bearing block).
-        ModelFile condenserAdv = models().cubeAll(path(RusticMachineBlocks.CONDENSER_ADVANCED),
-                tex("condenser_adv_side"));
+        // The advanced condenser is a two-block column and the port kept its TOP property (only the retort-only
+        // FACING was dropped), so the halves now split on TOP: TOP=false draws the condenser_adv body, TOP=true the
+        // condenser_adv_top coil/dish. The block item shows the body.
         getVariantBuilder(RusticMachineBlocks.CONDENSER_ADVANCED.get())
-                .forAllStates(state -> ConfiguredModel.builder().modelFile(condenserAdv).build());
-        simpleBlockItem(RusticMachineBlocks.CONDENSER_ADVANCED.get(), condenserAdv);
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(state.getValue(CondenserAdvancedBlock.TOP)
+                                ? existing("condenser_adv_top") : existing("condenser_adv"))
+                        .build());
+        simpleBlockItem(RusticMachineBlocks.CONDENSER_ADVANCED.get(), existing("condenser_adv"));
     }
 
     // ------------------------------------------------------------------
@@ -877,6 +881,15 @@ public class RusticBlockStates extends BlockStateProvider {
      */
     private ModelFile existing(String name) {
         return models().getExistingFile(modLoc("block/" + name));
+    }
+
+    /**
+     * The restored vase model for one {@link VaseBlock#VARIANT} value. Only styles 0..5 have authored art
+     * (vase_0..5); the scaffolded property runs to 12, so every value above 5 falls back to style 0 - the block
+     * default and the style the legacy item drew - rather than pointing at a model that never existed.
+     */
+    private static String vaseModel(int variant) {
+        return "vase_" + (variant >= 0 && variant <= 5 ? variant : 0);
     }
 
     // ------------------------------------------------------------------

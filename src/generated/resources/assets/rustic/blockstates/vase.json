@@ -1,43 +1,43 @@
 {
   "variants": {
     "variant=0": {
-      "model": "rustic:block/vase"
+      "model": "rustic:block/vase_0"
     },
     "variant=1": {
-      "model": "rustic:block/vase"
+      "model": "rustic:block/vase_1"
     },
     "variant=10": {
-      "model": "rustic:block/vase"
+      "model": "rustic:block/vase_0"
     },
     "variant=11": {
-      "model": "rustic:block/vase"
+      "model": "rustic:block/vase_0"
     },
     "variant=12": {
-      "model": "rustic:block/vase"
+      "model": "rustic:block/vase_0"
     },
     "variant=2": {
-      "model": "rustic:block/vase"
+      "model": "rustic:block/vase_2"
     },
     "variant=3": {
-      "model": "rustic:block/vase"
+      "model": "rustic:block/vase_3"
     },
     "variant=4": {
-      "model": "rustic:block/vase"
+      "model": "rustic:block/vase_4"
     },
     "variant=5": {
-      "model": "rustic:block/vase"
+      "model": "rustic:block/vase_5"
     },
     "variant=6": {
-      "model": "rustic:block/vase"
+      "model": "rustic:block/vase_0"
     },
     "variant=7": {
-      "model": "rustic:block/vase"
+      "model": "rustic:block/vase_0"
     },
     "variant=8": {
-      "model": "rustic:block/vase"
+      "model": "rustic:block/vase_0"
     },
     "variant=9": {
-      "model": "rustic:block/vase"
+      "model": "rustic:block/vase_0"
     }
   }
 }

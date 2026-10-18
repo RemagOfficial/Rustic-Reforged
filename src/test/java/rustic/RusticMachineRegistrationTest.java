@@ -362,19 +362,22 @@ public class RusticMachineRegistrationTest {
     }
 
     /**
-     * The datagen that makes the vase render and drop. Its blockstate enumerates all thirteen variant states
-     * but each resolves to the one placeholder cube (the real styles are Phase 9), so the assertion is
-     * "every referenced model is rustic:block/vase". Re-run {@code runData} when this fails.
+     * The datagen that makes the vase render and drop. Phase 11 S11.2 restored six stacked-cube styles; the
+     * scaffolded VARIANT(0-12) maps 0..5 onto {@code rustic:block/vase_0.._5} and aliases 6..12 back onto style 0
+     * (only six were ever authored), so the referenced-model set is exactly those six. The item parents vase_0.
+     * Re-run {@code runData} when this fails.
      */
     @Test
     public void datagenProducedTheVaseStateModelLootAndTag() {
         Set<String> models = blockstateModels("/assets/rustic/blockstates/vase.json");
-        assertEquals(Set.of("rustic:block/vase"), models,
-                "every vase state should draw the one static cube while the real styles are deferred");
+        assertEquals(Set.of(
+                        "rustic:block/vase_0", "rustic:block/vase_1", "rustic:block/vase_2",
+                        "rustic:block/vase_3", "rustic:block/vase_4", "rustic:block/vase_5"),
+                models, "every vase state should draw one of the six restored styles (variants 6..12 alias onto vase_0)");
 
         JsonObject itemModel = json("/assets/rustic/models/item/vase.json");
-        assertEquals("rustic:block/vase", itemModel.get("parent").getAsString(),
-                "the vase item model parents the block model");
+        assertEquals("rustic:block/vase_0", itemModel.get("parent").getAsString(),
+                "the vase item model parents the default style");
 
         JsonObject loot = json("/data/rustic/loot_table/blocks/vase.json");
         JsonElement entry = loot.getAsJsonArray("pools").get(0).getAsJsonObject()
@@ -390,8 +393,9 @@ public class RusticMachineRegistrationTest {
     // Phase 4b fluid machines (liquid barrel, crushing tub, evaporating basin, brewing barrel, condenser,
     // advanced condenser). They share the storage machines' wiring contract - block + block item + block entity
     // type + (for the GUI three) a menu type + datagen + a decor-tab entry - so these assertions mirror the
-    // barrel/cabinet/vase tests above, table-driven for the six. Machine textures are placeholders until Phase 11,
-    // so each fluid-machine blockstate resolves every state to one rustic:block/<name> cube.
+    // barrel/cabinet/vase tests above, table-driven for the six. Phase 11 S11.1 restored the fluid-machine models as
+    // static assets, so each fluid-machine blockstate now resolves to its restored rustic:block/<name> model (the
+    // advanced condenser splitting its two TOP halves across condenser_adv and condenser_adv_top).
     // ==================================================================
 
     /** holder, block class, hardness, sound type and block entity holder - the per-machine registration facts. */
@@ -512,20 +516,27 @@ public class RusticMachineRegistrationTest {
 
     /**
      * The datagen that makes each fluid machine render and drop, plus its mineable tag by material: the three
-     * wooden barrels/tub take the axe, the three stone machines take the pickaxe. Every blockstate resolves to the
-     * single rustic:block/&lt;name&gt; placeholder cube (real machine models are Phase 11). Re-run {@code runData} if this fails.
+     * wooden barrels/tub take the axe, the three stone machines take the pickaxe. Every blockstate resolves to its
+     * restored {@code rustic:block/<name>} model (Phase 11 S11.1) - the advanced condenser alone splits its two
+     * TOP halves across the body ({@code condenser_adv}) and the coil/dish ({@code condenser_adv_top}), and its item
+     * parents the body. Re-run {@code runData} if this fails.
      */
     @Test
     public void datagenProducedStateModelLootAndTagForEveryFluidMachine() {
         for (FluidSpec spec : FLUID_MACHINES) {
             String path = spec.holder().getId().getPath();
+            // The advanced condenser is a two-block column: TOP=false draws the body, TOP=true the coil/dish, and
+            // the block item parents the body. Every other fluid machine has one restored model named after it.
+            String body = path.equals("condenser_advanced") ? "condenser_adv" : path;
             Set<String> models = blockstateModels("/assets/rustic/blockstates/" + path + ".json");
-            assertEquals(Set.of("rustic:block/" + path), models,
-                    path + " states should draw the one placeholder cube until Phase 11");
+            Set<String> expected = path.equals("condenser_advanced")
+                    ? Set.of("rustic:block/condenser_adv", "rustic:block/condenser_adv_top")
+                    : Set.of("rustic:block/" + path);
+            assertEquals(expected, models, path + " states should draw the restored machine model(s)");
 
             JsonObject itemModel = json("/assets/rustic/models/item/" + path + ".json");
-            assertEquals("rustic:block/" + path, itemModel.get("parent").getAsString(),
-                    path + " item model parents the block model");
+            assertEquals("rustic:block/" + body, itemModel.get("parent").getAsString(),
+                    path + " item model parents the body block model");
 
             JsonObject loot = json("/data/rustic/loot_table/blocks/" + path + ".json");
             JsonElement entry = loot.getAsJsonArray("pools").get(0).getAsJsonObject()

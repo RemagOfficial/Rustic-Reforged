@@ -1,0 +1,13 @@
+{
+    "__comment": "Legacy 1.12.2 parent was block/orientable (top=condenser_bottom, front=condenser_front, side=condenser_side). The port dropped the horizontal FACING (single-block shell), so the orientable face mapping is expanded to an explicit cube here: front on the fixed north face, side elsewhere, and the ground face (never seen) reuses the side.",
+    "parent": "minecraft:block/cube",
+    "textures": {
+        "particle": "rustic:block/condenser_front",
+        "down": "rustic:block/condenser_side",
+        "up": "rustic:block/condenser_bottom",
+        "north": "rustic:block/condenser_front",
+        "east": "rustic:block/condenser_side",
+        "south": "rustic:block/condenser_side",
+        "west": "rustic:block/condenser_side"
+    }
+}

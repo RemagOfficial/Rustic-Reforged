@@ -342,17 +342,19 @@ public class RusticFarmRegistrationTest {
     }
 
     /**
-     * The vinery's datagen: the stem maps its four ages to two placeholder crosses (the real per-age art and the
-     * mature log model are Phase 9), the leaves resolve every state to one placeholder cross, the stem's block item
-     * is the flat "Grape Seeds" sprite, and the leaves loot their grapes only when carrying fruit.
+     * The vinery's datagen: Phase 11 S11.2 restored the stem's four ages to {@code rustic:block/grape_stem_0.._3}
+     * (ages 0-2 are cutout crosses, age 3 the solid oak-log post), the leaves still resolve every state to one
+     * placeholder cross (their assembly and foliage tint stay deferred), the stem's block item is the flat
+     * "Grape Seeds" sprite, and the leaves loot their grapes only when carrying fruit.
      */
     @Test
     public void datagenProducedTheGrapeStatesModelsAndFruitGatedLoot() {
         JsonObject stemVariants = json("/assets/rustic/blockstates/grape_stem.json").getAsJsonObject("variants");
-        assertEquals("rustic:block/grape_stem",
-                stemVariants.getAsJsonObject("age=0").get("model").getAsString(), "grape_stem young stage");
-        assertEquals("rustic:block/grape_stem_tall",
-                stemVariants.getAsJsonObject("age=3").get("model").getAsString(), "grape_stem ripe stage");
+        for (int age = 0; age <= 3; age++) {
+            assertEquals("rustic:block/grape_stem_" + age,
+                    stemVariants.getAsJsonObject("age=" + age).get("model").getAsString(),
+                    "grape_stem age " + age + " draws its restored model");
+        }
 
         JsonObject stemItem = json("/assets/rustic/models/item/grape_stem.json");
         assertEquals("minecraft:item/generated", stemItem.get("parent").getAsString(),
@@ -588,17 +590,28 @@ public class RusticFarmRegistrationTest {
     // ------------------------------------------------------------------ datagen output
 
     /**
-     * The datagen that makes the two poles render and drop themselves. Each pole is a plain variant-less
-     * cube (the four-way knot is Phase 9 art), a block item model parenting that cube, a drop-myself loot
-     * table and the axe-mineable tag entry the legacy {@code Material.WOOD} implied.
+     * The datagen that makes the two poles render and drop themselves. Phase 11 S11.2 restored both as static
+     * models: {@code crop_stake} is a single-state pole, while {@code stake_tied} keeps its four connection flags
+     * as sixteen states that all draw the one base knot model (the four-way rope-attachment submodels stay
+     * deferred). Each has a block item parenting the model, a loot table and the axe-mineable tag the legacy
+     * {@code Material.WOOD} implied.
      */
     @Test
     public void datagenProducedThePoleStatesModelsLootAndTags() {
-        for (String pole : List.of("crop_stake", "stake_tied")) {
-            JsonObject state = json("/assets/rustic/blockstates/" + pole + ".json");
-            assertEquals("rustic:block/" + pole, state.getAsJsonObject("variants").getAsJsonObject("")
-                    .get("model").getAsString(), pole + " blockstate");
+        // crop_stake is the plain single-state pole.
+        assertEquals("rustic:block/crop_stake",
+                json("/assets/rustic/blockstates/crop_stake.json").getAsJsonObject("variants")
+                        .getAsJsonObject("").get("model").getAsString(), "crop_stake blockstate");
 
+        // stake_tied maps all sixteen connection states to the restored base knot model.
+        JsonObject tiedVariants = json("/assets/rustic/blockstates/stake_tied.json").getAsJsonObject("variants");
+        assertEquals(16, tiedVariants.size(), "stake_tied lost one of its sixteen connection states");
+        for (var entry : tiedVariants.entrySet()) {
+            assertEquals("rustic:block/stake_tied", entry.getValue().getAsJsonObject().get("model").getAsString(),
+                    "stake_tied state " + entry.getKey() + " should draw the restored knot model");
+        }
+
+        for (String pole : List.of("crop_stake", "stake_tied")) {
             JsonObject itemModel = json("/assets/rustic/models/item/" + pole + ".json");
             assertEquals("rustic:block/" + pole, itemModel.get("parent").getAsString(),
                     pole + " item model parents the block model");
@@ -614,14 +627,14 @@ public class RusticFarmRegistrationTest {
     }
 
     /**
-     * Each vine's datagen: a blockstate that maps every age to the one cutout placeholder (the per-age art is
-     * Phase 9), a cutout block model, and the two-pool loot table - always one-to-two seeds, plus the produce
-     * gated on {@code age=3}.
+     * Each vine's datagen: a blockstate that maps each age to its restored per-age model (S11.2: the four
+     * {@code rustic:block/<crop>_0.._3} models over the shared stake_crop parent), and the two-pool loot table -
+     * always one-to-two seeds, plus the produce gated on {@code age=3}.
      */
     @Test
     public void datagenProducedTheCropStatesAndSeedPlusRipeProduceLoot() {
-        assertCropState("tomato_crop", "rustic:block/tomato_crop");
-        assertCropState("chili_crop", "rustic:block/chili_crop");
+        assertCropState("tomato_crop");
+        assertCropState("chili_crop");
 
         assertCropLoot("/data/rustic/loot_table/blocks/tomato_crop.json", "tomato_crop",
                 "rustic:tomato_seeds", "rustic:tomato");
@@ -629,12 +642,14 @@ public class RusticFarmRegistrationTest {
                 "rustic:chili_pepper_seeds", "rustic:chili_pepper");
     }
 
-    private static void assertCropState(String id, String model) {
+    private static void assertCropState(String id) {
         JsonObject variants = json("/assets/rustic/blockstates/" + id + ".json").getAsJsonObject("variants");
-        for (String age : List.of("age=0", "age=1", "age=2", "age=3")) {
-            assertTrue(variants.has(age), id + " lost the " + age + " variant");
-            assertEquals(model, variants.getAsJsonObject(age).get("model").getAsString(),
-                    id + " " + age + " should draw the one placeholder cross while the per-age art is deferred");
+        for (int age = 0; age <= 3; age++) {
+            String key = "age=" + age;
+            assertTrue(variants.has(key), id + " lost the " + key + " variant");
+            assertEquals("rustic:block/" + id + "_" + age,
+                    variants.getAsJsonObject(key).get("model").getAsString(),
+                    id + " " + key + " should draw its restored per-age model");
         }
     }
 

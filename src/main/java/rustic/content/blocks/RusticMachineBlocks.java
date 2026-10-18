@@ -32,9 +32,13 @@ public final class RusticMachineBlocks {
     // Storage. 1.12.2: BlockBarrel, Material.WOOD, hardness 1.5, no harvest level, a 27-slot tile
     // entity behind it. The wooden barrel is registered here; the liquid barrel (a fluid tank) and the
     // brewing barrel arrive with the fluid phase.
+    // Same occlusion contract as crushing_tub/evaporating_basin (Phase 11 S11.1 in-game verdict): the restored
+    // barrel model's footprint is [1,0,1]->[15,8,15] while its getShape is the full cube, so an opaque block culls
+    // the neighbour DOWN face and shows as missing ground in a ring under the barrel. noOcclusion() reproduces
+    // legacy isOpaqueCube=false.
     // ------------------------------------------------------------------
     public static final DeferredBlock<BarrelBlock> BARREL =
-            MACHINE_BLOCKS.registerBlock("barrel", BarrelBlock::new, RusticBlockProperties.wood(1.5F));
+            MACHINE_BLOCKS.registerBlock("barrel", BarrelBlock::new, RusticBlockProperties.wood(1.5F).noOcclusion());
 
     // 1.12.2: BlockLiquidBarrel, Material.WOOD, hardness 1.5 - a fluid tank (16 buckets), no GUI. Its item and loot
     // ride the same entries() loops as every other machine block.
@@ -77,8 +81,9 @@ public final class RusticMachineBlocks {
             MACHINE_BLOCKS.registerBlock("evaporating_basin", EvaporatingBasinBlock::new, RusticBlockProperties.stone(1.5F).noOcclusion());
 
     // 1.12.2: BlockBrewingBarrel, Material.WOOD, hardness 1.5 - the fermenting barrel with the bespoke GUI.
+    // noOcclusion() for the same reason as BARREL above: banded model inside a full-cube shape.
     public static final DeferredBlock<BrewingBarrelBlock> BREWING_BARREL =
-            MACHINE_BLOCKS.registerBlock("brewing_barrel", BrewingBarrelBlock::new, RusticBlockProperties.wood(1.5F));
+            MACHINE_BLOCKS.registerBlock("brewing_barrel", BrewingBarrelBlock::new, RusticBlockProperties.wood(1.5F).noOcclusion());
 
     // 1.12.2: BlockCondenser, Material.ROCK, hardness 2 - the elixir still. Rebuilt as a single functional block
     // (no retort flank) behind CondenserBlockEntity; its item and loot ride the same entries() loops as every machine.

@@ -1,0 +1,13 @@
+{
+    "__comment": "Lower half of the two-block advanced condenser. Legacy 1.12.2 parent was block/orientable (top=condenser_adv_top, front=condenser_adv_front, side=condenser_adv_side). The port kept the TOP column but dropped FACING, so the orientable mapping is expanded to an explicit cube here: front on the fixed north face, side elsewhere, ground face reuses the side (never seen).",
+    "parent": "minecraft:block/cube",
+    "textures": {
+        "particle": "rustic:block/condenser_adv_front",
+        "down": "rustic:block/condenser_adv_side",
+        "up": "rustic:block/condenser_adv_top",
+        "north": "rustic:block/condenser_adv_front",
+        "east": "rustic:block/condenser_adv_side",
+        "south": "rustic:block/condenser_adv_side",
+        "west": "rustic:block/condenser_adv_side"
+    }
+}

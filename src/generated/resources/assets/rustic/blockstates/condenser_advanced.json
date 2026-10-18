@@ -1,10 +1,10 @@
 {
   "variants": {
     "top=false": {
-      "model": "rustic:block/condenser_advanced"
+      "model": "rustic:block/condenser_adv"
     },
     "top=true": {
-      "model": "rustic:block/condenser_advanced"
+      "model": "rustic:block/condenser_adv_top"
     }
   }
 }
