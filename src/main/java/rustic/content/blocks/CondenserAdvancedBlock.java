@@ -39,29 +39,12 @@ import org.jetbrains.annotations.Nullable;
 import rustic.content.blockentity.CondenserAdvancedBlockEntity;
 import rustic.content.blockentity.RusticBlockEntities;
 
-/**
- * 1.12.2's {@code BlockCondenserAdvanced}: the two-block advanced condenser. The lower half ({@code top=false}) owns
- * the entire seven-slot inventory, water tank and brew timers in its {@link CondenserAdvancedBlockEntity}; the upper
- * half ({@code top=true}) carries no block entity at all and only forwards interaction down, exactly as legacy
- * {@code TileEntityCondenserAdvancedTop} merely delegated capabilities to the tile below. Because there is one real
- * inventory, this is <em>not</em> a {@link net.minecraft.world.CompoundContainer} merge like the double cabinet -
- * clicking either half opens the same bottom container, which is the "shared logical inventory" the pairing test
- * checks.
- *
- * <p>The legacy {@code FACING} property and {@code hasRetorts} gate are restored here too: the advanced still only opens
- * when flanked on both sides (perpendicular to its facing) by outward-turned {@link RusticMachineBlocks#RETORT_ADVANCED}
- * retorts of its own tier (see {@link CondenserFlanking} for the shared rule). {@code FACING} also turns the front panel
- * with the block, reproducing the 1.12.2 orientable body. The two-block lifecycle - place a bottom, it grows a top;
- * break either half, the other follows - mirrors legacy {@code onBlockAdded}/{@code onBlockHarvested} via 1.21's
- * {@link #onPlace} and {@link #playerWillDestroy}.
- */
 public class CondenserAdvancedBlock extends BaseEntityBlock {
 
     public static final MapCodec<CondenserAdvancedBlock> CODEC = simpleCodec(CondenserAdvancedBlock::new);
 
-    /** 1.12.2 {@code BOTTOM}, inverted to the more common {@code top} convention the cabinet uses. */
     public static final BooleanProperty TOP = BooleanProperty.create("top");
-    /** Legacy {@code FACING}: which way the front panel looks and which axis the retorts flank. */
+
     public static final DirectionProperty FACING = RetortBlock.FACING;
 
     private static final VoxelShape BOTTOM_SHAPE = Shapes.box(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
@@ -83,7 +66,6 @@ public class CondenserAdvancedBlock extends BaseEntityBlock {
         builder.add(TOP, FACING);
     }
 
-    /** Place as a bottom half facing the placer, and only when there is headroom above - the legacy {@code canPlaceBlockAt} rule. */
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
@@ -95,7 +77,6 @@ public class CondenserAdvancedBlock extends BaseEntityBlock {
                 .setValue(FACING, context.getHorizontalDirection().getOpposite());
     }
 
-    /** A freshly placed bottom grows its top half above it, mirroring legacy {@code onBlockAdded}. */
     @Override
     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
         if (!level.isClientSide && !state.getValue(TOP)) {
@@ -106,7 +87,6 @@ public class CondenserAdvancedBlock extends BaseEntityBlock {
         }
     }
 
-    /** Breaking either half silently removes the partner, mirroring legacy {@code onBlockHarvested}. */
     @Override
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (!level.isClientSide) {
@@ -122,7 +102,7 @@ public class CondenserAdvancedBlock extends BaseEntityBlock {
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        // Only the bottom half has an inventory to hold; the top half is decoration + a click forwarder.
+
         return state.getValue(TOP) ? null : new CondenserAdvancedBlockEntity(pos, state);
     }
 
@@ -152,13 +132,11 @@ public class CondenserAdvancedBlock extends BaseEntityBlock {
                                               Player player, InteractionHand hand, BlockHitResult hit) {
         CondenserAdvancedBlockEntity condenser = resolveBottom(level, pos, state);
         if (condenser == null) {
-            // Not correctly flanked by its advanced retorts (or the bottom half is not resolved yet): CONSUME the
-            // interaction so the held item is not used. Only a consuming result makes ServerPlayerGameMode.useItemOn
-            // return before stack.useOn places the held BlockItem (PASS/SKIP_DEFAULT/FAIL all still place).
+
             return ItemInteractionResult.CONSUME;
         }
         if (level.isClientSide) {
-            // Operable, but the menu/bucket action is server-side: consume so the client never predicts a placement.
+
             return ItemInteractionResult.sidedSuccess(true);
         }
         if (FluidUtil.interactWithFluidHandler(player, hand, condenser.getTank())) {
@@ -193,13 +171,6 @@ public class CondenserAdvancedBlock extends BaseEntityBlock {
         return InteractionResult.CONSUME;
     }
 
-    /**
-     * The bottom half's block entity when the column is correctly flanked by advanced retorts, otherwise {@code null}.
-     * This is the restored legacy {@code hasRetorts} gate (see {@link CondenserFlanking}): without its two
-     * outward-facing {@link RusticMachineBlocks#RETORT_ADVANCED} retorts the still will not open, so both the GUI and
-     * the bucket interaction require a properly shaped multi-block. A top-half click resolves down to the
-     * inventory-owning bottom before the flank is checked, so the gate is always evaluated at the bottom position.
-     */
     @Nullable
     private CondenserAdvancedBlockEntity resolveBottom(Level level, BlockPos pos, BlockState state) {
         BlockPos bottom = state.getValue(TOP) ? pos.below() : pos;
@@ -222,7 +193,7 @@ public class CondenserAdvancedBlock extends BaseEntityBlock {
 
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moving) {
-        // The bottom half owns the inventory; empty it when the block actually leaves the world (top half has none).
+
         if (!state.is(newState.getBlock()) && !state.getValue(TOP)
                 && level.getBlockEntity(pos) instanceof CondenserAdvancedBlockEntity condenser) {
             ItemStackHandler handler = condenser.getItemHandler();

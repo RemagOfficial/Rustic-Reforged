@@ -22,41 +22,12 @@ import rustic.content.potions.RusticMobEffects;
 import java.util.ArrayList;
 import java.util.function.Supplier;
 
-/**
- * The sixteen Rustic fluids and their fifteen-plus {@link FluidType}s, ported from 1.12.2's
- * {@code ModFluids.init()}.
- *
- * <p><b>What the port reproduces verbatim</b> — the golden {@code ModFluidsBaselineTest}: the sixteen logical
- * fluid names, the density/viscosity table, the {@code EPIC} rarity on golden apple juice and ambrosia, the
- * luminosity/temperature/gaseous defaults, the seven-booze split, and the eight placeables' flow tick rates.
- * The eight placeables get a source + flowing {@link BaseFlowingFluid} pair and their block/bucket in Slice 3;
- * the seven boozes plus vanta oil are source-only, self-referencing fluids with no flowing pair and no block,
- * which is the 1.21 expression of the baseline's {@code getBlock() == null}.</p>
- *
- * <p><b>Recorded deviations from 1.12.2:</b></p>
- * <ul>
- *   <li>Legacy had a {@code BaseFluidType} helper from the mod's own library; 1.21.1 has no such class, so the
- *   physics simply go on {@link FluidType.Properties}. Density/viscosity/temperature/light/rarity all live
- *   there, and every one of them already defaults to the baseline value except where set below.</li>
- *   <li>The still/flowing <b>textures</b> ({@code rustic:blocks/fluids/...}) are a client concern in 1.21 and
- *   are attached through the client-extensions API in Phase 9, so nothing here references them. The names of
- *   the fluids they map to are unchanged.</li>
- *   <li>Honey's legacy 2 <em>quanta per block</em> has no direct 1.21 analogue — flowing-fluid levels are fixed
- *   at 8 there. The thick feel is carried instead by honey's very high viscosity and its {@code 27}-tick flow
- *   rate; the visual level split is a Slice 3 / Phase 9 concern.</li>
- *   <li>Fluid {@code Rarity} has no per-fluid field in 1.21 any more than 1.12.2, but the ported EPIC rarity is
- *   placed on the {@link FluidType} here and re-expressed as {@code Rarity.EPIC} on the bucket/bottle item
- *   stacks in Slices 3 and 4, which is where a 1.21 player can actually see it.</li>
- * </ul>
- */
 public final class RusticFluids {
 
     private static final DeferredRegister<FluidType> FLUID_TYPES =
             DeferredRegister.create(NeoForgeRegistries.Keys.FLUID_TYPES, Rustic.MODID);
     private static final DeferredRegister<Fluid> FLUIDS =
             DeferredRegister.create(Registries.FLUID, Rustic.MODID);
-
-    // ------------------------------------------------------------------ fluid types (physics)
 
     public static final DeferredHolder<FluidType, FluidType> OLIVE_OIL_TYPE =
             type("oliveoil", 920, 2000, Rarity.COMMON);
@@ -90,8 +61,6 @@ public final class RusticFluids {
             type("wine", 1034, 1500, Rarity.COMMON);
     public static final DeferredHolder<FluidType, FluidType> AMBROSIA_TYPE =
             type("ambrosia", 1004, 1400, Rarity.EPIC);
-
-    // ------------------------------------------------------------------ placeable fluids (source + flowing)
 
     public static final DeferredHolder<Fluid, RusticDrinkableFluid> OLIVE_OIL = FLUIDS.register("oliveoil",
             () -> new RusticDrinkableFluid(pair(OLIVE_OIL_TYPE, RusticFluids.OLIVE_OIL, RusticFluids.OLIVE_OIL_FLOWING, 10, () -> RusticFluidBlocks.OLIVE_OIL.value(), () -> RusticItems.OLIVE_OIL_BUCKET.value()),
@@ -172,15 +141,12 @@ public final class RusticFluids {
     public static final DeferredHolder<Fluid, RusticFlowingFluid> GOLDEN_APPLE_JUICE_FLOWING = FLUIDS.register("goldenapplejuice_flow",
             () -> new RusticFlowingFluid(pair(GOLDEN_APPLE_JUICE_TYPE, GOLDEN_APPLE_JUICE, RusticFluids.GOLDEN_APPLE_JUICE_FLOWING, 5, () -> RusticFluidBlocks.GOLDEN_APPLE_JUICE.value(), () -> RusticItems.GOLDEN_APPLE_JUICE_BUCKET.value())));
 
-    // vanta oil is bucket-able but has no flowing block: source-only, self-referencing.
     public static final DeferredHolder<Fluid, RusticDrinkableFluid> VANTA_OIL = FLUIDS.register("vantaoil",
             () -> new RusticDrinkableFluid(soloBucket(VANTA_OIL_TYPE, RusticFluids.VANTA_OIL, () -> RusticItems.VANTA_OIL_BUCKET.value()),
                     (level, player, stack, fluid) -> {
                         player.getFoodData().eat(1, 0.4F);
                         player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 600, 0), null);
                     }));
-
-    // ------------------------------------------------------------------ boozes (source-only, self-referencing)
 
     public static final DeferredHolder<Fluid, RusticBooze> ALE = FLUIDS.register("ale",
             () -> new RusticBooze(solo(ALE_TYPE, RusticFluids.ALE)) {
@@ -337,10 +303,7 @@ public final class RusticFluids {
                         }
                         player.addEffect(new MobEffectInstance(RusticMobEffects.UNDYING, duration, 0, false, false), null);
                     } else {
-                        // Legacy did attackEntityFrom(RusticUtils.BAD_AMBROSIA_DAMAGE, Float.MAX_VALUE) with an
-                        // armor-bypassing, creative-allowed magic source. Entity#kill is the 1.21 equivalent that
-                        // always takes the player down regardless of game mode, and no custom damage type entry
-                        // is needed for it.
+
                         player.kill();
                     }
                 }
@@ -364,14 +327,11 @@ public final class RusticFluids {
                 }
             }.setInebriationChance(1.0F));
 
-    // ------------------------------------------------------------------ helpers
-
     private static DeferredHolder<FluidType, FluidType> type(String name, int density, int viscosity, Rarity rarity) {
         return FLUID_TYPES.register(name, () -> new FluidType(FluidType.Properties.create()
                 .density(density).viscosity(viscosity).rarity(rarity)));
     }
 
-    /** A source + flowing pair for one of the placeable fluids, carrying its legacy flow tick rate and its Slice 3 block + bucket. */
     private static BaseFlowingFluid.Properties pair(DeferredHolder<FluidType, FluidType> type,
                                                     DeferredHolder<Fluid, ? extends Fluid> still,
                                                     DeferredHolder<Fluid, ? extends Fluid> flowing, int tickRate,
@@ -380,22 +340,19 @@ public final class RusticFluids {
         return new BaseFlowingFluid.Properties(type, still, flowing).tickRate(tickRate).block(block).bucket(bucket);
     }
 
-    /** A source-only, self-referencing fluid (booze / vanta oil): still and flowing both point back at itself. */
     private static BaseFlowingFluid.Properties solo(DeferredHolder<FluidType, FluidType> type,
                                                     DeferredHolder<Fluid, ? extends Fluid> self) {
         return new BaseFlowingFluid.Properties(type, self, self);
     }
 
-    /** A source-only fluid that is still bucket-able but has no flowing block: this is vanta oil. */
     private static BaseFlowingFluid.Properties soloBucket(DeferredHolder<FluidType, FluidType> type,
                                                           DeferredHolder<Fluid, ? extends Fluid> self,
                                                           Supplier<? extends Item> bucket) {
         return new BaseFlowingFluid.Properties(type, self, self).bucket(bucket);
     }
 
-    /** Attaches the fluid-type and fluid registers to the mod event bus. Called from the mod constructor. */
     public static void register(IEventBus modEventBus) {
-        // Types attach first so the fluids' lazy getFluidType() lookups resolve as soon as the fluid event runs.
+
         FLUID_TYPES.register(modEventBus);
         FLUIDS.register(modEventBus);
     }

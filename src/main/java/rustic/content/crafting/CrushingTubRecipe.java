@@ -16,17 +16,6 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.fluids.FluidStack;
 import rustic.registry.RusticRegistries;
 
-/**
- * 1.12.2's {@code CrushingTubRecipe}: one input item crushes into an output {@link FluidStack} plus an optional
- * byproduct item (the apple/seed split for juice). The legacy class matched on {@code (item, metadata)} against a
- * hand-built list in {@code Recipes.crushingTubRecipes}; here it is a real {@link Recipe} so it lives in the recipe
- * manager (Phase 7 fills the data) and the crushing tub block entity asks {@code getAllRecipesFor(CRUSHING_TUB_TYPE)}.
- *
- * <p>The {@code Recipe} interface forces an {@link ItemStack} result, but the crushing tub's primary output is a
- * fluid, so {@link #getResultItem} reports the byproduct (often empty) and the machine reads the fluid through
- * {@link #getFluid()}. This recipe never appears in a crafting table; {@link #canCraftInDimensions} is a benign
- * {@code true} for exactly that reason.
- */
 public class CrushingTubRecipe implements Recipe<SingleRecipeInput> {
 
     private final Ingredient ingredient;
@@ -56,7 +45,7 @@ public class CrushingTubRecipe implements Recipe<SingleRecipeInput> {
 
     @Override
     public ItemStack getResultItem(HolderLookup.Provider registries) {
-        // The crushing tub's real output is the fluid (getFluid()); the item interface can only report the byproduct.
+
         return this.byproduct;
     }
 
@@ -89,7 +78,6 @@ public class CrushingTubRecipe implements Recipe<SingleRecipeInput> {
         return this.byproduct.copy();
     }
 
-    /** Serializer following the vanilla {@code SmithingTransformRecipe.Serializer} shape: {@code MapCodec} + {@code StreamCodec.of}. */
     public static class Serializer implements RecipeSerializer<CrushingTubRecipe> {
 
         private static final MapCodec<CrushingTubRecipe> CODEC = RecordCodecBuilder.mapCodec(

@@ -18,12 +18,6 @@ import rustic.Rustic;
 import rustic.content.blockentity.CondenserBlockEntityBase;
 import rustic.content.menu.CondenserAdvancedMenu;
 
-/**
- * The advanced condenser GUI, the 1.21 form of legacy {@code GuiCondenserAdvanced}. Identical to {@link
- * RusticCondenserScreen} except for its own {@code condenser_advanced.png} panel and the taller brew-progress bar the
- * advanced layout uses (legacy drew it 53 tall at y=17 instead of 28 tall at y=29) to run beside the third ingredient
- * socket.
- */
 public class RusticCondenserAdvancedScreen extends AbstractContainerScreen<CondenserAdvancedMenu> {
 
     private static final ResourceLocation TEXTURE =
@@ -57,7 +51,7 @@ public class RusticCondenserAdvancedScreen extends AbstractContainerScreen<Conde
 
         int l = brewProgress(50);
         if (l > 0) {
-            // Advanced layout: the tall bar at (44,17), 53px tall (legacy GuiCondenserAdvanced).
+
             guiGraphics.blit(TEXTURE, this.leftPos + 44, this.topPos + 17, 176, 14, l, 53);
         }
     }

@@ -50,49 +50,12 @@ import rustic.content.potions.RusticMobEffects;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * Recipe datagen: the 1.21 replacement for the vanilla-crafting and smelting half of 1.12.2's
- * {@code rustic.common.crafting.Recipes} ({@code addCraftingRecipes} / {@code addSmeltingRecipes} /
- * {@code addSilverCraftingRecipes}).
- *
- * <p>Legacy built these recipes in code at {@code FMLPreInitializationEvent} with {@code GameRegistry}
- * and {@code ShapedOreRecipe}; here every one of them is emitted as JSON under
- * {@code data/rustic/recipe/}. The ore-dictionary ingredient names ({@code plankWood}, {@code dyeRed},
- * {@code wax}, {@code ingotSilver}) become the item tags that {@link RusticItemTags} and NeoForge's
- * conventional tags already populate, so a recipe asking for "any plank" asks for {@code #minecraft:planks}.
- *
- * <p><b>Config gating.</b> The legacy {@code enable_*} flags wrapped each group at recipe-registration
- * time. 1.21 recipes are baked JSON, and {@code ModConfigSpec} answers are not readable during
- * {@code runData} (the config is not loaded yet), so - exactly as {@link RusticBlockTags} and the creative
- * tabs already do - the datagen emits the shipped-config set, where every one of these flags defaults
- * true. Turning a group off stays a runtime/creative-tab concern rather than a per-user recipe removal.
- * The one external-material gate the legacy code could not resolve statically is the silver set, which
- * 1.12.2 also required {@code ingotSilver} to exist for: those recipes are still always emitted, but
- * wrapped in a {@code neoforge:not}/{@code neoforge:tag_empty} condition on {@code c:ingots/silver}, so
- * they drop out of an install that provides no silver, reproducing the legacy {@code OreDictionary} check.
- *
- * <p><b>Also here (P7.3):</b> the four special crafting-table types (cabinet, non-ingredient return, olive oil,
- * vanta oil) are now emitted too - the three dynamic pattern recipes as one-line {@code Unit}-codec stubs, the
- * non-ingredient-return family (ale wort, bottle/barrel emptying) as data-driven shapeless rows. The
- * {@code dynamictrees} seed conversions remain Phase 10 compat, so this class emits shaped + smelting JSON, the
- * four machine recipe types (crushing tub, evaporating basin, brewing barrel, condenser) built straight through
- * their Phase-4b serializers, and the four custom crafting-table types.</p>
- *
- * <p><b>The JSON half.</b> 1.12.2 kept its recipes in two places: {@code Recipes.init()} and 43 data-driven files
- * under {@code assets/rustic/recipes/}. Porting only the first of those is what left the iron and gold mounts, the
- * Rustic wood slabs/stairs/fences, the workstations, the rope, the vase and the gargoyle with no recipe at all -
- * every one of those files whose result this build registers is now emitted here too. The three whose results do not
- * exist yet ({@code apiary}, {@code retort} and {@code retort_advanced}) wait for the phases
- * that add those blocks. The one recipe that was still hand-written in {@code src/main/resources}, the Patchouli
- * almanac, is emitted here too - see {@link #addAlmanac(RecipeOutput)}.
- */
 public class RusticRecipeProvider extends RecipeProvider {
 
-    /** The conventional silver-ingot tag the legacy {@code ingotSilver} ore name maps onto. */
     private static final TagKey<Item> SILVER_INGOTS = cTag("ingots/silver");
-    /** The beeswax/tallow {@code wax} ore name, now a c: tag. */
+
     private static final TagKey<Item> WAX = cTag("wax");
-    /** The legacy {@code dustRedstone} ore name. */
+
     private static final TagKey<Item> DUST_REDSTONE = cTag("dusts/redstone");
 
     public RusticRecipeProvider(PackOutput output, CompletableFuture<net.minecraft.core.HolderLookup.Provider> registries) {
@@ -121,10 +84,6 @@ public class RusticRecipeProvider extends RecipeProvider {
         addAlmanac(recipeOutput);
     }
 
-    // ------------------------------------------------------------------
-    // Stone pillars (Recipes.addCraftingRecipes, the pillar block). Each pillar is three rows of two
-    // stone of the matching variety; the slate pillar was additionally nested under the slate flag there.
-    // ------------------------------------------------------------------
     private void addPillars(RecipeOutput out) {
         pillar(out, RusticBlocks.STONE_PILLAR.get(), Blocks.STONE, "pillar_stone");
         pillar(out, RusticBlocks.ANDESITE_PILLAR.get(), Blocks.ANDESITE, "pillar_andesite");
@@ -145,10 +104,6 @@ public class RusticRecipeProvider extends RecipeProvider {
                 .save(out, rl(id));
     }
 
-    // ------------------------------------------------------------------
-    // The slate family (ENABLE_SLATE): roof, its stairs/slab, brick stairs/slab, tile (from slate or
-    // brick), brick (from tile) and chiseled (from brick). Numbers and patterns are the legacy calls.
-    // ------------------------------------------------------------------
     private void addSlate(RecipeOutput out) {
         shaped(RecipeCategory.BUILDING_BLOCKS, RusticBlocks.SLATE_ROOF.get(), 4, 'S', RusticBlocks.SLATE.get())
                 .pattern("SS").pattern("SS")
@@ -162,7 +117,7 @@ public class RusticRecipeProvider extends RecipeProvider {
                 .save(out, rl("slate_brick_stairs"));
         slab(out, RecipeCategory.BUILDING_BLOCKS, RusticBlocks.SLATE_BRICK_SLAB.get(), RusticBlocks.SLATE_BRICK.get(),
                 "slate_brick_slab");
-        // Tile from slate, and tile again from brick - two distinct ids because the result item is the same.
+
         single(out, RusticBlocks.SLATE_TILE.get(), RusticBlocks.SLATE.get(), "slate_tile");
         single(out, RusticBlocks.SLATE_TILE.get(), RusticBlocks.SLATE_BRICK.get(), "slate_tile_1");
         shaped(RecipeCategory.BUILDING_BLOCKS, RusticBlocks.SLATE_BRICK.get(), 4, 'S', RusticBlocks.SLATE_TILE.get())
@@ -175,9 +130,6 @@ public class RusticRecipeProvider extends RecipeProvider {
                 .save(out, rl("slate_chiseled"));
     }
 
-    // ------------------------------------------------------------------
-    // Clay walls (ENABLE_CLAY_WALLS): planks frame a clay or clay-wall core. plankWood -> #minecraft:planks.
-    // ------------------------------------------------------------------
     private void addClayWalls(RecipeOutput out) {
         ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, RusticBlocks.CLAY_WALL.get(), 8)
                 .define('P', ItemTags.PLANKS)
@@ -199,10 +151,6 @@ public class RusticRecipeProvider extends RecipeProvider {
                 .save(out, rl("clay_wall_diag"));
     }
 
-    // ------------------------------------------------------------------
-    // Chairs (ENABLE_CHAIRS, 4 per craft) and tables (ENABLE_TABLES, 2 per craft), eight woods each. The
-    // six vanilla woods use their planks block; olive and ironwood use the Rustic wood-family planks.
-    // ------------------------------------------------------------------
     private void addFurniture(RecipeOutput out) {
         for (Furniture furniture : RusticBlocks.FURNITURE) {
             ItemLike planks = planksFor(furniture.name());
@@ -223,11 +171,11 @@ public class RusticRecipeProvider extends RecipeProvider {
         }
     }
 
-    /** The planks a furniture recipe uses: a vanilla plank block, or the matching Rustic wood-family planks. */
     private static ItemLike planksFor(String wood) {
         return switch (wood) {
             case "oak" -> Blocks.OAK_PLANKS;
-            case "big_oak" -> Blocks.DARK_OAK_PLANKS; // 1.12.2's "big_oak" is 1.21 dark oak
+            case "big_oak" -> Blocks.DARK_OAK_PLANKS;
+
             case "birch" -> Blocks.BIRCH_PLANKS;
             case "spruce" -> Blocks.SPRUCE_PLANKS;
             case "acacia" -> Blocks.ACACIA_PLANKS;
@@ -243,10 +191,6 @@ public class RusticRecipeProvider extends RecipeProvider {
         };
     }
 
-    // ------------------------------------------------------------------
-    // Iron lattice (ENABLE_LATTICE): cross of five iron ingots -> 16. ingotIron again becomes NeoForge's
-    // c:ingots/iron, which vanilla fills, so this crafts in a Rustic-only install.
-    // ------------------------------------------------------------------
     private void addIronLattice(RecipeOutput out) {
         ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, RusticBlocks.IRON_LATTICE.get(), 16)
                 .define('I', Tags.Items.INGOTS_IRON)
@@ -255,10 +199,6 @@ public class RusticRecipeProvider extends RecipeProvider {
                 .save(out, rl("iron_lattice"));
     }
 
-    // ------------------------------------------------------------------
-    // Painted wood (ENABLE_PAINTED_WOOD): eight planks ringed around a dye, one per colour. The result id
-    // keeps the legacy spelling (light gray is still painted_wood_silver). dye<Name> -> c:dyes/<name>.
-    // ------------------------------------------------------------------
     private void addPaintedWood(RecipeOutput out) {
         for (DyeColor color : DyeColor.values()) {
             TagKey<Item> dye = cTag("dyes/" + color.getName());
@@ -273,12 +213,6 @@ public class RusticRecipeProvider extends RecipeProvider {
         }
     }
 
-    // ------------------------------------------------------------------
-    // The Rustic woods' own plank parts (olive_planks.json, olive_slab.json, ironwood_stairs.json and the
-    // rest). One log squares to four planks, and the plank then makes the slab, stairs, fence and gate in
-    // vanilla's own patterns - which is what 1.12.2 shipped, its groups being the vanilla ones. The recipe
-    // ids stay the legacy file names (olive_planks, not planks_olive) so the two sets can be compared.
-    // ------------------------------------------------------------------
     private void addWoodVariants(RecipeOutput out) {
         for (WoodFamily family : RusticBlocks.WOOD_FAMILIES) {
             String wood = family.name();
@@ -311,8 +245,7 @@ public class RusticRecipeProvider extends RecipeProvider {
                     .pattern("SPS").pattern("SPS")
                     .unlockedBy(getHasName(planks), has(planks))
                     .save(out, rl(wood + "_fence_gate"));
-            // Phase 13: the door. 1.12.2's olive_door.json / ironwood_door.json were six of the wood's own
-            // planks in three rows of two, yielding three doors. The legacy result id (olive_door) is kept.
+
             ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, family.door().get(), 3)
                     .define('P', planks)
                     .pattern("PP").pattern("PP").pattern("PP")
@@ -321,13 +254,6 @@ public class RusticRecipeProvider extends RecipeProvider {
         }
     }
 
-    // ------------------------------------------------------------------
-    // The metal mounts (chain.json, candle_gold.json, iron_lantern.json, iron_torch.json and the rest of
-    // 1.12.2's JSON set). Iron and gold were plain JSON and so always existed; only the silver six were
-    // built in code behind the ingotSilver test - see addSilver. The ore-dict names become NeoForge's
-    // conventional tags, which NeoForge itself fills from vanilla (c:ingots/iron, c:ingots/gold,
-    // c:nuggets/iron), so a Rustic-only install can craft all of them.
-    // ------------------------------------------------------------------
     private void addMetalMounts(RecipeOutput out) {
         mounts(out, "", RusticBlocks.CHAIN.get(), RusticBlocks.CANDLE.get(), RusticBlocks.CANDLE_DOUBLE.get(),
                 RusticBlocks.CANDLE_LEVER.get(), RusticBlocks.CHANDELIER.get(), RusticBlocks.IRON_LANTERN.get(),
@@ -336,7 +262,7 @@ public class RusticRecipeProvider extends RecipeProvider {
                 RusticBlocks.CANDLE_DOUBLE_GOLD.get(), RusticBlocks.CANDLE_LEVER_GOLD.get(),
                 RusticBlocks.CHANDELIER_GOLD.get(), RusticBlocks.GOLDEN_LANTERN.get(),
                 "golden_lantern", Tags.Items.INGOTS_GOLD);
-        // The iron torch is the mount of the group that costs nuggets rather than ingots.
+
         ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, RusticBlocks.IRON_TORCH.get(), 4)
                 .define('I', Tags.Items.NUGGETS_IRON)
                 .define('C', Ingredient.of(Items.COAL, Items.CHARCOAL))
@@ -346,12 +272,6 @@ public class RusticRecipeProvider extends RecipeProvider {
                 .save(out, rl("iron_torch"));
     }
 
-    /**
-     * The six mount recipes for one metal, in the patterns 1.12.2 used identically for iron, gold and silver.
-     * {@code suffix} is the legacy id tail ({@code ""} for iron, {@code "_gold"}, {@code "_silver"}); the lantern
-     * id is spelled out because it is the one that does not follow it (iron_lantern, golden_lantern,
-     * silver_lantern).
-     */
     private void mounts(RecipeOutput out, String suffix, ItemLike chain, ItemLike candle, ItemLike candleDouble,
                         ItemLike candleLever, ItemLike chandelier, ItemLike lantern, String lanternId,
                         TagKey<Item> ingots) {
@@ -370,7 +290,7 @@ public class RusticRecipeProvider extends RecipeProvider {
                 .pattern("S S").pattern("W W").pattern(" I ")
                 .unlockedBy("has_ingot", has(ingots))
                 .save(out, rl("candle_double" + suffix));
-        // The lever is that candle with a redstone switch wired under it, so it unlocks off the candle.
+
         ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, candleLever)
                 .define('C', candle).define('R', DUST_REDSTONE)
                 .pattern("C").pattern("R")
@@ -389,13 +309,6 @@ public class RusticRecipeProvider extends RecipeProvider {
                 .save(out, rl(lanternId));
     }
 
-    // ------------------------------------------------------------------
-    // The workstations (barrel.json, crushing_tub.json, condenser.json and friends). The three banded wood
-    // cases are plank + wooden slab + iron; slabWood became the vanilla wooden-slab item tag, which
-    // RusticItemTags now also puts the two Rustic slabs in, so those still count. 1.12's hardened_clay is
-    // today's terracotta, and its stained_hardened_clay meta 0 - the condenser's clay dish - is white
-    // terracotta.
-    // ------------------------------------------------------------------
     private void addMachines(RecipeOutput out) {
         ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, RusticMachineBlocks.BARREL.get(), 2)
                 .define('P', ItemTags.PLANKS).define('S', ItemTags.WOODEN_SLABS).define('I', Tags.Items.INGOTS_IRON)
@@ -434,10 +347,7 @@ public class RusticRecipeProvider extends RecipeProvider {
                 .group("rustic_condenser")
                 .unlockedBy("has_nether_brick", has(Items.NETHER_BRICK))
                 .save(out, rl("condenser_advanced"));
-        // Phase 12: the retort flank blocks. Legacy gave them their OWN shaped recipe (they were never an
-        // ingredient of the condenser recipes above - the plan's assumption there was wrong, corrected against the
-        // real 1.12.2 assets/rustic/recipes/retort*.json). Both tiers share the " B"/"IE"/" B" pattern and differ
-        // only in the brick: basic uses minecraft:brick, advanced uses netherbrick. ingotIron -> c:ingots/iron.
+
         ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, RusticMachineBlocks.RETORT.get())
                 .define('B', Items.BRICK).define('E', Items.BUCKET).define('I', Tags.Items.INGOTS_IRON)
                 .pattern(" B").pattern("IE").pattern(" B")
@@ -450,8 +360,7 @@ public class RusticRecipeProvider extends RecipeProvider {
                 .group("rustic_retort")
                 .unlockedBy("has_nether_brick", has(Items.NETHER_BRICK))
                 .save(out, rl("retort_advanced"));
-        // Phase 15: the apiary. Legacy recipes/apiary.json was a plain log-frame: six logs (ore_dict logWood) around
-        // two planks (plankWood) in the middle row, one result. logWood -> ItemTags.LOGS, plankWood -> ItemTags.PLANKS.
+
         ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, RusticMachineBlocks.APIARY.get())
                 .define('L', ItemTags.LOGS).define('P', ItemTags.PLANKS)
                 .pattern("LLL").pattern("P P").pattern("LLL")
@@ -459,11 +368,6 @@ public class RusticRecipeProvider extends RecipeProvider {
                 .save(out, rl("apiary"));
     }
 
-    // ------------------------------------------------------------------
-    // The remaining decor JSON rows: rope, the grape stake, the vase, the wooden lantern, the gargoyle,
-    // fertile soil and the grape stem. Legacy called the last one grape_seeds.json while its result was the
-    // plantable grape_stem block item, so the id here names what actually comes out.
-    // ------------------------------------------------------------------
     private void addMiscDecor(RecipeOutput out) {
         ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, RusticBlocks.ROPE.get(), 12)
                 .define('S', Items.STRING)
@@ -486,7 +390,7 @@ public class RusticRecipeProvider extends RecipeProvider {
                 .pattern("SPS").pattern("GTG").pattern("SPS")
                 .unlockedBy("has_torch", has(Blocks.TORCH))
                 .save(out, rl("lantern_wood"));
-        // The gargoyle's stone_slab meta 0 was the smooth-stone slab, which is what stone_slab means today.
+
         ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, RusticBlocks.GARGOYLE.get(), 2)
                 .define('P', Blocks.STONE_PRESSURE_PLATE).define('R', Blocks.STONE).define('S', Blocks.STONE_SLAB)
                 .pattern("PRP").pattern("SSS")
@@ -502,13 +406,6 @@ public class RusticRecipeProvider extends RecipeProvider {
                 .save(out, rl("grape_stem"));
     }
 
-    // ------------------------------------------------------------------
-    // The silver set (addSilverCraftingRecipes). Emitted only when the silver blocks registered at all
-    // (RusticBlocks.silverDecorEnabled()); every recipe then carries a not(tag_empty(c:ingots/silver))
-    // condition so it drops out when no mod provides silver, reproducing the legacy OreDictionary check.
-    // Unlike the iron and gold mounts above this group has always needed another mod: 1.12.2 shipped no
-    // silver ingot of its own, and neither does this port.
-    // ------------------------------------------------------------------
     private void addSilver(RecipeOutput out) {
         RusticBlocks.SilverDecor silver = RusticBlocks.SILVER_DECOR;
         if (silver == null) {
@@ -520,11 +417,6 @@ public class RusticRecipeProvider extends RecipeProvider {
                 "silver_lantern", SILVER_INGOTS);
     }
 
-    // ------------------------------------------------------------------
-    // Smelting (addSmeltingRecipes). The legacy olive/ironwood logs each smelt to charcoal; the tiny/gold
-    // dusts (P7.0 items) smelt to an iron nugget / gold ingot; honeycomb to beeswax; and rotten flesh to
-    // tallow behind FLESH_SMELTING. Legacy cook time was GameRegistry's default 200 ticks.
-    // ------------------------------------------------------------------
     private void addSmelting(RecipeOutput out) {
         smelt(out, Ingredient.of(RusticItems.HONEYCOMB.get()), RusticItems.HONEYCOMB.get(), RecipeCategory.FOOD,
                 RusticItems.BEESWAX.get(), 0.3F, "beeswax_from_smelting");
@@ -547,18 +439,6 @@ public class RusticRecipeProvider extends RecipeProvider {
                 .save(out, rl(id));
     }
 
-    // ------------------------------------------------------------------
-    // Machine recipes (P7.2). The four Phase-4b custom Recipe types, emitted straight through each
-    // serializer's codec by handing the constructed Recipe to RecipeOutput.accept (no advancement, no
-    // condition). The rows are 1.12.2's Recipes.addCrushingTubRecipes / addEvaporatingRecipes /
-    // addBrewingRecipes / addCondenserRecipes verbatim: ore-dict ingredients become the concrete items the
-    // machines match, the crushing-tub fluid amounts (250 mb, golden apple 100/1000) and the evaporating
-    // input amounts (500/100 - which also drive the basin's getAmount-tick countdown) are preserved, the
-    // brewing quality is left to the barrel block entity at runtime (amount is matching-irrelevant, so the
-    // legacy 1 mb placeholder is kept), and every condenser result is a rustic:elixir carrying one
-    // MobEffectInstance (ElixirUtils.addEffect) exactly as the legacy Basic/Advanced constructors built it.
-    // The dynamictrees apple-seed and the for.honey compat rows are skipped (Phase 10).
-    // ------------------------------------------------------------------
     private void addCrushingTub(RecipeOutput out) {
         crush(out, "olive_oil", fluid(RusticFluids.OLIVE_OIL.get(), 250), ing(RusticItems.OLIVES.get()), ItemStack.EMPTY);
         crush(out, "ironberry_juice", fluid(RusticFluids.IRONBERRY_JUICE.get(), 250), ing(RusticItems.IRONBERRIES.get()), ItemStack.EMPTY);
@@ -587,12 +467,6 @@ public class RusticRecipeProvider extends RecipeProvider {
         brew(out, "ambrosia", fluid(RusticFluids.GOLDEN_APPLE_JUICE.get(), 1), fluid(RusticFluids.AMBROSIA.get(), 1));
     }
 
-    // ------------------------------------------------------------------
-    // Condenser (Recipes.addCondenserRecipes). Basic rows (two ingredients, empty modifier) run 400 ticks;
-    // advanced rows (a modifier herb - sometimes ItemStack.EMPTY, but always the 3-ingredient advanced
-    // shape) run 300 ticks, matching the legacy Basic/Advanced getTime() overrides. The modifier gate rides
-    // on Ingredient.EMPTY for basic, exactly as the ported CondenserRecipe.matches reads it.
-    // ------------------------------------------------------------------
     private void addCondenser(RecipeOutput out) {
         Ingredient chamomile = ing(RusticFarmBlocks.CHAMOMILE.get());
         Ingredient marshMallow = ing(RusticItems.MARSH_MALLOW.get());
@@ -628,47 +502,46 @@ public class RusticRecipeProvider extends RecipeProvider {
         Ingredient netherrack = ing(Blocks.NETHERRACK);
         Ingredient empty = Ingredient.EMPTY;
 
-        // Healing (instant health).
         condense(out, "heal_basic", false, empty, List.of(chamomile, beef), new MobEffectInstance(MobEffects.HEAL, 1, 0));
         condense(out, "heal_advanced", true, marshMallow, List.of(chamomile, beef), new MobEffectInstance(MobEffects.HEAL, 1, 1));
-        // Regeneration.
+
         condense(out, "regeneration_basic", false, empty, List.of(cohosh, honeycomb), new MobEffectInstance(MobEffects.REGENERATION, 900, 0));
         condense(out, "regeneration_extended", true, horsetail, List.of(cohosh, honeycomb), new MobEffectInstance(MobEffects.REGENERATION, 1800, 0));
         condense(out, "regeneration_strong", true, marshMallow, List.of(cohosh, honeycomb), new MobEffectInstance(MobEffects.REGENERATION, 450, 1));
-        // Wither.
+
         condense(out, "wither_basic", false, empty, List.of(deathstalk, soulSand), new MobEffectInstance(MobEffects.WITHER, 900, 0));
         condense(out, "wither_extended", true, horsetail, List.of(deathstalk, soulSand), new MobEffectInstance(MobEffects.WITHER, 1800, 0));
         condense(out, "wither_strong", true, marshMallow, List.of(deathstalk, soulSand), new MobEffectInstance(MobEffects.WITHER, 450, 1));
-        // Night vision.
+
         condense(out, "night_vision_basic", false, empty, List.of(mooncap, spiderEye), new MobEffectInstance(MobEffects.NIGHT_VISION, 3600, 0));
         condense(out, "night_vision_extended", true, horsetail, List.of(mooncap, spiderEye), new MobEffectInstance(MobEffects.NIGHT_VISION, 9600, 0));
-        // Speed.
+
         condense(out, "speed_basic", false, empty, List.of(windThistle, sugar), new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 3600, 0));
         condense(out, "speed_extended", true, horsetail, List.of(windThistle, sugar), new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 9600, 0));
         condense(out, "speed_strong", true, marshMallow, List.of(windThistle, sugar), new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 1800, 1));
-        // Fire resistance (advanced, no modifier herb on the shorter one).
+
         condense(out, "fire_resistance_basic", true, empty, List.of(aloeVera, brick, coal), new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 3600, 0));
         condense(out, "fire_resistance_extended", true, horsetail, List.of(aloeVera, brick, coal), new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 9600, 0));
-        // Health boost.
+
         condense(out, "health_boost_basic", true, empty, List.of(bloodOrchid, rottenFlesh, redstone), new MobEffectInstance(MobEffects.HEALTH_BOOST, 3600, 0));
         condense(out, "health_boost_extended", true, horsetail, List.of(bloodOrchid, rottenFlesh, redstone), new MobEffectInstance(MobEffects.HEALTH_BOOST, 9600, 0));
         condense(out, "health_boost_strong", true, marshMallow, List.of(bloodOrchid, rottenFlesh, redstone), new MobEffectInstance(MobEffects.HEALTH_BOOST, 1800, 1));
-        // Haste.
+
         condense(out, "haste_basic", true, empty, List.of(coreRoot, ironNugget, redstone), new MobEffectInstance(MobEffects.DIG_SPEED, 3600, 0));
         condense(out, "haste_extended", true, horsetail, List.of(coreRoot, ironNugget, redstone), new MobEffectInstance(MobEffects.DIG_SPEED, 9600, 0));
         condense(out, "haste_strong", true, marshMallow, List.of(coreRoot, ironNugget, redstone), new MobEffectInstance(MobEffects.DIG_SPEED, 1800, 1));
-        // Strength.
+
         condense(out, "strength_basic", true, empty, List.of(ginseng, bone, gunpowder), new MobEffectInstance(MobEffects.DAMAGE_BOOST, 3600, 0));
         condense(out, "strength_extended", true, horsetail, List.of(ginseng, bone, gunpowder), new MobEffectInstance(MobEffects.DAMAGE_BOOST, 9600, 0));
         condense(out, "strength_strong", true, marshMallow, List.of(ginseng, bone, gunpowder), new MobEffectInstance(MobEffects.DAMAGE_BOOST, 1800, 1));
-        // Iron skin (custom effect).
+
         condense(out, "iron_skin_basic", true, empty, List.of(ironberries, leather, clayBall), new MobEffectInstance(RusticMobEffects.IRON_SKIN, 3600, 0));
         condense(out, "iron_skin_extended", true, horsetail, List.of(ironberries, leather, clayBall), new MobEffectInstance(RusticMobEffects.IRON_SKIN, 9600, 0));
         condense(out, "iron_skin_strong", true, marshMallow, List.of(ironberries, leather, clayBall), new MobEffectInstance(RusticMobEffects.IRON_SKIN, 1800, 1));
-        // Feather (custom effect; the vanilla feather is an ingredient, not the effect).
+
         condense(out, "feather_basic", true, empty, List.of(cloudsbluff, featherItem, paper), new MobEffectInstance(RusticMobEffects.FEATHER, 3600, 0));
         condense(out, "feather_extended", true, horsetail, List.of(cloudsbluff, featherItem, paper), new MobEffectInstance(RusticMobEffects.FEATHER, 9600, 0));
-        // Blazing trail (custom effect).
+
         condense(out, "blazing_trail_basic", true, empty, List.of(chiliPepper, blazePowder, netherrack), new MobEffectInstance(RusticMobEffects.BLAZING_TRAIL, 3600, 0));
         condense(out, "blazing_trail_extended", true, horsetail, List.of(chiliPepper, blazePowder, netherrack), new MobEffectInstance(RusticMobEffects.BLAZING_TRAIL, 9600, 0));
     }
@@ -702,9 +575,6 @@ public class RusticRecipeProvider extends RecipeProvider {
         return Ingredient.of(item);
     }
 
-    // ------------------------------------------------------------------
-    // Small builder helpers.
-    // ------------------------------------------------------------------
     private static ShapedRecipeBuilder shaped(RecipeCategory category, ItemLike result, int count, char key,
                                               ItemLike ingredient) {
         return ShapedRecipeBuilder.shaped(category, result, count).define(key, ingredient);
@@ -725,17 +595,6 @@ public class RusticRecipeProvider extends RecipeProvider {
                 .save(out, rl(id));
     }
 
-    // ------------------------------------------------------------------
-    // Phase 7.3 crafting-table recipes. The cabinet is an ordinary shaped crafting-table recipe, so it is emitted as
-    // vanilla {@code minecraft:crafting_shaped} JSON - that gives it recipe-book support and JEI's normal Crafting tab
-    // instead of inventing a type. The remaining three genuinely cannot be plain JSON: olive/vanta oiling copy the
-    // matched food/weapon and merge effects, and the non-ingredient-return rows must suppress a container remainder
-    // (the fluid bottle declares {@code craftRemainder(GLASS_BOTTLE)}, so a vanilla shapeless would double it). Those
-    // stay code-driven {@code CraftingRecipe}s under the vanilla CRAFTING type, exactly like the game's own
-    // {@code crafting_special_*} recipes, and are {@code isSpecial()} so they never clutter the recipe book.
-    // Like the rest of this provider every row is emitted unconditionally (config is not loaded at datagen time);
-    // RecipeOliveOil checks ENABLE_OLIVE_OILING in its matches(), so a runtime toggle works without regenerating JSON.
-    // ------------------------------------------------------------------
     private void addCraftingTableRecipes(RecipeOutput out) {
         out.accept(rl("ale_wort"), new RecipeNonIngredientReturn(
                 new ItemStack(RusticItems.ALE_WORT_BUCKET.get()),
@@ -749,14 +608,12 @@ public class RusticRecipeProvider extends RecipeProvider {
                 new ItemStack(RusticMachineBlocks.LIQUID_BARREL.get()),
                 List.of(Ingredient.of(RusticMachineBlocks.LIQUID_BARREL.get()))),
                 null);
-        // Legacy RecipeCabinet: full plank rows above and below an empty-centre middle row of one plank and one
-        // wooden trapdoor.
+
         cabinetShape(out, rl("cabinet"));
         out.accept(rl("olive_oiling"), new RecipeOliveOil(), null);
         out.accept(rl("vanta_oiling"), new RecipeVantaOil(), null);
     }
 
-    /** The cabinet pattern: full plank rows above and below a middle row of one plank and one trapdoor. */
     private void cabinetShape(RecipeOutput out, ResourceLocation id) {
         ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, RusticMachineBlocks.CABINET.get())
                 .define('P', ItemTags.PLANKS)
@@ -768,15 +625,6 @@ public class RusticRecipeProvider extends RecipeProvider {
                 .save(out, id);
     }
 
-    // ------------------------------------------------------------------
-    // The almanac (S11, replacing the last hand-written file under src/main/resources, recipe/almanac.json).
-    // The result is Patchouli's own guide_book item carrying the patchouli:book component pointed at
-    // data/rustic/patchouli_books/book, exactly as the manual JSON spelled it. Patchouli is a localRuntime-only
-    // dependency and is deliberately not on the compile classpath, so neither its item nor its component type
-    // can be named here; both are resolved out of the default registries instead, which are populated because
-    // runData boots with Patchouli loaded. The neoforge:mod_loaded condition the JSON carried is kept through
-    // out.withConditions, so a Patchouli-free install still drops the recipe (and its advancement) at load.
-    // ------------------------------------------------------------------
     @SuppressWarnings("unchecked")
     private void addAlmanac(RecipeOutput out) {
         Item guideBook = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("patchouli", "guide_book"));
@@ -806,12 +654,10 @@ public class RusticRecipeProvider extends RecipeProvider {
                 .save(out, rl(id));
     }
 
-    /** A Rustic-namespaced {@link ResourceLocation}, the recipe/advancement id used in {@code data/rustic/recipe}. */
     private static ResourceLocation rl(String path) {
         return ResourceLocation.fromNamespaceAndPath(Rustic.MODID, path);
     }
 
-    /** A conventional-namespaced ({@code c:}) item tag key, matching the tags {@link RusticItemTags} writes. */
     private static TagKey<Item> cTag(String path) {
         return TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", path));
     }

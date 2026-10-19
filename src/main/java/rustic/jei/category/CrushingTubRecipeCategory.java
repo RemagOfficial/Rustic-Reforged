@@ -13,11 +13,6 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import rustic.content.blocks.RusticMachineBlocks;
 import rustic.content.crafting.CrushingTubRecipe;
 
-/**
- * The crushing tub: one input item crushes into an output fluid (searchable as a {@code fluid_stack}) plus an optional
- * byproduct item. Port of 1.12.2's {@code CrushingTubRecipeCategory}; the legacy background texture is deferred to
- * Phase 11, so the slots carry their own standard backgrounds and the layout size is fixed here.
- */
 public class CrushingTubRecipeCategory extends AbstractRecipeCategory<RecipeHolder<CrushingTubRecipe>> {
 
     public CrushingTubRecipeCategory(IGuiHelper guiHelper, RecipeType<RecipeHolder<CrushingTubRecipe>> recipeType) {

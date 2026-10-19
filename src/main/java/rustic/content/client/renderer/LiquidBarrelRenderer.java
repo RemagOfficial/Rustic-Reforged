@@ -12,17 +12,8 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import rustic.Rustic;
 import rustic.content.blockentity.LiquidBarrelBlockEntity;
 
-/**
- * 1.21 form of the legacy {@code rustic.client.renderer.LiquidBarrelRenderer}. Draws the stored fluid as a top
- * surface quad inside the barrel - the only pass the legacy renderer had (the liquid barrel holds no items).
- *
- * <p>Faithful numbers from the legacy renderer: the quad spans {@code 0.1875..0.8125} in x/z at
- * {@code y = 0.125 + 0.8125 * amount/capacity} (a tall, narrow fill inside the barrel body) with a {@code 0.1875}
- * sprite UV inset, drawn through {@link FluidTankRenderUtil}.
- */
 public class LiquidBarrelRenderer implements BlockEntityRenderer<LiquidBarrelBlockEntity> {
 
-    /** Round-5 diagnostic, see {@link CrushingTubRenderer#FLUID_DIAG_LOGGED}; remove once the Phase 9 verdict is green. */
     private static final AtomicBoolean FLUID_DIAG_LOGGED = new AtomicBoolean();
 
     private final ItemRenderer itemRenderer;
@@ -34,10 +25,7 @@ public class LiquidBarrelRenderer implements BlockEntityRenderer<LiquidBarrelBlo
     @Override
     public void render(LiquidBarrelBlockEntity be, float partialTick, PoseStack poseStack,
                        MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
-        // ENTITYBLOCK_ANIMATED: draw the open-topped barrel body first (via the block's own baked model through the
-        // item renderer) so the fluid surface below reads as held inside it. renderSingleBlock is unusable and
-        // renderStatic(NONE) leaves the model at full scale but translated by (-0.5,-0.5,-0.5), so a +0.5
-        // pre-translate recentres it in the block's 0..1 space - see CrushingTubRenderer.
+
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
         this.itemRenderer.renderStatic(new ItemStack(be.getBlockState().getBlock()), ItemDisplayContext.NONE,

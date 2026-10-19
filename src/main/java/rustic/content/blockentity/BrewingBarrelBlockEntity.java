@@ -34,29 +34,8 @@ import rustic.content.items.RusticItems;
 import rustic.content.menu.BrewingBarrelMenu;
 import rustic.registry.RusticRegistries;
 
-/**
- * 1.12.2's {@code TileEntityBrewingBarrel}: the fermenting barrel behind the GUI. Three tanks (an 8-bucket
- * {@code input} juice tank, an 8-bucket {@code output} booze tank and a 1-bucket {@code auxiliary} culture tank) sit
- * behind six item slots (an in and an out slot per tank). Each tick the in/out slots push fluid into / draw fluid out
- * of their tank; when the input holds a juice a {@link BrewingBarrelRecipe} matches, a {@code MAX_BREW_TIME} countdown
- * runs and, at the end, the whole matched batch ferments from input to output.
- *
- * <p><b>Quality deviation (the plan's headline).</b> Legacy stamped a random {@code "Quality"} FLOAT NBT tag onto the
- * output inside {@code BrewingBarrelRecipe.getResult}, and used the auxiliary culture's quality as the base when one
- * was loaded (the "booze culture" mechanic). 1.21 moves that to runtime here: the recipe is a plain fluid→fluid
- * mapping (see {@link BrewingBarrelRecipe}) and {@link #computeQuality} writes the {@code rustic:quality} data
- * component onto the output {@link FluidStack} through {@link RusticBooze}/{@link RusticDataComponents#QUALITY},
- * reproducing the legacy fresh-roll and cultured-delta formulas off {@code RusticConfig.MIN/MAX_BREW_QUALITY_CHANGE}.
- *
- * <p><b>Sync deviation.</b> {@code brewTime} changes every tick, so it reaches the GUI through the menu's
- * {@link ContainerData} (the furnace-style per-tick int channel, {@link #getContainerData()}). The tanks only change
- * on fill/drain/brew, so they ride the ordinary {@link #getUpdatePacket()} block update into the client BE copy the
- * screen reads for fluid type + amount. The legacy {@code addBlockEvent(1)}/{@code receiveClientEvent} relay collapses
- * into that one {@link #sync()} call.
- */
 public class BrewingBarrelBlockEntity extends BlockEntity implements MenuProvider, ContainerData {
 
-    // The six slots legacy's ItemStackHandler(6) used: an in and an out slot per tank.
     public static final int INPUT_IN_SLOT = 0;
     public static final int OUTPUT_IN_SLOT = 1;
     public static final int AUX_IN_SLOT = 2;
@@ -64,12 +43,10 @@ public class BrewingBarrelBlockEntity extends BlockEntity implements MenuProvide
     public static final int OUTPUT_OUT_SLOT = 4;
     public static final int AUX_OUT_SLOT = 5;
 
-    /** Legacy tank sizes: input 8000, output 8000, auxiliary (culture) 1000 mB. */
     public static final int INPUT_CAPACITY = 8000;
     public static final int OUTPUT_CAPACITY = 8000;
     public static final int AUX_CAPACITY = 1000;
 
-    // ContainerData indices the menu syncs each tick.
     private static final int DATA_BREW_TIME = 0;
     private static final int DATA_MAX_BREW_TIME = 1;
     private static final int DATA_INPUT_AMOUNT = 2;
@@ -152,12 +129,6 @@ public class BrewingBarrelBlockEntity extends BlockEntity implements MenuProvide
         }
     }
 
-    // ------------------------------------------------------------------ ticking
-
-    /**
-     * Server tick: move fluid between the in/out item slots and their tanks, then run the brew countdown and ferment
-     * a full batch when it completes. Mirrors legacy {@code update()} / {@code brew()}.
-     */
     public static void serverTick(Level level, BlockPos pos, BlockState state, BrewingBarrelBlockEntity be) {
         if (level.isClientSide) {
             return;
@@ -188,12 +159,6 @@ public class BrewingBarrelBlockEntity extends BlockEntity implements MenuProvide
         }
     }
 
-    /**
-     * Port of legacy {@code TileEntityBrewingBarrel.tryTankIO}. It takes the stack in the in-slot, and either pushes
-     * its fluid into {@code tank} (when {@code allowFill}) or draws {@code tank} fluid into an empty container, moving
-     * the resulting container to the paired out-slot and consuming one in-slot item on success. A bare glass bottle is
-     * swapped for an empty {@code rustic:fluid_bottle} first so it can hold our drinkable fluids.
-     */
     private boolean tryTankIO(FluidTank tank, int inSlot, int outSlot, boolean allowFill) {
         ItemStack stack = itemHandler.getStackInSlot(inSlot);
         if (stack.isEmpty()) {
@@ -203,7 +168,6 @@ public class BrewingBarrelBlockEntity extends BlockEntity implements MenuProvide
                 ? new ItemStack(RusticItems.FLUID_BOTTLE.get())
                 : stack.copyWithCount(1);
 
-        // Fill the tank from the item.
         if (allowFill) {
             IFluidHandlerItem filled = FluidUtil.getFluidHandler(container.copyWithCount(1)).orElse(null);
             if (filled != null && !filled.getFluidInTank(0).isEmpty()) {
@@ -216,7 +180,6 @@ public class BrewingBarrelBlockEntity extends BlockEntity implements MenuProvide
             }
         }
 
-        // Drain the tank into an empty item.
         if (!tank.getFluid().isEmpty()) {
             IFluidHandlerItem exec = FluidUtil.getFluidHandler(container.copyWithCount(1)).orElse(null);
             if (exec != null && exec.getFluidInTank(0).isEmpty()
@@ -244,7 +207,7 @@ public class BrewingBarrelBlockEntity extends BlockEntity implements MenuProvide
             BrewingBarrelRecipe candidate = holder.value();
             if (candidate.matches(in, level)) {
                 FluidStack out = candidate.getOutputFluid();
-                // Prefer a recipe whose output can actually enter the output tank (empty, same fluid, room to spare).
+
                 boolean fits = output.getFluid().isEmpty()
                         || FluidStack.isSameFluidSameComponents(output.getFluid(), out);
                 if (fits && output.getFluidAmount() < output.getCapacity()) {
@@ -278,11 +241,6 @@ public class BrewingBarrelBlockEntity extends BlockEntity implements MenuProvide
         }
     }
 
-    /**
-     * The runtime quality stamp, the 1.21 form of legacy {@code BrewingBarrelRecipe.getResult(in, aux)}. With a
-     * matching booze loaded in the culture tank the quality is that culture's quality nudged by a random
-     * {@code MIN..MAX_BREW_QUALITY_CHANGE} percent delta; otherwise it is a fresh {@code 5..75} percent roll.
-     */
     private float computeQuality(FluidStack out) {
         net.minecraft.util.RandomSource rand = level.getRandom();
         FluidStack aux = auxiliary.getFluid();
@@ -300,9 +258,6 @@ public class BrewingBarrelBlockEntity extends BlockEntity implements MenuProvide
         return (5 + rand.nextInt(71)) / 100F;
     }
 
-    // ------------------------------------------------------------------ container data (menu sync)
-
-    /** The menu-facing {@link ContainerData}: the five brew-GUI ints, furnace-style. */
     public ContainerData getContainerData() {
         return this;
     }
@@ -326,13 +281,11 @@ public class BrewingBarrelBlockEntity extends BlockEntity implements MenuProvide
 
     @Override
     public void set(int index, int value) {
-        // Only the brew countdown flows back to the client this way; the amounts sync through the block update.
+
         if (index == DATA_BREW_TIME) {
             this.brewTime = value;
         }
     }
-
-    // ------------------------------------------------------------------ menu provider
 
     @Override
     public Component getDisplayName() {
@@ -345,18 +298,11 @@ public class BrewingBarrelBlockEntity extends BlockEntity implements MenuProvide
         return new BrewingBarrelMenu(containerId, playerInventory, this);
     }
 
-    /**
-     * Writes this barrel's position into the menu open packet so the client factory ({@link
-     * rustic.content.menu.BrewingBarrelMenu#client}) can resolve the client block entity copy whose fluid tanks the
-     * screen renders. Replaces the legacy GUI reading the tile entity straight off {@code ContainerBrewingBarrel}.
-     */
     @Override
     public void writeClientSideData(net.minecraft.world.inventory.AbstractContainerMenu menu,
                                    net.minecraft.network.RegistryFriendlyByteBuf buffer) {
         buffer.writeBlockPos(this.worldPosition);
     }
-
-    // ------------------------------------------------------------------ save / load / sync
 
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {

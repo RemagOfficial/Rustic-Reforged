@@ -21,18 +21,6 @@ import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 
-/**
- * Phase 10 S10.4b baseline for the Patchouli almanac book.
- *
- * <p>The legacy 1.12.2 in-game book ({@code ItemBook} + {@code GuiBook} + {@code BookManager}) is replaced by a pure-data
- * Patchouli book authored as JSON under {@code data/rustic/patchouli_books/book/} and
- * {@code assets/rustic/patchouli_books/book/en_us/}. No Java glue exists for the book. Note that Patchouli 1.21 has no
- * per-book item: {@code BookRegistry} discovers the book (whose id is still {@code rustic:book}) at reload, and the
- * almanac is delivered as the single {@code patchouli:guide_book} item carrying a {@code patchouli:book="rustic:book"}
- * data component ({@code ItemModBook.forBook}). Because none of it is read at unit-test boot, this test is the only
- * offline guard: it walks every shipped file the way Patchouli would and asserts the 1:1 mapping back to
- * {@code BookManager.init()}, plus the lang-key and recipe/advancement gating.
- */
 public class PatchouliBookBaselineTest {
 
     private static final String BOOK_DIR = "/data/rustic/patchouli_books/book/";
@@ -48,8 +36,6 @@ public class PatchouliBookBaselineTest {
             "alcoholic_beverages", "crushing", "drying"};
     private static final String[] CATEGORIES = {"decoration", "agriculture", "production"};
 
-    // ------------------------------------------------------------------ book.json
-
     @Test
     public void bookJsonIsWellFormedAndI18n() {
         JsonObject book = json(BOOK_DIR + "book.json");
@@ -57,23 +43,18 @@ public class PatchouliBookBaselineTest {
         assertEquals("item.rustic.book", book.get("name").getAsString());
         assertEquals("book.rustic.landing", book.get("landing_text").getAsString());
         assertEquals("rustic:main/root", book.get("advancements_tab").getAsString());
-        // Patchouli renders book.model with an "item/" prefix applied internally, so the value must be bare.
+
         assertEquals("rustic:book", book.get("model").getAsString());
-        // A book only lands in a creative tab (and so in JEI's item list) when creative_tab names a registered tab;
-        // Patchouli's processCreativeTabs adds ItemModBook.forBook(book) only while Book.creativeTab != null.
-        // Legacy ItemBook.setCreativeTab(Rustic.decorTab) put the almanac in the decor tab, so the port must too.
+
         assertEquals("rustic:decor", book.get("creative_tab").getAsString(),
                 "the almanac must be parented to the DECOR tab, matching legacy ItemBook");
-        // Patchouli 1.20+ hard-throws in the Book ctor (book skipped, item never registered) unless this is true:
-        // all categories/entries live clientside under assets/, only book.json stays under data/.
+
         assertTrue(book.get("use_resource_pack").getAsBoolean(),
                 "book.json MUST set use_resource_pack:true or Patchouli refuses to load the book");
-        // The book uses Patchouli's auto-generated item (no dont_generate_book / custom_book_item).
+
         assertTrue(!book.has("dont_generate_book") && !book.has("custom_book_item"),
                 "the almanac relies on Patchouli's automatic book item");
     }
-
-    // ------------------------------------------------------------------ categories
 
     @Test
     public void allThreeCategoriesExistAndAreNamed() {
@@ -84,8 +65,6 @@ public class PatchouliBookBaselineTest {
             assertTrue(obj.has("icon"), category + " needs an icon");
         }
     }
-
-    // ------------------------------------------------------------------ entries: existence + shape
 
     @Test
     public void allThirtyTwoEntriesExistAndParse() {
@@ -106,7 +85,6 @@ public class PatchouliBookBaselineTest {
         assertEquals(34, count, "16 decoration + 11 agriculture + 7 production");
     }
 
-    /** The three config-gated-but-always-shown entries carry no {@code flag} field (pure-data policy). */
     @Test
     public void entriesCarryNoConfigFlag() {
         for (String category : CATEGORIES) {
@@ -115,8 +93,6 @@ public class PatchouliBookBaselineTest {
             }
         }
     }
-
-    // ------------------------------------------------------------------ entries: related links resolve
 
     @Test
     public void relatedIdsPointAtRealSiblingEntries() {
@@ -143,9 +119,6 @@ public class PatchouliBookBaselineTest {
         }
     }
 
-    // ------------------------------------------------------------------ entries: page count fidelity
-
-    /** Spot-check the page counts that {@code BookManager.init()} hard-coded, so a lost page fails fast. */
     @Test
     public void pageCountMatchesLegacyBookManager() {
         assertEquals(2, pages("decoration", "barrels"), "barrel_item + barrel_fluid");
@@ -159,15 +132,6 @@ public class PatchouliBookBaselineTest {
         assertEquals(2, pages("production", "crushing"), "crushing + crushing_1");
     }
 
-    // ------------------------------------------------------------------ item model texture
-
-    /**
-     * Patchouli's {@code replaceBookModel} renders {@code book.model} (here {@code rustic:book} -> the
-     * {@code rustic:item/book} model) for the shared guide_book whenever the {@code patchouli:book} component is
-     * {@code rustic:book}. The almanac PNG actually lives at {@code assets/rustic/textures/item/book.png}, so the
-     * model must reference {@code rustic:item/book}; the 1.12-era {@code rustic:items/book} resolves to a missing
-     * texture and renders a broken icon.
-     */
     @Test
     public void bookItemModelPointsAtTheRealTextureFolder() {
         JsonObject model = json("/assets/rustic/models/item/book.json");
@@ -176,13 +140,11 @@ public class PatchouliBookBaselineTest {
         assertEquals("rustic:item/book", textures.get("particle").getAsString());
     }
 
-    // ------------------------------------------------------------------ recipe gating
-
     @Test
     public void almanacRecipeIsPatchouliGatedAndCraftsTheBook() {
         JsonObject recipe = json("/data/rustic/recipe/almanac.json");
         assertEquals("minecraft:crafting_shaped", recipe.get("type").getAsString());
-        // Patchouli 1.21 has no rustic:book item: the almanac is guide_book + the patchouli:book data component.
+
         JsonObject result = recipe.getAsJsonObject("result");
         assertEquals("patchouli:guide_book", result.get("id").getAsString());
         assertEquals("rustic:book",
@@ -192,13 +154,11 @@ public class PatchouliBookBaselineTest {
         assertPatchouliCondition(recipe);
     }
 
-    // ------------------------------------------------------------------ advancement gating
-
     @Test
     public void almanacAdvancementIsPatchouliGatedAndParentedToRoot() {
         JsonObject almanac = json("/data/rustic/advancement/main/almanac.json");
         assertEquals("rustic:main/root", almanac.get("parent").getAsString());
-        // Icon (and the inventory_changed items condition) must target guide_book + patchouli:book component.
+
         JsonObject icon = almanac.getAsJsonObject("display").getAsJsonObject("icon");
         assertEquals("patchouli:guide_book", icon.get("id").getAsString());
         assertEquals("rustic:book", icon.getAsJsonObject("components").get("patchouli:book").getAsString());
@@ -216,17 +176,10 @@ public class PatchouliBookBaselineTest {
         JsonObject root = json("/data/rustic/advancement/main/root.json");
         assertEquals("advancements.rustic.root",
                 root.getAsJsonObject("display").getAsJsonObject("title").get("translate").getAsString());
-        // The tab root is a vanilla Rustic advancement, so it must NOT be Patchouli-gated.
+
         assertTrue(!root.has("neoforge:conditions"), "the root tab is present whether or not Patchouli is installed");
     }
 
-    // ------------------------------------------------------------------ lang-key coverage (drift guard)
-
-    /**
-     * Every lang key a book file references (entry names, page text, category names/descriptions, the book name and
-     * landing) must exist in the ported {@code en_us.json}. This is the guard that catches a page renamed here but not
-     * migrated there.
-     */
     @Test
     public void everyReferencedLangKeyExists() {
         JsonObject lang = json(LANG_JSON);
@@ -272,8 +225,6 @@ public class PatchouliBookBaselineTest {
             assertTrue(lang.has(key), "missing advancement lang key: " + key);
         }
     }
-
-    // ------------------------------------------------------------------ helpers
 
     private static void assertPatchouliCondition(JsonObject obj) {
         JsonArray conditions = obj.getAsJsonArray("neoforge:conditions");

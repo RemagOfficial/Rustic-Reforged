@@ -18,14 +18,6 @@ import rustic.Rustic;
 import rustic.content.blockentity.CondenserBlockEntityBase;
 import rustic.content.menu.CondenserMenu;
 
-/**
- * The basic condenser GUI, the 1.21 form of legacy {@code GuiCondenser}. It draws {@code condenser.png}, the water
- * tank as a bottom-up fill from the block-atlas still sprite, the burning flame and the brew-progress bar - all three
- * driven by the four synced furnace {@code DataSlot}s plus the block-update-synced tank on the client BE copy.
- *
- * <p><b>Art status.</b> The background is referenced at its legacy path and only renders once Phase 11 ships the
- * texture; a missing background here is the expected placeholder, not a bug. The fluid fill itself always draws.
- */
 public class RusticCondenserScreen extends AbstractContainerScreen<CondenserMenu> {
 
     private static final ResourceLocation TEXTURE =
@@ -51,21 +43,18 @@ public class RusticCondenserScreen extends AbstractContainerScreen<CondenserMenu
 
         drawTank(guiGraphics, condenser.getTank().getFluid(), condenser.getTank().getCapacity(), 133, 27, 16, 32);
 
-        // Flame, scaled off the current fuel's burn length (legacy getBurnLeftScaled(13)).
         if (condenser.isBurning()) {
             int scale = condenser.currentItemBurnTime == 0 ? 200 : condenser.currentItemBurnTime;
             int k = condenser.condenserBurnTime * 13 / scale;
             guiGraphics.blit(TEXTURE, this.leftPos + 67, this.topPos + 46 + 12 - k, 176, 12 - k, 14, k + 1);
         }
 
-        // Brew progress (legacy getBrewProgressScaled(50), drawn 28 tall at (44,29)).
         int l = brewProgress(50);
         if (l > 0) {
             guiGraphics.blit(TEXTURE, this.leftPos + 44, this.topPos + 29, 176, 14, l, 28);
         }
     }
 
-    /** Legacy {@code getBrewProgressScaled}: {@code brewTime * pixels / totalBrewTime + 1} when both are non-zero. */
     private int brewProgress(int pixels) {
         CondenserBlockEntityBase condenser = this.menu.getTile();
         if (condenser == null || condenser.brewTime == 0 || condenser.totalBrewTime == 0) {

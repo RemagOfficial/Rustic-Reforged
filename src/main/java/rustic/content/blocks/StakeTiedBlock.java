@@ -19,22 +19,6 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.function.Supplier;
 
-/**
- * 1.12.2's {@code BlockStakeTied}: a {@link CropStakeBlock} knot tied with rope, made by right-clicking
- * rope onto a stake. It renders the four horizontal connections of the pole to neighbouring rope, grape
- * vines or other tied stakes.
- *
- * <p>Those connections were a legacy {@code getActualState} - a purely visual, on-the-fly state the model
- * read but that was never stored. 1.21 deleted {@code getActualState}, so the port keeps the same four
- * flags as <em>real</em> {@link BooleanProperty}s recomputed by {@link #updateShape} and
- * {@link #getStateForPlacement}, the approach {@link BlockRopeBase} already takes for its own {@code dangle}
- * flag. The neighbour test is the legacy one: a rope counts only when its stored axis matches the direction
- * being connected, and another tied stake always counts.
- *
- * <p>Deferred per the phase boundary: the grape-leaf branch of the neighbour test arrives with the vinery
- * (Phase 5's grape group), and the four-way knot model is Phase 9 art. This class owns the block, the
- * behaviour and the rope drop.
- */
 public class StakeTiedBlock extends Block {
 
     public static final MapCodec<StakeTiedBlock> CODEC = simpleCodec(
@@ -52,7 +36,6 @@ public class StakeTiedBlock extends Block {
                     Direction.WEST, WEST,
                     Direction.EAST, EAST);
 
-    // 1.12.2 KNOT_AABB 0.3125..0.6875 selection; STAKE_AABB 0.375..0.625 collision.
     private static final VoxelShape KNOT_SHAPE = Block.box(5.0D, 0.0D, 5.0D, 11.0D, 16.0D, 11.0D);
     private static final VoxelShape STAKE_COLLISION = Block.box(6.0D, 0.0D, 6.0D, 10.0D, 16.0D, 10.0D);
 
@@ -80,22 +63,17 @@ public class StakeTiedBlock extends Block {
         return STAKE_COLLISION;
     }
 
-    /** 1.12.2's {@code getPickBlock}: middle-click gives the rope, not the tied stake. */
     @Override
+    // Middle-click / pick-block yields the rope, not the tied-stake knot (the knot has no item of its own).
     public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
         return new ItemStack(RusticBlocks.ROPE.get().asItem());
     }
 
-    /**
-     * 1.12.2's {@code breakBlock}: after a break the pole reverts to a bare {@link CropStakeBlock} and the
-     * rope is returned. The revert is {@link #onDestroyedByPlayer}; the rope is the loot table. (Returning a
-     * replacement state from {@code playerWillDestroy} is a dead idiom in 1.21 - the engine only feeds that
-     * state to the drop/destroy calls, it never writes it to the world, so the revert must set the block itself.)
-     */
     @Override
     public boolean onDestroyedByPlayer(BlockState state, net.minecraft.world.level.Level level, BlockPos pos,
                                        net.minecraft.world.entity.player.Player player, boolean willHarvest,
                                        FluidState fluid) {
+        // Un-tying a knot reverts the block back to the plain crop-stake pole underneath it.
         boolean removed = super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
         if (removed) {
             level.setBlock(pos, cropStake.get().defaultBlockState(), Block.UPDATE_ALL);
@@ -129,7 +107,6 @@ public class StakeTiedBlock extends Block {
         }
     }
 
-    /** 1.12.2's {@code getActualState} neighbour scan, now stored in the state instead of computed per frame. */
     private BlockState withConnections(BlockState state, BlockGetter level, BlockPos pos) {
         for (java.util.Map.Entry<Direction, BooleanProperty> entry : CONNECTION_BY_HORIZONTAL.entrySet()) {
             Direction direction = entry.getKey();
@@ -147,7 +124,7 @@ public class StakeTiedBlock extends Block {
         if (block instanceof BlockRopeBase && neighbour.getValue(BlockRopeBase.AXIS) == direction.getAxis()) {
             return true;
         }
-        // The grape-leaf connection joins this test when the vinery lands (see the class notes).
+
         return false;
     }
 

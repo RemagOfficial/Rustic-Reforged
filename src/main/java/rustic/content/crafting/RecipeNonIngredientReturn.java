@@ -21,18 +21,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * The 1.21 port of 1.12.2's {@code RecipeNonIngredientReturn} (a {@code ShapelessOreRecipe} subclass). A data-driven
- * shapeless recipe - result plus an order-insensitive ingredient multiset - whose only twist is its leftover
- * handling: the container a real ingredient hands back (the bucket left by a water bucket, the glass bottle left by
- * a rustic fluid bottle, the liquid barrel you re-emptied) is <em>cleared</em> instead of returned, so the crafting
- * result is the fluid-holding replacement rather than result-plus-a-spurious-container. This is what powers the
- * legacy {@code ale_wort}, {@code bottle_emptying} and {@code barrel_emptying} recipes.
- *
- * <p>Matching mirrors vanilla shapeless exactly: every non-empty grid slot must consume one required
- * {@link Ingredient} and every required ingredient must be consumed - no leftovers, no unmatched stacks. The
- * recipe is {@code isSpecial()} so it never clutters the recipe book, matching the legacy dynamic registration.
- */
 public class RecipeNonIngredientReturn implements CraftingRecipe {
 
     private final ItemStack result;
@@ -76,7 +64,7 @@ public class RecipeNonIngredientReturn implements CraftingRecipe {
 
     @Override
     public NonNullList<ItemStack> getRemainingItems(CraftingInput input) {
-        // The vanilla shapeless contract first: each slot yields its item's crafting remainder, if any.
+
         NonNullList<ItemStack> ret = NonNullList.withSize(input.size(), ItemStack.EMPTY);
         for (int i = 0; i < ret.size(); i++) {
             ItemStack stack = input.getItem(i);
@@ -84,8 +72,7 @@ public class RecipeNonIngredientReturn implements CraftingRecipe {
                 ret.set(i, stack.getCraftingRemainingItem());
             }
         }
-        // The one deviation: a bucket, glass bottle or liquid barrel remainder is dropped, so the fluid-carrying
-        // result is not doubled up with the container it logically consumed (legacy getRemainingItems verbatim).
+
         for (int i = 0; i < ret.size(); i++) {
             ItemStack remainder = ret.get(i);
             if (remainder.is(Items.BUCKET) || remainder.is(Items.GLASS_BOTTLE)
@@ -121,14 +108,12 @@ public class RecipeNonIngredientReturn implements CraftingRecipe {
         return RusticRegistries.NON_INGREDIENT_RETURN_SERIALIZER.get();
     }
 
-    // RecipeType comes from CraftingRecipe's default (RecipeType.CRAFTING) so the vanilla crafting table matches it.
     @Override
     public CraftingBookCategory category() {
-        // isSpecial() keeps this out of the recipe book, so the tab is never opened; MISC mirrors legacy.
+
         return CraftingBookCategory.MISC;
     }
 
-    /** Serializer: nested {@code Serializer}, a {@code MapCodec} for JSON (result + ingredient list) and a hand-rolled {@code StreamCodec}. */
     public static class Serializer implements RecipeSerializer<RecipeNonIngredientReturn> {
 
         private static final MapCodec<RecipeNonIngredientReturn> CODEC = RecordCodecBuilder.mapCodec(

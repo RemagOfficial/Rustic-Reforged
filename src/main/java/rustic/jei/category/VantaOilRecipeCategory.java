@@ -14,12 +14,6 @@ import net.minecraft.world.item.crafting.RecipeHolder;
 import rustic.content.crafting.RecipeVantaOil;
 import rustic.content.fluids.RusticFluids;
 
-/**
- * Vanta oiling. {@link RecipeVantaOil} is a stateless pattern recipe: a weapon plus a fluid bottle of vanta oil
- * (optionally with elixir-effect ingredients) yields the same weapon imbued with the elixir effects. The legacy
- * wrapper enumerated every oilable weapon/potion in the game via 1.12 registry scans, which has no portable form
- * here, so this category renders one representative example - a sword plus vanta oil in, an imbued sword out.
- */
 public class VantaOilRecipeCategory extends AbstractRecipeCategory<RecipeHolder<RecipeVantaOil>> {
 
     public VantaOilRecipeCategory(IGuiHelper guiHelper, RecipeType<RecipeHolder<RecipeVantaOil>> recipeType) {

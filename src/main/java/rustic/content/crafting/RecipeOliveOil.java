@@ -20,18 +20,6 @@ import rustic.content.items.ItemFluidBottle;
 import rustic.content.items.RusticItems;
 import rustic.registry.RusticRegistries;
 
-/**
- * The 1.21 port of 1.12.2's {@code RecipeOliveOil} - a dynamic, {@code Unit}-codec crafting-table recipe that oils
- * exactly one edible food with one {@code rustic:fluid_bottle} of olive oil. The result is a single copy of the food
- * carrying the {@code rustic:oiled} marker; the bottle is consumed with no glass remainder (the default empty
- * {@code getRemainingItems} delivers that, as the legacy override did).
- *
- * <p>The legacy mutable {@code foodSlot} field is gone: the food slot is re-derived in {@link #assemble} so the recipe
- * instance stays stateless and safe to share across decodes. Food eligibility honours
- * {@link RusticConfig#OLIVE_OIL_USE_WHITELIST} against {@link RusticConfig#OLIVE_OIL_BLACKLIST} exactly like the
- * legacy {@code USE_WHITELIST != blacklist.contains(id)} test, and the whole recipe no-ops when
- * {@link RusticConfig#ENABLE_OLIVE_OILING} is off (the legacy registration gate, folded into matching).
- */
 public class RecipeOliveOil implements CraftingRecipe {
 
     @Override
@@ -80,7 +68,7 @@ public class RecipeOliveOil implements CraftingRecipe {
 
     @Override
     public ItemStack getResultItem(HolderLookup.Provider registries) {
-        // Dynamic recipe: the result is derived from the matched food, so there is no static output.
+
         return ItemStack.EMPTY;
     }
 
@@ -99,10 +87,9 @@ public class RecipeOliveOil implements CraftingRecipe {
         return RusticRegistries.OLIVE_OIL_SERIALIZER.get();
     }
 
-    // RecipeType comes from CraftingRecipe's default (RecipeType.CRAFTING) so the vanilla crafting table matches it.
     @Override
     public CraftingBookCategory category() {
-        // isSpecial() keeps this out of the recipe book, so the tab is never opened; MISC mirrors legacy.
+
         return CraftingBookCategory.MISC;
     }
 
@@ -115,7 +102,7 @@ public class RecipeOliveOil implements CraftingRecipe {
     }
 
     private static boolean isOileableFood(ItemStack stack) {
-        // The 1.21 form of legacy's "instanceof ItemFood": a food is any stack carrying the FOOD component.
+
         if (!stack.has(DataComponents.FOOD) || stack.has(RusticDataComponents.OILED.get())) {
             return false;
         }
@@ -127,15 +114,12 @@ public class RecipeOliveOil implements CraftingRecipe {
                 break;
             }
         }
-        // USE_WHITELIST true -> accept only listed; false (blacklist) -> accept everything but listed.
+
         return RusticConfig.OLIVE_OIL_USE_WHITELIST.get() == listed;
     }
 
-    /** Serializer: a stateless dynamic recipe; both codecs are {@code unit} codecs pinned to one shared instance. */
     public static class Serializer implements RecipeSerializer<RecipeOliveOil> {
 
-        // One canonical instance shared by BOTH codecs. A split instance breaks the
-        // server-side 'update_recipes' network encode (StreamCodec.unit compares by reference).
         private static final RecipeOliveOil INSTANCE = new RecipeOliveOil();
 
         private static final MapCodec<RecipeOliveOil> CODEC = MapCodec.unit(INSTANCE);

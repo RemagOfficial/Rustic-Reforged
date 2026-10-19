@@ -59,28 +59,8 @@ import rustic.content.items.RusticItems;
 import rustic.content.items.ItemHerbEdible;
 import rustic.content.items.StakeCropSeedItem;
 
-/**
- * Phase 5 characterisation test for the stake-crop slice: the two placeable poles ({@code crop_stake},
- * {@code stake_tied}), the two climbing vines ({@code tomato_crop}, {@code chili_crop}), their seed items and
- * their produce, plus the datagen that makes each render and drop.
- *
- * <p>{@link RusticDecorRegistrationTest} deliberately excludes these ids (see its {@code farmIds()} helper),
- * so this is where the crop pipeline's one structural oddity is asserted: a {@link StakeCropBlock} is
- * <em>never</em> given a block item - it is planted by clicking a seed onto a stake, picked as its seed and
- * harvested through its loot table - while the two poles are ordinary placeable wood. A slice that gave a
- * vine a block item would show a ghost "crop" cube in the creative menu and let a player place an
- * unsupported vine, which is exactly the failure this guards against.
- *
- * <p>Like the machine test this runs in ModDevGradle's FML unit-test JVM, which makes {@code BuiltInRegistries}
- * populated and the creative tab readable. It asserts the wiring a live game depends on exists (register
- * shape, properties, loot, models, tab membership), not the growth tick itself - the random-tick climb and the
- * {@code canSurvive} light check need a real level and are a live-game check.
- */
 public class RusticFarmRegistrationTest {
 
-    // ------------------------------------------------------------------ the two poles
-
-    /** The crop stake was Material.WOOD at hardness 2 with the legacy {@code setResistance(5F)}. */
     @Test
     public void cropStakeIsRegisteredAsAFarmBlockWithTheLegacyWoodNumbers() {
         Block stake = RusticFarmBlocks.CROP_STAKE.get();
@@ -97,7 +77,6 @@ public class RusticFarmRegistrationTest {
                 "crop_stake would stop dropping its item when mined by hand");
     }
 
-    /** The tied stake was the same wood family at hardness 1 with the same reported resistance. */
     @Test
     public void stakeTiedIsRegisteredAsAFarmBlockWithTheLegacyWoodNumbers() {
         Block tied = RusticFarmBlocks.STAKE_TIED.get();
@@ -110,7 +89,6 @@ public class RusticFarmRegistrationTest {
                 "Material.WOOD sound");
     }
 
-    /** 1.12.2 gave every placeable-from-item block a block item under its own id: the crop_stake pole and the herbs. */
     @Test
     public void thePlaceableFarmBlocksHaveBlockItemsUnderTheirOwnIds() {
         for (var holder : RusticFarmBlocks.blockItemEntries()) {
@@ -123,10 +101,6 @@ public class RusticFarmRegistrationTest {
         }
     }
 
-    /**
-     * The tied stake stores its four horizontal connections as real properties (the legacy
-     * {@code getActualState} is gone in 1.21), all false in a freshly declared knot.
-     */
     @Test
     public void stakeTiedStoresFourConnectionFlagsAllOffByDefault() {
         BlockState state = RusticFarmBlocks.STAKE_TIED.get().defaultBlockState();
@@ -137,7 +111,6 @@ public class RusticFarmRegistrationTest {
         }
     }
 
-    /** 1.12.2's {@code getPickBlock}: middle-clicking the knot hands back the rope, not the stake. */
     @Test
     public void stakeTiedPicksAsRope() {
         ItemStack picked = RusticFarmBlocks.STAKE_TIED.get()
@@ -146,12 +119,6 @@ public class RusticFarmRegistrationTest {
                 "the tied stake should pick as the rope that made it");
     }
 
-    /**
-     * Bug-fix 2026-10-19 (part 4): stake_tied reproduces legacy {@code BlockStakeTied}'s block-only
-     * registration ({@code super(mat, name, false)}, no {@code ItemBlock}). It has no block item - it is not in
-     * {@code RusticFarmBlocks.blockItemEntries} - because it is made by clicking rope onto a pole, picks as that
-     * rope and reverts to the pole on break, so an inventory item would be a ghost entry with no legacy model.
-     */
     @Test
     public void stakeTiedHasNoBlockItem() {
         Block tied = RusticFarmBlocks.STAKE_TIED.get();
@@ -159,13 +126,6 @@ public class RusticFarmRegistrationTest {
                 "rustic:stake_tied must have no block item, matching legacy's block-only registration");
     }
 
-    // ------------------------------------------------------------------ the two vines
-
-    /**
-     * The stake crops are neither wood nor a vanilla {@code CropBlock}: they are a {@link BushBlock}
-     * (a plant that reads {@code canSustainPlant} for its support) that is also {@link BonemealableBlock},
-     * built from the legacy {@code Material.FOLIAGE} numbers - hardness 0, broken instantly, plant sound.
-     */
     @Test
     public void eachCropIsALightlessBonemealableBushWithTheLegacyFoliageNumbers() {
         for (var holder : List.of(RusticFarmBlocks.TOMATO_CROP, RusticFarmBlocks.CHILI_CROP)) {
@@ -182,7 +142,6 @@ public class RusticFarmRegistrationTest {
         }
     }
 
-    /** {@code PropertyInteger AGE 0..3} is {@link BlockStateProperties#AGE_3}, defaulting to age 0. */
     @Test
     public void eachCropCarriesTheLegacyAgePropertyZeroToThreeAndDefaultsToZero() {
         for (var holder : List.of(RusticFarmBlocks.TOMATO_CROP, RusticFarmBlocks.CHILI_CROP)) {
@@ -197,21 +156,12 @@ public class RusticFarmRegistrationTest {
         }
     }
 
-    /**
-     * The one legacy difference between the two vines besides the produce: a tomato climbed three stakes,
-     * a chili only two. That is {@code getMaxHeight()}, which the random-tick column guard reads.
-     */
     @Test
     public void theTomatoClimbsTallerThanTheChili() {
         assertEquals(3, RusticFarmBlocks.TOMATO_CROP.get().getMaxHeight(), "1.12.2: tomato maxHeight 3");
         assertEquals(2, RusticFarmBlocks.CHILI_CROP.get().getMaxHeight(), "1.12.2: chili maxHeight 2");
     }
 
-    /**
-     * The structural oddity of the crop pipeline: a vine must not have a block item. Its pick result is the
-     * seed, its harvest comes from the loot table and it is planted by clicking a seed onto a stake, so a
-     * block item would be both unplaceable-by-design and a ghost entry in the creative menu.
-     */
     @Test
     public void theCropsAreNeverGivenABlockItemAndPickAsTheirSeed() {
         assertCropHasNoItem(RusticFarmBlocks.TOMATO_CROP.get());
@@ -230,7 +180,6 @@ public class RusticFarmRegistrationTest {
                 BuiltInRegistries.BLOCK.getKey(crop) + " must not have a block item");
     }
 
-    /** Every farm block registers under its legacy id: two poles, two vines, thirteen herbs and the Phase 8 beehive/apple trio. */
     @Test
     public void everyLegacyFarmBlockIsRegistered() {
         List<String> ids = new ArrayList<>();
@@ -244,9 +193,6 @@ public class RusticFarmRegistrationTest {
                 "the full farm register (Phase 5 crops plus the Phase 8 beehive/apple blocks and the Phase 14 apple crop)");
     }
 
-    // ------------------------------------------------------------------ seeds and produce
-
-    /** 1.12.2's {@code ItemStakeCropSeed}: a seed that carries the vine it plants, as its age-0 state. */
     @Test
     public void eachSeedItemCarriesItsOwnCropAndYieldsAnAgeZeroState() {
         StakeCropSeedItem tomato = RusticItems.TOMATO_SEEDS.get();
@@ -260,20 +206,14 @@ public class RusticFarmRegistrationTest {
         assertEquals(0, chili.getCropState().getValue(StakeCropBlock.AGE), "a clicked-in vine starts at age 0");
     }
 
-    /**
-     * The three produce are plain foods - {@code ItemFoodBase(nutrition, saturation)} read off the legacy
-     * fields. The potion-carrying edibles are Phase 6, so none of these may have a food effect.
-     */
     @Test
     public void theProduceArePlainFoodsWithTheLegacyHungerNumbers() {
         assertPlainFood(RusticItems.TOMATO.get(), 4, 0.4F);
         assertPlainFood(RusticItems.CHILI_PEPPER.get(), 3, 0.4F);
         assertPlainFood(RusticItems.GHOST_PEPPER.get(), 4, 0.7F);
-        // The grapes carry the legacy ItemFoodBase(3, 0.3F) numbers; their half-length eat time is the
-        // FoodProperties fast() flag, which assertPlainFood does not touch, so it is asserted separately below.
+
         assertPlainFood(RusticItems.GRAPES.get(), 3, 0.3F);
-        // The berries carry the legacy ItemFoodBase(2, 0.5F); their half-length eat time is fast(), asserted with
-        // the block behaviour below.
+
         assertPlainFood(RusticItems.WILDBERRIES.get(), 2, 0.5F);
     }
 
@@ -281,19 +221,12 @@ public class RusticFarmRegistrationTest {
         FoodProperties food = item.getFoodProperties(new ItemStack(item), null);
         assertNotNull(food, BuiltInRegistries.ITEM.getKey(item) + " is not a food");
         assertEquals(nutrition, food.nutrition(), "nutrition");
-        // 1.21 stores the folded saturation, not the legacy modifier; replay the same constant so the
-        // assertion checks the modifier that was handed to the builder rather than a restated number.
+
         assertEquals(FoodConstants.saturationByModifier(nutrition, saturationModifier), food.saturation(),
                 0.0001F, "saturation, the legacy modifier folded through 1.21's constant");
         assertTrue(food.effects().isEmpty(), "these three had no setPotionEffect in 1.12.2; effects are Phase 6");
     }
 
-    /**
-     * The stake crops and their produce are offered in the farming tab. The tied stake and the vines are not:
-     * legacy {@code BlockStakeTied} ran {@code super(mat, name, false)} and registered the block only (no
-     * {@code ItemBlock}), so {@code stake_tied} never had an item to offer, exactly like the vine crops - and
-     * the port now mirrors that faithfully, leaving stake_tied with no BlockItem (see {@link #stakeTiedHasNoBlockItem}).
-     */
     @Test
     public void theFarmingTabOffersThePolesSeedsAndProduce() {
         CreativeModeTab farming = RusticCreativeTabs.FARMING.get();
@@ -307,19 +240,13 @@ public class RusticFarmRegistrationTest {
                 "apple_seeds")) {
             assertTrue(shown.contains(id), "rustic:" + id + " is missing from the FARMING tab: " + shown);
         }
-        // The tied stake and the vines themselves have no legacy item, so they can never appear.
+
         assertFalse(shown.contains("stake_tied"), "stake_tied is block-only in legacy and must not be offered");
         assertFalse(shown.contains("tomato_crop"), "a vine leaked a block item into the FARMING tab");
         assertFalse(shown.contains("chili_crop"), "a vine leaked a block item into the FARMING tab");
         assertFalse(shown.contains("grape_leaves"), "a grape leaf leaked a block item into the FARMING tab");
     }
 
-    // ------------------------------------------------------------------ vinery
-
-    /**
-     * The grape stem is the vinery's placeable half: a lightless bonemealable {@link BushBlock} on the crop
-     * family's FOLIAGE numbers that carries a block item (the legacy "Grape Seeds") and ripens through AGE_3.
-     */
     @Test
     public void theGrapeStemIsAPlaceableBonemealableBushWithTheCropNumbers() {
         GrapeStemBlock stem = RusticFarmBlocks.GRAPE_STEM.get();
@@ -335,14 +262,9 @@ public class RusticFarmRegistrationTest {
         assertEquals(0, stem.getAge(stem.defaultBlockState()), "a planted stem starts at age 0");
         assertTrue(stem.isMaxAge(stem.getStateForAge(3)), "grape_stem age 3 is the top");
 
-        // Unlike the stake crops, the stem is placeable, so it does have a block item.
         assertTrue(stem.asItem() instanceof BlockItem, "grape_stem is placeable and must have a block item");
     }
 
-    /**
-     * The grape leaf is the vinery's climbing half: a rope-family plant ({@link BlockRopeBase}) that stores the
-     * legacy grapes/distance flags, carries no block item, and picks as its grapes.
-     */
     @Test
     public void theGrapeLeavesAreARopeFamilyPlantThatPicksAsGrapes() {
         GrapeLeavesBlock leaves = RusticFarmBlocks.GRAPE_LEAVES.get();
@@ -366,12 +288,6 @@ public class RusticFarmRegistrationTest {
         assertSame(RusticItems.GRAPES.get(), picked.getItem(), "a grape leaf picks as its grapes");
     }
 
-    /**
-     * The vinery's datagen: Phase 11 S11.2 restored the stem's four ages to {@code rustic:block/grape_stem_0.._3}
-     * (ages 0-2 are cutout crosses, age 3 the solid oak-log post), Phase 17 S17.1 restored the leaves to the legacy
-     * multipart assembly (leaf core/arm, stem cap, vine, rope body and the grapes overlay), the stem's block item is
-     * the flat "Grape Seeds" sprite, and the leaves loot their grapes only when carrying fruit.
-     */
     @Test
     public void datagenProducedTheGrapeStatesModelsAndFruitGatedLoot() {
         JsonObject stemVariants = json("/assets/rustic/blockstates/grape_stem.json").getAsJsonObject("variants");
@@ -387,9 +303,6 @@ public class RusticFarmRegistrationTest {
         assertEquals("rustic:item/grape_seeds", stemItem.getAsJsonObject("textures").get("layer0").getAsString(),
                 "the Grape Seeds sprite reads rustic:item/grape_seeds");
 
-        // Phase 17 S17.1: the leaf state file is multipart, part-for-part the legacy dc69f81 blockstate - the
-        // dist-0 leaf cube plus its stem cap, the dist-1 arm turned for the x axis, the vine and rope bodies
-        // along the axis, and the grapes overlay gated on grapes=true.
         JsonArray leavesParts = json("/assets/rustic/blockstates/grape_leaves.json").getAsJsonArray("multipart");
         assertMultiPart(leavesParts, "rustic:block/grape_leaves_0", null, "distance", "0");
         assertMultiPart(leavesParts, "rustic:block/grape_stem_top", null, "distance", "0");
@@ -400,11 +313,10 @@ public class RusticFarmRegistrationTest {
         assertMultiPart(leavesParts, "rustic:block/rope_horizontal", 90, "axis", "x");
         assertMultiPart(leavesParts, "rustic:block/rope_horizontal", null, "axis", "z");
         assertMultiPart(leavesParts, "rustic:block/grapes", null, "grapes", "true");
-        // The placeholder cross model the pre-S17.1 datagen emitted is gone and nothing regenerates it.
+
         assertNull(RusticFarmRegistrationTest.class.getResource("/assets/rustic/models/block/grape_leaves.json"),
                 "the stale grape_leaves placeholder model outlived the multipart restore");
 
-        // The stem drops itself; the leaves drop grapes only when grapes=true.
         assertEquals("rustic:grape_stem", lootFirstEntry("/data/rustic/loot_table/blocks/grape_stem.json"));
         JsonObject leavesLoot = json("/data/rustic/loot_table/blocks/grape_leaves.json");
         assertEquals("rustic:grapes", lootFirstEntry("/data/rustic/loot_table/blocks/grape_leaves.json"),
@@ -416,13 +328,6 @@ public class RusticFarmRegistrationTest {
                 "grapes only drop when the leaf is carrying them");
     }
 
-    // ------------------------------------------------------------------ wildberry bush
-
-    /**
-     * The wildberry bush is a placeable, bonemealable ground bush (the legacy {@code BlockBerryBush}) on a lighter
-     * hardness than the crop family ({@code 0.2}), aged 0..5, harvested by hand rather than broken; its produce is
-     * the separate WILDBERRIES item and it carries a block item because it is placeable.
-     */
     @Test
     public void theWildberryBushIsAPlaceableBonemealableBushThatYieldsBerries() {
         BerryBushBlock bush = RusticFarmBlocks.WILDBERRY_BUSH.get();
@@ -443,17 +348,9 @@ public class RusticFarmRegistrationTest {
         assertFalse(bush.isMaxAge(bush.getStateForAge(4)), "bush age 4 is not the top");
         assertSame(RusticItems.WILDBERRIES.get(), bush.getBerries(), "the bush's produce is WILDBERRIES");
 
-        // The bush is placeable, so unlike a vine it does have a block item under its own id.
         assertTrue(bush.asItem() instanceof BlockItem, "wildberry_bush is placeable and must have a block item");
     }
 
-    /**
-     * The bush's datagen: Phase 17 S17.2 restored the real base model (a static log-stem-over-leaf-cube, foliage-tinted
-     * through RusticClient) that every age resolves to - the legacy {@code berries} berry overlays were dead art, never
-     * reachable because the state container only declares {@code AGE 0..5}, so they stay out on purpose. The block item
-     * is a draw of the block itself (as the legacy parent was), the berry produce is a flat sprite, and the loot drops
-     * the bush plus one berry gated on {@code age=5}.
-     */
     @Test
     public void datagenProducedTheBushStateModelAndRipeBerryLoot() {
         JsonObject state = json("/assets/rustic/blockstates/wildberry_bush.json");
@@ -485,15 +382,6 @@ public class RusticFarmRegistrationTest {
                 "berries only drop at full age");
     }
 
-    // ------------------------------------------------------------------ apple seeds crop (Phase 14)
-
-    /**
-     * Phase 14 (§A3): the apple-seeds crop the crushing tub's apple byproduct plants. 1.12.2's
-     * {@code BlockAppleSeeds} was a two-age growable crop that ripened into an apple sapling rather than a
-     * fruit, so it is a {@link BushBlock} that is {@link BonemealableBlock} on the crop-family numbers - but
-     * unlike the stake vines it carries a real block item (the seed itself under the same id), which is what
-     * makes it plantable by right-clicking the seed on farmland.
-     */
     @Test
     public void theAppleSeedsCropIsABonemealableBushCarryingItsOwnSeedItem() {
         AppleSeedsBlock crop = RusticFarmBlocks.APPLE_SEEDS_CROP.get();
@@ -513,20 +401,12 @@ public class RusticFarmRegistrationTest {
         assertTrue(crop.isMaxAge(crop.getStateForAge(1)), "apple_seeds age 1 is the top");
         assertFalse(crop.isMaxAge(crop.getStateForAge(0)), "apple_seeds age 0 is not the top");
 
-        // Unlike the stake vines, the crop IS its seed: one plantable block item under the same id, so the
-        // RusticItems field and the block's asItem() must be the same object.
         Item seedItem = crop.asItem();
         assertTrue(seedItem instanceof BlockItem, "apple_seeds must have a plantable block item");
         assertSame(RusticItems.APPLE_SEEDS.get(), seedItem, "the RusticItems seed is the crop's block item");
         assertSame(crop, ((BlockItem) seedItem).getBlock(), "the seed item places the crop");
     }
 
-    /**
-     * The apple crop's datagen: the two ages each draw their own cutout cross on the restored
-     * {@code block/apple_seeds_0}/{@code _1} art, the seed item is the flat {@code item/apple_seeds} sprite
-     * (never the world-facing cross), and a broken crop loots the seed itself - the legacy {@code BlockBase}
-     * drop-myself behaviour.
-     */
     @Test
     public void datagenProducedTheAppleSeedsStatesModelsAndSeedLoot() {
         JsonObject variants = json("/assets/rustic/blockstates/apple_seeds.json").getAsJsonObject("variants");
@@ -555,22 +435,6 @@ public class RusticFarmRegistrationTest {
                 "a broken crop loots the seed itself");
     }
 
-    /**
-     * Phase 14 follow-up (in-game bug): the crop-family plants must never compute as {@code isSolid()},
-     * because {@code FarmBlock.canSurvive} reverts farmland to dirt under any solid block above it - which
-     * is how the mature apple crop destroyed the very soil it was planted on, and then itself with it
-     * ({@code AppleSeedsBlock.canSurvive} demands farmland). The legacy
-     * {@code Material.PLANTS}/{@code FOLIAGE} were non-solid and piston-destroyed; 1.21 states that as
-     * {@code noCollission()} plus {@code pushReaction(DESTROY)} on {@code crop()} - {@code noOcclusion()}
-     * alone never did. Vanilla holds the same invariant for every one of its plants, walk-through included.
-     *
-     * <p>The two stake vines and the two bare poles are the documented exceptions to walk-through: legacy
-     * kept the pole's thin {@code 7..9} collision box, and those families trade {@code noCollission()}
-     * for {@code forceSolidOff()} ({@code stakeCrop()}/{@code stakePole()}) to stay non-solid with the box
-     * in place - so for them this asserts non-solid and a NON-empty collision instead. The poles are not
-     * {@code BushBlock}s and are not piston-DESTROYed (legacy wood was pushable); they join the non-solid
-     * check because a solid pole reverts its farmland on placement, the 1.21 half of the tomato bug.
-     */
     @Test
     public void noPlantStateIsSolidOrBlocksMovement() {
         for (var holder : RusticFarmBlocks.entries()) {
@@ -600,12 +464,8 @@ public class RusticFarmRegistrationTest {
         }
     }
 
-    // ------------------------------------------------------------------ herbs
-
-    /** The four crop-herbs have no block item; their produce is a separate ItemHerbEdible under the same id. */
     private static final List<String> CROP_HERB_IDS = List.of("cloudsbluff", "core_root", "ginseng", "marsh_mallow");
 
-    /** Every herb is a lightless bonemealable BushBlock on the legacy FOLIAGE numbers, aged 0..3. */
     @Test
     public void everyHerbIsABonemealableBushWithTheLegacyFoliageNumbersAndAgeThree() {
         for (var holder : RusticFarmBlocks.herbs()) {
@@ -622,7 +482,6 @@ public class RusticFarmRegistrationTest {
         }
     }
 
-    /** The nine self-herbs get a block item and yield it; the four crop-herbs get none and yield their edible. */
     @Test
     public void selfHerbsHaveABlockItemAndCropHerbsYieldTheirEdibleInstead() {
         for (var holder : RusticFarmBlocks.herbs()) {
@@ -643,7 +502,6 @@ public class RusticFarmRegistrationTest {
         }
     }
 
-    /** Only the mooncap glowed in 1.12.2 (light 8); the other twelve are dark like ordinary plants. */
     @Test
     public void onlyTheMooncapEmitsLight() {
         assertEquals(8, RusticFarmBlocks.MOONCAP_MUSHROOM.get().defaultBlockState().getLightEmission(),
@@ -657,10 +515,6 @@ public class RusticFarmRegistrationTest {
         }
     }
 
-    /**
-     * The four crop-herb edibles carry the legacy ItemFoodBase numbers. Only cloudsbluff had a potion effect,
-     * and 1.21 folds it into FoodProperties as the vanilla levitation for 400 ticks (four seconds).
-     */
     @Test
     public void theHerbEdiblesCarryTheLegacyFoodValuesAndCloudsbluffTheLevitation() {
         assertPlainFood(RusticItems.CORE_ROOT.get(), 2, 0.3F);
@@ -680,11 +534,6 @@ public class RusticFarmRegistrationTest {
         assertEquals(400, effect.getDuration(), "four seconds of levitation");
     }
 
-    /**
-     * Each herb's datagen: a two-stage blockstate (a seedling cross for ages 0..2, a mature cross for age 3,
-     * the mushrooms reading a {@code _spore} seedling), a cutout {@code block/cross} mature model, and a flat
-     * {@code item/generated} sprite - eleven from {@code item/herbs}, the two mushrooms reusing {@code block/herbs}.
-     */
     @Test
     public void datagenProducedTwoStageHerbStatesAndFlatItemSprites() {
         for (String id : List.of("aloe_vera", "blood_orchid", "chamomile", "cloudsbluff", "cohosh", "core_root",
@@ -714,7 +563,6 @@ public class RusticFarmRegistrationTest {
         }
     }
 
-    /** Each herb's loot drops its own herb (block item or edible) plus a maturity bonus gated on age 3. */
     @Test
     public void datagenProducedHerbLootThatDropsTheHerbWithARipeBonus() {
         for (String id : List.of("aloe_vera", "blood_orchid", "chamomile", "cloudsbluff", "cohosh", "core_root",
@@ -735,24 +583,13 @@ public class RusticFarmRegistrationTest {
         }
     }
 
-    // ------------------------------------------------------------------ datagen output
-
-    /**
-     * The datagen that makes the two poles render and drop themselves. Phase 11 S11.2 restored both as static
-     * models and Phase 17 S17.3 completed the tied stake: {@code crop_stake} is a single-state pole, while
-     * {@code stake_tied} is now the legacy multipart - the base knot drawn for every state plus one
-     * rope_attachment_n submodel per connected side (north/east/south/west, turned y=0/90/180/270). Each has a
-     * block item parenting the knot model, a loot table and the axe-mineable tag the legacy {@code Material.WOOD}
-     * implied.
-     */
     @Test
     public void datagenProducedThePoleStatesModelsLootAndTags() {
-        // crop_stake is the plain single-state pole.
+
         assertEquals("rustic:block/crop_stake",
                 json("/assets/rustic/blockstates/crop_stake.json").getAsJsonObject("variants")
                         .getAsJsonObject("").get("model").getAsString(), "crop_stake blockstate");
 
-        // stake_tied is multipart: the unconditional knot plus one rotated attachment per connection flag.
         JsonArray tiedParts = json("/assets/rustic/blockstates/stake_tied.json").getAsJsonArray("multipart");
         assertMultiPart(tiedParts, "rustic:block/stake_tied", null);
         assertMultiPart(tiedParts, "rustic:block/rope_attachment_n", null, "north", "true");
@@ -761,15 +598,12 @@ public class RusticFarmRegistrationTest {
         assertMultiPart(tiedParts, "rustic:block/rope_attachment_n", 270, "west", "true");
         assertEquals(5, tiedParts.size(), "stake_tied multipart grew beyond the knot plus four attachments");
 
-        // Only crop_stake is placeable from an item, so only it gets an item model. stake_tied is the
-        // block-only legacy knot (no ItemBlock, no simpleBlockItem), so it has NO item model at all.
         JsonObject stakeItemModel = json("/assets/rustic/models/item/crop_stake.json");
         assertEquals("rustic:block/crop_stake", stakeItemModel.get("parent").getAsString(),
                 "crop_stake item model parents the block model");
         assertNull(RusticFarmRegistrationTest.class.getResource("/assets/rustic/models/item/stake_tied.json"),
                 "stake_tied must have no item model - it is a block-only, item-less legacy block");
 
-        // crop_stake drops itself; stake_tied returns the rope that turned the plain stake into a knot.
         assertEquals("rustic:crop_stake", lootFirstEntry("/data/rustic/loot_table/blocks/crop_stake.json"));
         assertEquals("rustic:rope", lootFirstEntry("/data/rustic/loot_table/blocks/stake_tied.json"));
 
@@ -778,11 +612,6 @@ public class RusticFarmRegistrationTest {
         assertTrue(axe.contains("rustic:stake_tied"), "Material.WOOD means the knot is axe-mined");
     }
 
-    /**
-     * Each vine's datagen: a blockstate that maps each age to its restored per-age model (S11.2: the four
-     * {@code rustic:block/<crop>_0.._3} models over the shared stake_crop parent), and the two-pool loot table -
-     * always one-to-two seeds, plus the produce gated on {@code age=3}.
-     */
     @Test
     public void datagenProducedTheCropStatesAndSeedPlusRipeProduceLoot() {
         assertCropState("tomato_crop");
@@ -811,7 +640,6 @@ public class RusticFarmRegistrationTest {
         JsonArray pools = loot.getAsJsonArray("pools");
         assertEquals(2, pools.size(), resource + " should have a seed pool and a ripe-produce pool");
 
-        // Pool 0: the seed, 1..2 of it, unconditional (a broken young vine still returns its seeds).
         JsonObject seedPool = pools.get(0).getAsJsonObject();
         JsonObject seedEntry = seedPool.getAsJsonArray("entries").get(0).getAsJsonObject();
         assertEquals(seed, seedEntry.get("name").getAsString(), resource + " seed pool");
@@ -820,7 +648,6 @@ public class RusticFarmRegistrationTest {
                         .getAsJsonObject("count").get("type").getAsString(),
                 resource + " seed count should be a uniform roll");
 
-        // Pool 1: the produce, gated on the named crop block being fully ripe (age=3).
         JsonObject producePool = pools.get(1).getAsJsonObject();
         assertEquals(produce, producePool.getAsJsonArray("entries").get(0).getAsJsonObject()
                 .get("name").getAsString(), resource + " produce pool");
@@ -832,7 +659,6 @@ public class RusticFarmRegistrationTest {
                 resource + " only drops its produce when fully ripe");
     }
 
-    /** The four standalone (non-block) items each get an {@code item/generated} model on their own texture. */
     @Test
     public void datagenProducedAModelForEveryStandaloneItem() {
         for (String id : List.of("tomato", "chili_pepper", "ghost_pepper", "tomato_seeds", "chili_pepper_seeds",
@@ -844,7 +670,6 @@ public class RusticFarmRegistrationTest {
         }
     }
 
-    /** The vines are tool-less (legacy FOLIAGE mined by hand), so they must not appear in any mineable tag. */
     @Test
     public void theCropsAreInNoMineableTag() {
         for (String tool : List.of("axe", "pickaxe", "shovel")) {
@@ -854,20 +679,12 @@ public class RusticFarmRegistrationTest {
         }
     }
 
-    // ------------------------------------------------------------------ helpers
-
     private static String lootFirstEntry(String resource) {
         JsonObject loot = json(resource);
         return loot.getAsJsonArray("pools").get(0).getAsJsonObject()
                 .getAsJsonArray("entries").get(0).getAsJsonObject().get("name").getAsString();
     }
 
-    /**
-     * Asserts the multipart array has one part that applies {@code model} (rotated {@code y}, null meaning no
-     * rotation key) under a {@code when} that carries every {@code propPairs} key/value pair (values are the
-     * stringified blockstate values NeoForge writes). NeoForge keeps each part as its own object, so a plain scan
-     * pins the assembly without depending on part order.
-     */
     private static void assertMultiPart(JsonArray parts, String model, Integer y, String... propPairs) {
         for (JsonElement element : parts) {
             JsonObject part = element.getAsJsonObject();
@@ -882,7 +699,7 @@ public class RusticFarmRegistrationTest {
             JsonObject when = part.getAsJsonObject("when");
             boolean matched;
             if (propPairs.length == 0) {
-                // An unconditional part (the base knot NeoForge writes with no "when" key).
+
                 matched = true;
             } else {
                 matched = when != null;

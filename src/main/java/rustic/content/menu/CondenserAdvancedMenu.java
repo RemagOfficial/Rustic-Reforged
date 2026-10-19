@@ -14,13 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import rustic.content.blockentity.CondenserAdvancedBlockEntity;
 import rustic.content.blockentity.CondenserBlockEntityBase;
 
-/**
- * The advanced condenser's container, the 1.21 form of legacy {@code ContainerCondenserAdvanced}. Seven machine slots
- * (result / fuel / bottle / modifier / three ingredients) over the {@code condenser_advanced.png} panel, plus the same
- * four furnace {@link net.minecraft.world.inventory.DataSlot}s. It reuses the {@link CondenserMenu.ResultSlot result
- * / fuel / bottle} guards from the basic menu and adds the modifier slot (free placement - the recipe's modifier gate
- * does the validation at match time).
- */
 public class CondenserAdvancedMenu extends AbstractContainerMenu {
 
     private final CondenserBlockEntityBase tile;
@@ -38,7 +31,6 @@ public class CondenserAdvancedMenu extends AbstractContainerMenu {
         }
     }
 
-    /** Rebuilds the client menu, resolving the world block entity from the position the server wrote. */
     public static CondenserAdvancedMenu client(int containerId, Inventory playerInventory, RegistryFriendlyByteBuf data) {
         BlockPos pos = data.readBlockPos();
         CondenserBlockEntityBase tile = playerInventory.player.level().getBlockEntity(pos)
@@ -47,7 +39,7 @@ public class CondenserAdvancedMenu extends AbstractContainerMenu {
     }
 
     private void addMachineSlots() {
-        // Legacy ContainerCondenserAdvanced coordinates: modifier at (66,7), the three ingredients down the left column.
+
         addSlot(new CondenserMenu.ResultSlot(itemHandler, CondenserBlockEntityBase.SLOT_RESULT, 105, 35));
         addSlot(new CondenserMenu.FuelSlot(itemHandler, CondenserBlockEntityBase.SLOT_FUEL, 66, 62));
         addSlot(new CondenserMenu.BottleSlot(itemHandler, CondenserBlockEntityBase.SLOT_BOTTLE, 105, 7));
@@ -97,7 +89,6 @@ public class CondenserAdvancedMenu extends AbstractContainerMenu {
         return true;
     }
 
-    /** The bound advanced condenser (server copy, or the synced client copy the screen renders). */
     @Nullable
     public CondenserBlockEntityBase getTile() {
         return this.tile;

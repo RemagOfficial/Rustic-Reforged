@@ -9,28 +9,20 @@ import net.minecraft.resources.ResourceLocation;
 import org.junit.jupiter.api.Test;
 import rustic.content.client.IronSkinRenderPolicy;
 
-/**
- * Baseline guard for {@link IronSkinRenderPolicy}, the headless decision core of the S9.4 iron-skin /
- * fullmetal render layer. Every expected value is lifted straight from the 1.12.2
- * {@code LayerIronSkin.doRenderLayer} so a future refactor that nudges an opacity or a skip condition
- * fails here rather than only showing up as a subtle visual difference in game.
- */
 public class IronSkinRenderPolicyTest {
 
     @Test
     void opacityLadderMatchesLegacy() {
-        // Fullmetal short-circuits to 0.92 regardless of the (ignored) amplifier.
+
         assertEquals(0.92F, IronSkinRenderPolicy.opacityFor(-1, true, false), 0.0F, "fullmetal, no ironskin");
         assertEquals(0.92F, IronSkinRenderPolicy.opacityFor(2, true, true), 0.0F, "fullmetal wins over ironskin");
 
-        // Iron-skin amplifier ladder.
         assertEquals(0.875F, IronSkinRenderPolicy.opacityFor(0, false, true), 0.0F, "ironskin amp 0");
         assertEquals(0.89F, IronSkinRenderPolicy.opacityFor(1, false, true), 0.0F, "ironskin amp 1");
         assertEquals(0.91F, IronSkinRenderPolicy.opacityFor(2, false, true), 0.0F, "ironskin amp 2");
         assertEquals(0.92F, IronSkinRenderPolicy.opacityFor(3, false, true), 0.0F, "ironskin amp 3+");
         assertEquals(0.92F, IronSkinRenderPolicy.opacityFor(9, false, true), 0.0F, "ironskin high amp clamps to 0.92");
 
-        // No effect at all falls back to the default (only reachable through the debug force flag).
         assertEquals(IronSkinRenderPolicy.DEFAULT_OPACITY, IronSkinRenderPolicy.opacityFor(-1, false, false), 0.0F,
                 "no effect default");
     }
@@ -59,7 +51,6 @@ public class IronSkinRenderPolicyTest {
         assertFalse(IronSkinRenderPolicy.isEntityBlacklisted(ResourceLocation.fromNamespaceAndPath("minecraft", "player"), blacklist),
                 "player is not on the list");
 
-        // Defensive edges the render path can actually hit.
         assertFalse(IronSkinRenderPolicy.isEntityBlacklisted(null, blacklist), "null id is never blacklisted");
         assertFalse(IronSkinRenderPolicy.isEntityBlacklisted(ResourceLocation.fromNamespaceAndPath("minecraft", "slime"), null),
                 "null list never blacklists");

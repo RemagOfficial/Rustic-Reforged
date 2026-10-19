@@ -26,21 +26,10 @@ import org.jetbrains.annotations.Nullable;
 import rustic.content.blockentity.BrewingBarrelBlockEntity;
 import rustic.content.blockentity.RusticBlockEntities;
 
-/**
- * 1.12.2's {@code BlockBrewingBarrel}: the fermenting machine behind {@link BrewingBarrelBlockEntity}. Right-clicking
- * it - with or without a held item - opens the brewing GUI (the legacy block always {@code openGui}ed on activation,
- * and the tank IO the GUI needs happens inside the container, so the world interaction never inserts items). The
- * brew itself runs on the server tick.
- *
- * <p>The legacy horizontal {@code FACING} property drove only the old GUI-less item placement; the barrel renders as
- * a symmetric block with no orientation-dependent texture, so it is dropped, matching the other GUI-less machine
- * blocks here.
- */
 public class BrewingBarrelBlock extends BaseEntityBlock {
 
     public static final MapCodec<BrewingBarrelBlock> CODEC = simpleCodec(BrewingBarrelBlock::new);
 
-    // The legacy full-block footprint; the barrel is a plain cube for interaction purposes.
     private static final VoxelShape SHAPE = Shapes.box(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
 
     public BrewingBarrelBlock(BlockBehaviour.Properties properties) {
@@ -104,7 +93,7 @@ public class BrewingBarrelBlock extends BaseEntityBlock {
 
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moving) {
-        // Eject the six item slots when the block changes; the fluid tanks are lost, as legacy's breakBlock did.
+
         if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof BrewingBarrelBlockEntity barrel) {
             ItemStackHandler handler = barrel.getItemHandler();
             for (int slot = 0; slot < handler.getSlots(); slot++) {

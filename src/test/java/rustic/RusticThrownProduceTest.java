@@ -39,28 +39,8 @@ import rustic.content.items.ItemOlives;
 import rustic.content.items.ItemTomato;
 import rustic.content.items.RusticItems;
 
-/**
- * Phase 6 characterisation test for the last content slice: the thrown tomato (its entity, the item that
- * lobs it, the client renderer binding) and the two tree fruits whose bite carries a Rustic effect - the
- * nausea-giving {@code OLIVES} and the fullmetal-stacking {@code IRONBERRIES} - plus the burn-carrying
- * {@code GHOST_PEPPER}.
- *
- * <p>Runs in ModDevGradle's FML unit-test JVM, so {@code BuiltInRegistries} is populated and every deferred
- * holder resolves. What is pinned here is the registration contract the live game leans on: the tomato
- * entity is a {@link EntityTomato} type at the legacy 0.25 hitbox, the four foods are their ported item
- * subclasses with the exact 1.12.2 nutrition/saturation/eat-time/effect numbers, the farming tab now leads
- * with olives and lists both tree fruits, and the datagen/lang entries a player actually sees are present.
- *
- * <p>Not exercised (live-game checks the plan parks): the sneak-throw motion arc, the SHAME-on-impact and
- * splat particle of {@code EntityTomato}, the ghost pepper's hurt damage and the ironberries' duration
- * stacking in {@code finishUsingItem} - each needs a ticking {@code Level} and a real entity. This is a
- * registration + arithmetic gate, not a simulation.
- */
 public class RusticThrownProduceTest {
 
-    // ------------------------------------------------------------------ the thrown tomato entity
-
-    /** 1.12.2 registered the tomato as an entity; here it resolves under {@code rustic:tomato}. */
     @Test
     public void theTomatoEntityIsRegisteredUnderItsLegacyId() {
         EntityType<EntityTomato> type = RusticEntities.TOMATO.get();
@@ -70,10 +50,6 @@ public class RusticThrownProduceTest {
         assertEquals(Rustic.MODID, RusticEntities.TOMATO.getId().getNamespace());
     }
 
-    /**
-     * The legacy {@code EntityThrowable} hitbox was 0.25 x 0.25, which is what vanilla declares beside the
-     * size is now part of the {@link EntityType} rather than the constructor.
-     */
     @Test
     public void theTomatoEntityCarriesTheLegacyThrowableHitbox() {
         EntityType<EntityTomato> type = RusticEntities.TOMATO.get();
@@ -81,13 +57,6 @@ public class RusticThrownProduceTest {
         assertEquals(0.25F, type.getHeight(), 0.0001F, "the legacy EntityThrowable height was 0.25");
     }
 
-    /**
-     * The client lookup crashes on an entity with no renderer (the P3 NoopRenderer lesson), so the tomato
-     * must be an item-carrying thrown projectile - the type vanilla's {@code ThrownItemRenderer} renders.
-     * That is pinned here as the class hierarchy ({@link EntityTomato} extends {@code ThrowableItemProjectile},
-     * which is the {@code ItemSupplier} the renderer reads); constructing a live entity and its synced default
-     * stack needs a ticking {@code Level} and is a live-game check.
-     */
     @Test
     public void theEntityTomatoIsAThrownItemProjectileTheVanillaRendererCanDraw() {
         assertTrue(net.minecraft.world.entity.projectile.ThrowableItemProjectile.class
@@ -97,9 +66,6 @@ public class RusticThrownProduceTest {
         assertTrue(net.minecraft.world.entity.Entity.class.isAssignableFrom(EntityTomato.class));
     }
 
-    // ------------------------------------------------------------------ the four produce items
-
-    /** The tomato is the sneaks-to-throw subclass; the plain foods stay ordinary {@link Item}s. */
     @Test
     public void theProduceItemsAreThePortedSubclasses() {
         assertSame(ItemTomato.class, RusticItems.TOMATO.get().getClass());
@@ -108,10 +74,6 @@ public class RusticThrownProduceTest {
         assertSame(ItemIronberries.class, RusticItems.IRONBERRIES.get().getClass());
     }
 
-    /**
-     * TOMATO food: {@code ItemFoodBase("tomato", 4, 0.4F, false)}, no potion effect (the nausea/glow are on
-     * the other fruits), eat time is the vanilla 32 ticks (legacy set no override).
-     */
     @Test
     public void theTomatoIsAPlainFoodWithTheLegacyNumbers() {
         FoodProperties food = foodOf(RusticItems.TOMATO.get());
@@ -123,10 +85,6 @@ public class RusticThrownProduceTest {
                 "the tomato had no getMaxItemUseDuration override, so it eats at the 32-tick default");
     }
 
-    /**
-     * GHOST_PEPPER food: {@code (4, 0.7F)} and alwaysEdible per the legacy initFood override; the burn and
-     * FIRE_POWER are code in finishUsingItem, so the food record carries no effect.
-     */
     @Test
     public void theGhostPepperIsAnAlwaysEdibleFoodWithNoDataEffect() {
         FoodProperties food = foodOf(RusticItems.GHOST_PEPPER.get());
@@ -136,11 +94,6 @@ public class RusticThrownProduceTest {
         assertTrue(food.effects().isEmpty(), "the burn and fire power are code in ItemGhostPepper, not food effects");
     }
 
-    /**
-     * OLIVES food: {@code (1, 0.4)}, the legacy {@code setPotionEffect(NAUSEA, 200, 1, false, false, 0.95F)}
-     * folded onto FoodProperties as CONFUSION (the 1.20.5 name), a 24-tick eat time (ItemOlives override) and
-     * NOT always edible - the legacy initFood set only the potion.
-     */
     @Test
     public void theOlivesCarryTheProbabilisticNauseaAndTheLegacyTwentyFourTickEat() {
         FoodProperties food = foodOf(RusticItems.OLIVES.get());
@@ -161,10 +114,6 @@ public class RusticThrownProduceTest {
                 "the legacy getMaxItemUseDuration override was 24 ticks, carried in code by ItemOlives");
     }
 
-    /**
-     * IRONBERRIES food: {@code (2, 0.4)}, always edible and eaten in 16 ticks (the legacy override is 1.21's
-     * {@code fast()}, eat-seconds 0.8); the stacking FULLMETAL is code, so the food record carries no effect.
-     */
     @Test
     public void theIronberriesAreAlwaysEdibleFastFoodsWithNoDataEffect() {
         FoodProperties food = foodOf(RusticItems.IRONBERRIES.get());
@@ -175,12 +124,6 @@ public class RusticThrownProduceTest {
         assertTrue(food.effects().isEmpty(), "the stacking fullmetal is code in ItemIronberries, not a food effect");
     }
 
-    // ------------------------------------------------------------------ the farming tab
-
-    /**
-     * 1.12.2 led the farming tab with {@code ModItems.OLIVES} as its icon. The stand-in {@code Items.WHEAT}
-     * was replaced the moment olives existed, so the icon must be the olives item now.
-     */
     @Test
     public void theFarmingTabIconIsTheOlivesItem() {
         CreativeModeTab farming = RusticCreativeTabs.FARMING.get();
@@ -188,7 +131,6 @@ public class RusticThrownProduceTest {
                 "the farming tab icon is the legacy ModItems.OLIVES, not the Phase 5 wheat stand-in");
     }
 
-    /** Both tree fruits are shown in the farming tab, matching the legacy setCreativeTab(farmingTab). */
     @Test
     public void theFarmingTabOffersBothTreeFruits() {
         CreativeModeTab farming = RusticCreativeTabs.FARMING.get();
@@ -201,9 +143,6 @@ public class RusticThrownProduceTest {
         assertTrue(shown.contains("ironberries"), "rustic:ironberries is missing from the FARMING tab: " + shown);
     }
 
-    // ------------------------------------------------------------------ lang + datagen models
-
-    /** The three new lang keys the slice depends on exist in en_us.json. */
     @Test
     public void theNewLangKeysArePresent() {
         JsonObject lang = json("/assets/rustic/lang/en_us.json");
@@ -213,7 +152,6 @@ public class RusticThrownProduceTest {
                 "the ghost pepper tooltip line needs a lang key the 1.12.2 file never carried");
     }
 
-    /** The two tree fruits each get a flat {@code item/generated} sprite on their own (renamed) texture. */
     @Test
     public void datagenProducedATreeFruitSpriteForEach() {
         for (String id : List.of("olives", "ironberries")) {
@@ -223,8 +161,6 @@ public class RusticThrownProduceTest {
                     id + " must texture from rustic:item/, not the legacy rustic:items/ folder");
         }
     }
-
-    // ------------------------------------------------------------------ helpers
 
     private static FoodProperties foodOf(Item item) {
         FoodProperties food = item.getFoodProperties(new ItemStack(item), null);

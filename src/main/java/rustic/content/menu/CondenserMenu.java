@@ -14,16 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import rustic.content.blockentity.CondenserBlockEntity;
 import rustic.content.blockentity.CondenserBlockEntityBase;
 
-/**
- * The basic condenser's container, the 1.21 form of legacy {@code ContainerCondenser}. Bespoke (not a
- * {@code ChestMenu}): five machine slots laid out over the {@code condenser.png} panel plus the four furnace-style
- * {@link net.minecraft.world.inventory.DataSlot}s the block entity exposes via {@code addDataSlots}.
- *
- * <p>Slot placement rules live here on {@link Slot#mayPlace}, mirroring legacy's external-handler insert guards -
- * the result slot is take-only, the fuel slot only burns, the bottle slot refuses fuel, the ingredient slots accept
- * anything - while leaving the block entity's own {@code ItemStackHandler} permissive so {@code brew()}'s internal
- * inserts into the result slot are never blocked. The same collapse the brewing barrel used.
- */
 public class CondenserMenu extends AbstractContainerMenu {
 
     private final CondenserBlockEntityBase tile;
@@ -40,7 +30,6 @@ public class CondenserMenu extends AbstractContainerMenu {
         }
     }
 
-    /** Rebuilds the client menu, resolving the world block entity from the position the server wrote. */
     public static CondenserMenu client(int containerId, Inventory playerInventory, RegistryFriendlyByteBuf data) {
         BlockPos pos = data.readBlockPos();
         CondenserBlockEntityBase tile = playerInventory.player.level().getBlockEntity(pos)
@@ -49,7 +38,7 @@ public class CondenserMenu extends AbstractContainerMenu {
     }
 
     private void addMachineSlots() {
-        // Legacy ContainerCondenser coordinates. Result take-only; fuel only-fuel; bottle refuses fuel; ingredients free.
+
         addSlot(new ResultSlot(itemHandler, CondenserBlockEntityBase.SLOT_RESULT, 105, 35));
         addSlot(new FuelSlot(itemHandler, CondenserBlockEntityBase.SLOT_FUEL, 66, 62));
         addSlot(new BottleSlot(itemHandler, CondenserBlockEntityBase.SLOT_BOTTLE, 105, 7));
@@ -96,16 +85,11 @@ public class CondenserMenu extends AbstractContainerMenu {
         return true;
     }
 
-    /** The bound condenser (server copy, or the synced client copy the screen renders). */
     @Nullable
     public CondenserBlockEntityBase getTile() {
         return this.tile;
     }
 
-    // ------------------------------------------------------------------ slot kinds
-    // Package-private so CondenserAdvancedMenu reuses the same three result/fuel/bottle guards without restating them.
-
-    /** The elixir output: the player can always take, never place. */
     static final class ResultSlot extends SlotItemHandler {
         ResultSlot(IItemHandler handler, int index, int x, int y) {
             super(handler, index, x, y);
@@ -117,7 +101,6 @@ public class CondenserMenu extends AbstractContainerMenu {
         }
     }
 
-    /** Only furnace fuel. */
     static final class FuelSlot extends SlotItemHandler {
         FuelSlot(IItemHandler handler, int index, int x, int y) {
             super(handler, index, x, y);
@@ -129,7 +112,6 @@ public class CondenserMenu extends AbstractContainerMenu {
         }
     }
 
-    /** Anything that is not fuel (legacy refused fuel in the bottle slot; the recipe's bottle check does the rest). */
     static final class BottleSlot extends SlotItemHandler {
         BottleSlot(IItemHandler handler, int index, int x, int y) {
             super(handler, index, x, y);

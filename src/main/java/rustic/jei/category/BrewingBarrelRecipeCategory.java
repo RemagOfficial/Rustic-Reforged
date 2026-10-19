@@ -12,11 +12,6 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import rustic.content.blocks.RusticMachineBlocks;
 import rustic.content.crafting.BrewingBarrelRecipe;
 
-/**
- * The brewing barrel: an input juice ferments into an output booze fluid. Quality is applied at runtime by the block
- * entity, so the recipe (and this category) only ever shows the fluid-to-fluid mapping. Port of 1.12.2's
- * {@code BrewingRecipeCategory}.
- */
 public class BrewingBarrelRecipeCategory extends AbstractRecipeCategory<RecipeHolder<BrewingBarrelRecipe>> {
 
     public BrewingBarrelRecipeCategory(IGuiHelper guiHelper, RecipeType<RecipeHolder<BrewingBarrelRecipe>> recipeType) {

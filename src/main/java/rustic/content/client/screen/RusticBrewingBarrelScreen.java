@@ -19,21 +19,6 @@ import rustic.content.blockentity.BrewingBarrelBlockEntity;
 import rustic.content.fluids.RusticBooze;
 import rustic.content.menu.BrewingBarrelMenu;
 
-/**
- * The brewing-barrel GUI, the 1.21 form of legacy {@code GuiBrewingBarrel}. It draws the bespoke
- * {@code textures/gui/brewing_barrel.png} panel, the three fluid tanks (input / output / auxiliary culture) as
- * bottom-up fills, the brew bubble column and the two progress bars, plus hover tooltips carrying the booze quality.
- *
- * <p><b>Where the numbers come from.</b> The fluid <em>type</em> and amount render from the client block-entity copy
- * the menu binds to (its tanks track the server through the ordinary block update), while the {@code brewTime}
- * countdown reads through the same copy's synced field (fed by the menu's {@link net.minecraft.world.inventory.DataSlot}
- * channel every tick) - the exact split the BE documents. When the menu lost its block entity, nothing is drawn on
- * top of the bare panel; the slots still work.
- *
- * <p><b>Art status.</b> The background is referenced at its legacy path and only renders once Phase 11 ships the
- * texture; the fluid fill itself is drawn from the block atlas still sprite of whatever fluid is in the tank, per the
- * plan. A missing background here is the expected placeholder, not a bug.
- */
 public class RusticBrewingBarrelScreen extends AbstractContainerScreen<BrewingBarrelMenu> {
 
     private static final ResourceLocation TEXTURE =
@@ -45,7 +30,7 @@ public class RusticBrewingBarrelScreen extends AbstractContainerScreen<BrewingBa
         super(menu, playerInventory, title);
         this.imageWidth = WIDTH;
         this.imageHeight = HEIGHT;
-        // No inventory label in the bespoke panel; suppress the base "Inventory" title row.
+
         this.inventoryLabelY = this.imageHeight + 1000;
     }
 
@@ -59,12 +44,10 @@ public class RusticBrewingBarrelScreen extends AbstractContainerScreen<BrewingBa
             return;
         }
 
-        // Fluid fills. Each region is (x, y, w, h) in the legacy GUI; fill grows from the bottom.
         drawTank(guiGraphics, barrel.getInputTank().getFluid(), BrewingBarrelBlockEntity.INPUT_CAPACITY, 62, 27, 16, 32);
         drawTank(guiGraphics, barrel.getOutputTank().getFluid(), BrewingBarrelBlockEntity.OUTPUT_CAPACITY, 116, 27, 16, 32);
         drawTank(guiGraphics, barrel.getAuxiliaryTank().getFluid(), BrewingBarrelBlockEntity.AUX_CAPACITY, 26, 35, 16, 16);
 
-        // Empty-input overlays (the little socket icons) while the paired input slot holds nothing.
         if (this.menu.isMachineSlotEmpty(BrewingBarrelBlockEntity.INPUT_IN_SLOT)) {
             guiGraphics.blit(TEXTURE, this.leftPos + 62, this.topPos + 7, 176, 54, 16, 16);
         }
@@ -75,7 +58,6 @@ public class RusticBrewingBarrelScreen extends AbstractContainerScreen<BrewingBa
             guiGraphics.blit(TEXTURE, this.leftPos + 26, this.topPos + 15, 176, 70, 16, 16);
         }
 
-        // Brew bubble column and the two progress bars, both scaled off the synced countdown.
         int brewTime = barrel.getBrewTime();
         int maxBrew = barrel.getMaxBrewTime();
         if (brewTime > 0 && maxBrew > 0) {
@@ -89,7 +71,6 @@ public class RusticBrewingBarrelScreen extends AbstractContainerScreen<BrewingBa
         }
     }
 
-    /** Draws one tank's fluid fill into a GUI rect, bottom-up, as the block-atlas still sprite of the tank's fluid. */
     private void drawTank(GuiGraphics guiGraphics, FluidStack fluid, int capacity, int x, int y, int width, int height) {
         if (fluid.isEmpty() || capacity <= 0) {
             return;
@@ -109,9 +90,9 @@ public class RusticBrewingBarrelScreen extends AbstractContainerScreen<BrewingBa
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        // super.render already draws the panel, the slots and any hovered slot tooltip.
+
         super.render(guiGraphics, mouseX, mouseY, partialTick);
-        // Layer the fluid-tank tooltips on top of the slot tooltips the base render drew.
+
         renderTankTooltips(guiGraphics, mouseX, mouseY);
     }
 
@@ -132,7 +113,6 @@ public class RusticBrewingBarrelScreen extends AbstractContainerScreen<BrewingBa
         }
     }
 
-    /** The legacy fluid tooltip: name + {@code amount/capacity}, plus the quality line for a booze. */
     private Component fluidTooltip(FluidStack fluid, int capacity) {
         if (fluid.isEmpty()) {
             return Component.translatable("tooltip.rustic.empty")

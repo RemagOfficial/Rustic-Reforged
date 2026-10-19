@@ -12,21 +12,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 
-/**
- * 1.12.2's {@code TileEntityLiquidBarrel}: a single {@link FluidTank} (16 buckets) with no inventory and no GUI.
- * Legacy extended Forge's {@code TileFluidHandler}; 1.21 drops that base, so this owns a {@link FluidTank} directly
- * and exposes it through the {@code Capabilities.FluidHandler.BLOCK} provider registered in
- * {@link RusticBlockEntities#registerCapabilities}. Fill/drain/temperature gating lives on the {@link FluidTank}
- * validator and the block's interaction code, since the legacy {@code setCanFill}/{@code setCanDrain} flags no
- * longer exist.
- *
- * <p>Any tank change marks the block dirty and pushes an update packet to watching clients, replacing the legacy
- * {@code markDirty} + {@code notifyBlockUpdate} + {@code addBlockEvent(1)} dance; the client then re-reads the tank
- * through {@link #getUpdateTag(HolderLookup.Provider)}.
- */
 public class LiquidBarrelBlockEntity extends BlockEntity {
 
-    /** Legacy {@code TileEntityLiquidBarrel.capacity}: sixteen buckets. */
     public static final int CAPACITY = FluidType.BUCKET_VOLUME * 16;
 
     private final FluidTank tank = new FluidTank(CAPACITY) {

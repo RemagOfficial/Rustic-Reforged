@@ -20,18 +20,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * 1.12.2's {@code CondenserRecipe} (with its {@code Basic}/{@code Advanced} subclasses collapsed into one data-driven
- * type): a set amount of water plus a glass bottle plus an exact multiset of ingredient items brew, over {@code time}
- * ticks, into an elixir {@link ItemStack} that carries its {@code rustic:elixir_effects}. The advanced variant adds a
- * modifier herb slot; the basic variant requires that slot stay empty.
- *
- * <p>Matching mirrors legacy: the bottle item and the water fluid must be right, the offered (non-empty) ingredient
- * stacks must consume every required {@link Ingredient} exactly once (leftovers or unmatched stacks fail), and the
- * modifier gate rides on {@link Ingredient#test} - an {@code EMPTY} modifier ingredient only accepts an empty slot
- * (basic), a real one demands a matching item (advanced). Like the crushing tub, the result item is reported but the
- * machine also needs the water/bottle/timings, exposed through the accessors below.
- */
 public class CondenserRecipe implements Recipe<CondenserRecipeInput> {
 
     private final boolean advanced;
@@ -60,21 +48,25 @@ public class CondenserRecipe implements Recipe<CondenserRecipeInput> {
         if (this.ingredients.isEmpty()) {
             return false;
         }
-        // Bottle: must be present and the same item as the required bottle (legacy hard-coded glass bottle).
+
         if (in.bottle().isEmpty() || !ItemStack.isSameItem(in.bottle(), this.bottle)) {
             return false;
         }
-        // Fluid: the required fluid type, with at least the required amount available.
+
         FluidStack offered = in.fluid();
         if (offered.isEmpty() || offered.getFluid() != this.fluid.getFluid()
                 || offered.getAmount() < this.fluid.getAmount()) {
             return false;
         }
-        // Modifier gate: EMPTY accepts only an empty slot (basic); a real ingredient demands a match (advanced).
+
+        // Modifier gate doubles as the basic/advanced discriminator: an EMPTY ingredient only matches an empty
+        // slot (basic), a real one demands a matching herb (advanced).
         if (!this.modifier.test(in.modifier())) {
             return false;
         }
-        // Exact multiset match of the offered ingredient stacks against the required ingredients.
+
+        // Exact multiset match: every offered stack consumes one required ingredient; any unmatched stack or
+        // leftover ingredient fails.
         List<Ingredient> remaining = new ArrayList<>(this.ingredients);
         for (ItemStack stack : in.ingredients()) {
             if (stack.isEmpty()) {
@@ -103,7 +95,7 @@ public class CondenserRecipe implements Recipe<CondenserRecipeInput> {
 
     @Override
     public boolean canCraftInDimensions(int width, int height) {
-        // Condenser recipes never appear in a crafting grid.
+
         return false;
     }
 
@@ -135,12 +127,10 @@ public class CondenserRecipe implements Recipe<CondenserRecipeInput> {
         return this.modifier;
     }
 
-    /** The water (or other base fluid) the condenser must hold to run this recipe, copied for safe consumption. */
     public FluidStack getFluid() {
         return this.fluid.copy();
     }
 
-    /** The bottle the condenser consumes (glass bottle in every legacy recipe). */
     public ItemStack getBottle() {
         return this.bottle.copy();
     }
@@ -149,7 +139,6 @@ public class CondenserRecipe implements Recipe<CondenserRecipeInput> {
         return this.time;
     }
 
-    /** Serializer: nested {@code Serializer}, {@code MapCodec} for JSON and a hand-rolled {@code StreamCodec} (the field count exceeds composite arity). */
     public static class Serializer implements RecipeSerializer<CondenserRecipe> {
 
         private static final MapCodec<CondenserRecipe> CODEC = RecordCodecBuilder.mapCodec(

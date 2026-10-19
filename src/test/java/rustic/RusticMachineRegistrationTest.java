@@ -61,22 +61,8 @@ import rustic.content.blocks.VaseBlock;
 import rustic.content.menu.RusticMenus;
 import rustic.registry.RusticRegistries;
 
-/**
- * Phase 4 characterisation test for the storage-machine slice, starting with the barrel vertical slice.
- *
- * <p>{@link RusticDecorRegistrationTest} deliberately excludes the machine ids (see its
- * {@code machineIds()} helper), so this is where a machine's four half-registrations are asserted to
- * line up: the block (with a block item and the legacy numbers), its {@link BlockEntityType}, its
- * {@link MenuType} and the datagen that makes it render and drop. A machine phase that only registered the
- * block - the failure mode this guards against - leaves an invisible, unopenable cube that drops nothing.
- *
- * <p>Like the decor test this runs in ModDevGradle's FML unit-test JVM, which is what makes
- * {@code BuiltInRegistries} populated and the creative tab readable. It does not exercise opening a menu or
- * ticking a block entity (that is a live-game check), only that the wiring a live game depends on exists.
- */
 public class RusticMachineRegistrationTest {
 
-    /** The barrel was Material.WOOD at hardness 1.5, with no harvest level and no setResistance call. */
     @Test
     public void barrelIsRegisteredAsAMachineBlockWithTheLegacyWoodNumbers() {
         Block barrel = RusticMachineBlocks.BARREL.get();
@@ -89,12 +75,11 @@ public class RusticMachineRegistrationTest {
                 0.0001F, "barrel resistance, which 1.12.2 never set");
         assertSame(SoundType.WOOD, barrel.getSoundType(barrel.defaultBlockState(), null, null, null),
                 "Material.WOOD sound");
-        // No harvest level in 1.12.2, so it always dropped its item even by hand.
+
         assertFalse(barrel.defaultBlockState().requiresCorrectToolForDrops(),
                 "barrel would stop dropping its item when mined by hand");
     }
 
-    /** 1.12.2 gave every block a block item under the block's own id; the machines are no exception. */
     @Test
     public void barrelHasABlockItemUnderTheSameId() {
         Block barrel = RusticMachineBlocks.BARREL.get();
@@ -105,12 +90,6 @@ public class RusticMachineRegistrationTest {
         assertSame(barrel, ((BlockItem) item).getBlock());
     }
 
-    /**
-     * The two registrations the decor blocks do not have and a storage machine must: a
-     * {@link BlockEntityType} valid for the block (so placing it produces a {@link BarrelBlockEntity}), and
-     * a {@link MenuType} the {@code MenuProvider} block entity can open (so right-clicking shows the
-     * 27-slot inventory rather than nothing).
-     */
     @Test
     public void barrelHasABlockEntityTypeAndAMenuType() {
         ResourceLocation id = RusticMachineBlocks.BARREL.getId();
@@ -126,7 +105,6 @@ public class RusticMachineRegistrationTest {
         assertSame(RusticMenus.BARREL.get(), menu, "the deferred menu holder and the registry disagree");
     }
 
-    /** The barrel block entity is the 27-slot container the legacy {@code TileEntityBarrel} was. */
     @Test
     public void barrelBlockEntityBacksATwentySevenSlotContainer() {
         BarrelBlockEntity entity = new BarrelBlockEntity(net.minecraft.core.BlockPos.ZERO,
@@ -136,11 +114,6 @@ public class RusticMachineRegistrationTest {
                 "the block entity reports the registered type, not a vanilla one");
     }
 
-    /**
-     * The machine blocks were appended to the decor tab (they were not a separate creative tab in
-     * 1.12.2), so the barrel item must be reachable there. Asserting membership rather than an exact list
-     * keeps this test independent of the decor baseline, which excludes these ids on purpose.
-     */
     @Test
     public void barrelAppearsInTheDecorTab() {
         CreativeModeTab decor = RusticCreativeTabs.DECOR.get();
@@ -152,11 +125,6 @@ public class RusticMachineRegistrationTest {
         assertTrue(ids.contains("rustic:barrel"), "the barrel is not offered in the DECOR tab: " + ids);
     }
 
-    /**
-     * The datagen output that makes the slice render and drop: a blockstate pointing at a generated model,
-     * a block model, an item model, a drop-myself loot table and the axe-mineable tag entry. Re-run
-     * {@code runData} when this fails; do not hand-write the files.
-     */
     @Test
     public void datagenProducedTheBarrelStateModelLootAndTag() {
         JsonObject state = json("/assets/rustic/blockstates/barrel.json");
@@ -178,7 +146,6 @@ public class RusticMachineRegistrationTest {
         assertTrue(axe.contains("rustic:barrel"), "Material.WOOD means the barrel is axe-mined");
     }
 
-    /** The cabinet was Material.WOOD at hardness 2.5, with no harvest level and no setResistance call. */
     @Test
     public void cabinetIsRegisteredAsAMachineBlockWithTheLegacyWoodNumbers() {
         Block cabinet = RusticMachineBlocks.CABINET.get();
@@ -195,7 +162,6 @@ public class RusticMachineRegistrationTest {
                 "cabinet would stop dropping its item when mined by hand");
     }
 
-    /** The three state properties that drive the double, and that the deferred door art would have rendered. */
     @Test
     public void cabinetDefaultStateCarriesFacingMirrorAndTop() {
         BlockState state = RusticMachineBlocks.CABINET.get().defaultBlockState();
@@ -205,7 +171,6 @@ public class RusticMachineRegistrationTest {
         assertFalse(state.getValue(CabinetBlock.TOP), "a freshly declared cabinet is a single, not a top half");
     }
 
-    /** 1.12.2 gave every block a block item under the block's own id; the cabinet is no exception. */
     @Test
     public void cabinetHasABlockItemUnderTheSameId() {
         Block cabinet = RusticMachineBlocks.CABINET.get();
@@ -216,11 +181,6 @@ public class RusticMachineRegistrationTest {
         assertSame(cabinet, ((BlockItem) item).getBlock());
     }
 
-    /**
-     * The cabinet needs all three machine registrations, and uniquely a second menu type: the single
-     * {@code cabinet} (27 slots) and the {@code double_cabinet} (54) that its {@code createMenu} opens when a
-     * partner is stacked on it. A missing {@code double_cabinet} would throw the moment anyone built a double.
-     */
     @Test
     public void cabinetHasABlockEntityTypeAndBothMenuTypes() {
         ResourceLocation id = RusticMachineBlocks.CABINET.getId();
@@ -237,7 +197,6 @@ public class RusticMachineRegistrationTest {
                 "no double-cabinet menu type under " + RusticMenus.DOUBLE_CABINET.getId());
     }
 
-    /** Each cabinet block entity is the 27-slot half the legacy {@code TileEntityCabinet} was. */
     @Test
     public void cabinetBlockEntityBacksATwentySevenSlotContainer() {
         CabinetBlockEntity entity = new CabinetBlockEntity(net.minecraft.core.BlockPos.ZERO,
@@ -247,7 +206,6 @@ public class RusticMachineRegistrationTest {
                 "the block entity reports the registered type, not a vanilla one");
     }
 
-    /** Like the barrel, the cabinet is offered in the decor tab (1.12.2 put the machines there too). */
     @Test
     public void cabinetAppearsInTheDecorTab() {
         CreativeModeTab decor = RusticCreativeTabs.DECOR.get();
@@ -259,16 +217,6 @@ public class RusticMachineRegistrationTest {
         assertTrue(ids.contains("rustic:cabinet"), "the cabinet is not offered in the DECOR tab: " + ids);
     }
 
-    /**
-     * The datagen that makes the cabinet render and drop. Its blockstate enumerates every facing/mirror/top
-     * combination but each one still resolves to the same static cube model (kept for particles/loot), so the
-     * assertion is "every referenced model is rustic:block/cabinet", not a single empty-variant key like the
-     * property-less barrel. Bug-fix 2026-10-19 (part 4) recovered 1.12.2's own
-     * {@code models/item/cabinet.json}, which parents the static {@code rustic:block/cabinet} (that recovered
-     * block carries the legacy display section); the S9.2 {@code minecraft:builtin/entity} + BER route was
-     * dropped because without a display section the inventory item rendered off-centre. Re-run {@code runData}
-     * when this fails; do not hand-write the files.
-     */
     @Test
     public void datagenProducedTheCabinetStateModelLootAndTag() {
         Set<String> models = blockstateModels("/assets/rustic/blockstates/cabinet.json");
@@ -289,7 +237,6 @@ public class RusticMachineRegistrationTest {
         assertTrue(axe.contains("rustic:cabinet"), "Material.WOOD means the cabinet is axe-mined");
     }
 
-    /** The vase was Material.ROCK at hardness 0.5, with no harvest level and no setResistance call. */
     @Test
     public void vaseIsRegisteredAsAMachineBlockWithTheLegacyStoneNumbers() {
         Block vase = RusticMachineBlocks.VASE.get();
@@ -306,7 +253,6 @@ public class RusticMachineRegistrationTest {
                 "vase would stop dropping its item when mined by hand");
     }
 
-    /** The scaffolded variant property, defaulting to 0; the thirteen real styles are Phase 9's. */
     @Test
     public void vaseDefaultStateCarriesVariantZero() {
         BlockState state = RusticMachineBlocks.VASE.get().defaultBlockState();
@@ -315,7 +261,6 @@ public class RusticMachineRegistrationTest {
         assertEquals(13, VaseBlock.VARIANT.getPossibleValues().size(), "1.12.2 shipped thirteen vase styles (0..12)");
     }
 
-    /** 1.12.2 gave every block a block item under the block's own id; the vase is no exception. */
     @Test
     public void vaseHasABlockItemUnderTheSameId() {
         Block vase = RusticMachineBlocks.VASE.get();
@@ -326,7 +271,6 @@ public class RusticMachineRegistrationTest {
         assertSame(vase, ((BlockItem) item).getBlock());
     }
 
-    /** The vase's block entity type and its single 27-slot menu type. */
     @Test
     public void vaseHasABlockEntityTypeAndAMenuType() {
         ResourceLocation id = RusticMachineBlocks.VASE.getId();
@@ -342,7 +286,6 @@ public class RusticMachineRegistrationTest {
         assertSame(RusticMenus.VASE.get(), menu, "the deferred menu holder and the registry disagree");
     }
 
-    /** The vase block entity is the 27-slot container the legacy {@code TileEntityVase} was. */
     @Test
     public void vaseBlockEntityBacksATwentySevenSlotContainer() {
         VaseBlockEntity entity = new VaseBlockEntity(net.minecraft.core.BlockPos.ZERO,
@@ -352,7 +295,6 @@ public class RusticMachineRegistrationTest {
                 "the block entity reports the registered type, not a vanilla one");
     }
 
-    /** Like the barrel and cabinet, the vase is offered in the decor tab. */
     @Test
     public void vaseAppearsInTheDecorTab() {
         CreativeModeTab decor = RusticCreativeTabs.DECOR.get();
@@ -364,13 +306,6 @@ public class RusticMachineRegistrationTest {
         assertTrue(ids.contains("rustic:vase"), "the vase is not offered in the DECOR tab: " + ids);
     }
 
-    /**
-     * The datagen that makes the vase render and drop. Phase 11 S11.2 restored six stacked-cube styles and aliased
-     * the scaffolded VARIANT(0-12) values 6..12 back onto style 0 (only six models existed); Phase 16 authored the
-     * seven missing vase_6..12 statics, so every one of the thirteen states now names its own model. The item model
-     * is hand-authored (parents vase_0, twelve override entries - see RusticVaseVariantTest). Re-run {@code runData}
-     * when this fails.
-     */
     @Test
     public void datagenProducedTheVaseStateModelLootAndTag() {
         Set<String> models = blockstateModels("/assets/rustic/blockstates/vase.json");
@@ -396,16 +331,6 @@ public class RusticMachineRegistrationTest {
         assertTrue(pickaxe.contains("rustic:vase"), "Material.ROCK means the vase is pickaxe-mined");
     }
 
-    // ==================================================================
-    // Phase 4b fluid machines (liquid barrel, crushing tub, evaporating basin, brewing barrel, condenser,
-    // advanced condenser). They share the storage machines' wiring contract - block + block item + block entity
-    // type + (for the GUI three) a menu type + datagen + a creative-tab entry - so these assertions mirror the
-    // barrel/cabinet/vase tests above, table-driven for the six. Phase 11 S11.1 restored the fluid-machine models as
-    // static assets, so each fluid-machine blockstate now resolves to its restored rustic:block/<name> model (the
-    // advanced condenser splitting its two TOP halves across condenser_adv and condenser_adv_top).
-    // ==================================================================
-
-    /** holder, block class, hardness, sound type and block entity holder - the per-machine registration facts. */
     private record FluidSpec(DeferredBlock<? extends Block> holder, Class<? extends Block> blockClass,
                              float hardness, SoundType sound,
                              DeferredHolder<BlockEntityType<?>, ? extends BlockEntityType<?>> beType) {
@@ -425,7 +350,6 @@ public class RusticMachineRegistrationTest {
             new FluidSpec(RusticMachineBlocks.CONDENSER_ADVANCED, CondenserAdvancedBlock.class, 2.0F, SoundType.STONE,
                     RusticBlockEntities.CONDENSER_ADVANCED));
 
-    /** Each fluid machine is the right block class, resolvable in the registry, with its 1.12.2 material numbers and block item. */
     @Test
     public void everyFluidMachineIsRegisteredWithItsLegacyNumbersAndBlockItem() {
         for (FluidSpec spec : FLUID_MACHINES) {
@@ -448,7 +372,6 @@ public class RusticMachineRegistrationTest {
         }
     }
 
-    /** The block entity type is registered, resolves to the deferred holder, and is valid for the block. */
     @Test
     public void everyFluidMachineHasABlockEntityTypeValidForItsBlock() {
         for (FluidSpec spec : FLUID_MACHINES) {
@@ -461,10 +384,6 @@ public class RusticMachineRegistrationTest {
         }
     }
 
-    /**
-     * The three GUI machines each need a menu type as well (the liquid barrel, crushing tub and evaporating basin
-     * are interact-only shells and register none); a missing menu type would throw the moment a player right-clicks.
-     */
     @Test
     public void theThreeGuiFluidMachinesEachHaveAMenuType() {
         assertSame(RusticMenus.BREWING_BARREL.get(),
@@ -475,7 +394,6 @@ public class RusticMachineRegistrationTest {
                 BuiltInRegistries.MENU.get(RusticMenus.CONDENSER_ADVANCED.getId()), "no advanced-condenser menu type");
     }
 
-    /** The legacy slot counts and fluid-tank capacities each machine block entity was built around. */
     @Test
     public void fluidMachineBlockEntitiesCarryTheLegacySlotAndTankSizes() {
         assertEquals(16 * 1000, new LiquidBarrelBlockEntity(net.minecraft.core.BlockPos.ZERO,
@@ -506,11 +424,6 @@ public class RusticMachineRegistrationTest {
         assertEquals(7, advanced.getItemHandler().getSlots(), "result/fuel/bottle/modifier/three ingredients");
     }
 
-    /**
-     * Each fluid machine must be offered on the tab 1.12.2 setCreativeTab'd it on, not the blanket decor append:
-     * the liquid barrel inherited BlockBase's decorTab, but BlockCrushingTub, BlockEvaporatingBasin and
-     * BlockBrewingBarrel set farmingTab and BlockCondenser / BlockCondenserAdvanced set alchemyTab.
-     */
     @Test
     public void everyFluidMachineAppearsInItsLegacyTab() {
         List<String> decor = tabIds(RusticCreativeTabs.DECOR.get());
@@ -525,7 +438,7 @@ public class RusticMachineRegistrationTest {
         assertTrue(alchemy.contains("rustic:condenser"), "the condenser is not offered in ALCHEMY: " + alchemy);
         assertTrue(alchemy.contains("rustic:condenser_advanced"),
                 "the advanced condenser is not offered in ALCHEMY: " + alchemy);
-        // ...and none of the four left its legacy tab for the decor append.
+
         assertFalse(decor.contains("rustic:crushing_tub"), "the farming-tab crushing tub leaked into DECOR");
         assertFalse(decor.contains("rustic:evaporating_basin"), "the farming-tab basin leaked into DECOR");
         assertFalse(decor.contains("rustic:brewing_barrel"), "the farming-tab brewing barrel leaked into DECOR");
@@ -533,7 +446,6 @@ public class RusticMachineRegistrationTest {
         assertFalse(decor.contains("rustic:condenser_advanced"), "the alchemy-tab condenser leaked into DECOR");
     }
 
-    /** Rebuilds a tab's contents the way the creative menu does, then maps them to ids. */
     private static List<String> tabIds(CreativeModeTab tab) {
         tab.buildContents(new CreativeModeTab.ItemDisplayParameters(FeatureFlags.DEFAULT_FLAGS, true, null));
         List<String> ids = new ArrayList<>();
@@ -543,21 +455,11 @@ public class RusticMachineRegistrationTest {
         return ids;
     }
 
-    /**
-     * The datagen that makes each fluid machine render and drop, plus its mineable tag by material: the three
-     * wooden barrels/tub take the axe, the three stone machines take the pickaxe. Every blockstate resolves to its
-     * restored {@code rustic:block/<name>} model (Phase 11 S11.1) - the advanced condenser alone splits its two
-     * TOP halves across the body ({@code condenser_adv}) and the coil/dish ({@code condenser_adv_top}), and its item
-     * parents the body. Re-run {@code runData} if this fails.
-     */
     @Test
     public void datagenProducedStateModelLootAndTagForEveryFluidMachine() {
         for (FluidSpec spec : FLUID_MACHINES) {
             String path = spec.holder().getId().getPath();
-            // The advanced condenser is a two-block column: TOP=false draws the body, TOP=true the coil/dish, and
-            // the block item parents the body. Phase 12 rebuilt the BASIC condenser to the same two-half contract
-            // (condenser / condenser_top), so both are treated as columns now; every other fluid machine has one
-            // restored model named after it.
+
             boolean column = path.equals("condenser_advanced") || path.equals("condenser");
             String body = path.equals("condenser_advanced") ? "condenser_adv" : path;
             String top = path.equals("condenser_advanced") ? "condenser_adv_top" : "condenser_top";
@@ -589,7 +491,6 @@ public class RusticMachineRegistrationTest {
         assertTrue(pickaxe.contains("rustic:condenser_advanced"), "Material.ROCK advanced condenser is pickaxe-mined");
     }
 
-    /** The four custom machine recipe types and their serializers must be in the registries the block entities query. */
     @Test
     public void theFourFluidMachineRecipeTypesAndSerializersAreRegistered() {
         assertSame(RusticRegistries.CRUSHING_TUB_TYPE.get(),
@@ -615,14 +516,6 @@ public class RusticMachineRegistrationTest {
                 "condenser serializer");
     }
 
-    // ==================================================================
-    // Phase 12: the retort flank columns and the basic condenser's restored two-half contract.
-    // ==================================================================
-
-    /**
-     * Phase 12 rebuilt the BASIC condenser as a two-block TOP column with a horizontal FACING, symmetric with the
-     * advanced one (previously it was a single collapsed block). The default state is the inventory-owning bottom.
-     */
     @Test
     public void basicCondenserCarriesTheTwoHalfColumnContract() {
         BlockState state = RusticMachineBlocks.CONDENSER.get().defaultBlockState();
@@ -632,14 +525,6 @@ public class RusticMachineRegistrationTest {
                 "a freshly declared condenser is the bottom half, not the top");
     }
 
-    /**
-     * Phase 12: both retorts. 1.12.2's {@code BlockRetort} was a plain block (Material.ROCK, hardness 2, STONE sound,
-     * no block entity), the two tiers differing only in texture, so both share {@link RetortBlock} and a horizontal
-     * FACING. They ride the machine {@code entries()} loops for block item / drop-self loot / creative tab - the
-     * bug-fix pass moved that tab from the DECOR append to the legacy ALCHEMY membership - and take the
-     * pickaxe tag, and their blockstate + item models are the restored MrCrayfish art (block id {@code retort_advanced}
-     * draws the {@code retort_adv} model). Re-run {@code runData} if the model/datagen half fails.
-     */
     @Test
     public void bothRetortsAreOrientablePlainBlocksWithTheirDatagen() {
         CreativeModeTab alchemy = RusticCreativeTabs.ALCHEMY.get();
@@ -668,7 +553,6 @@ public class RusticMachineRegistrationTest {
                     path + " block item drifted from the block id");
             assertTrue(tabIds.contains(holder.getId().toString()), path + " is not offered in the ALCHEMY tab");
 
-            // Legacy model names: the basic retort uses "retort", the advanced one uses "retort_adv".
             String model = path.equals("retort") ? "retort" : "retort_adv";
             Set<String> models = blockstateModels("/assets/rustic/blockstates/" + path + ".json");
             assertEquals(Set.of("rustic:block/" + model), models,
@@ -689,9 +573,6 @@ public class RusticMachineRegistrationTest {
         assertTrue(pickaxe.contains("rustic:retort_advanced"), "Material.ROCK advanced retort is pickaxe-mined");
     }
 
-    // ---------------------------------------------------------------- helpers
-
-    /** Every {@code model} string referenced anywhere in a generated blockstate's {@code variants}. */
     private static Set<String> blockstateModels(String classpathResource) {
         JsonObject variants = json(classpathResource).getAsJsonObject("variants");
         Set<String> models = new LinkedHashSet<>();

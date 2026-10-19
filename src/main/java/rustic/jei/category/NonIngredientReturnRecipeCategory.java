@@ -14,12 +14,6 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import rustic.content.crafting.RecipeNonIngredientReturn;
 
-/**
- * The non-ingredient-return crafting recipes (ale wort, bottle emptying, barrel emptying): a data-driven shapeless
- * craft whose only quirk is that the consumed container's remainder is dropped. The three generated rows carry real
- * ingredient lists and results, so this category renders them straight from {@link RecipeNonIngredientReturn} rather
- * than a synthetic example. Port of the legacy {@code ShapelessOreRecipe} handling in {@code Recipes.addCraftingRecipes}.
- */
 public class NonIngredientReturnRecipeCategory extends AbstractRecipeCategory<RecipeHolder<RecipeNonIngredientReturn>> {
 
     public NonIngredientReturnRecipeCategory(IGuiHelper guiHelper,

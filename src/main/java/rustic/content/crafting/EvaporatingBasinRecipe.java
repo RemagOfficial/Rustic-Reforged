@@ -15,12 +15,6 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.fluids.FluidStack;
 import rustic.registry.RusticRegistries;
 
-/**
- * 1.12.2's {@code EvaporatingBasinRecipe}: a {@link FluidStack} evaporates over time into a dust {@link ItemStack}
- * (ironberry juice to tiny iron dust, golden apple juice to gold dust). Legacy keyed the whole map by fluid and read
- * the required amount from {@code input.amount}; the port keeps the same two fields (input fluid + output item) and
- * derives the evaporation duration from the input amount, exactly as legacy {@code getTime()} did.
- */
 public class EvaporatingBasinRecipe implements Recipe<FluidRecipeInput> {
 
     private final FluidStack input;
@@ -77,12 +71,11 @@ public class EvaporatingBasinRecipe implements Recipe<FluidRecipeInput> {
         return this.output.copy();
     }
 
-    /** Legacy {@code getTime()} returned the input fluid amount; kept so the basin countdown is data-driven. */
+    // Evaporation countdown is data-driven from the input fluid amount (no separate time field), as in the original.
     public int getTime() {
         return this.input.getAmount();
     }
 
-    /** Serializer following the vanilla nested-{@code Serializer} codec pattern. */
     public static class Serializer implements RecipeSerializer<EvaporatingBasinRecipe> {
 
         private static final MapCodec<EvaporatingBasinRecipe> CODEC = RecordCodecBuilder.mapCodec(

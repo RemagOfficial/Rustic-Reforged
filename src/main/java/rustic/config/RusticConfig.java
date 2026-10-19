@@ -4,30 +4,10 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 import java.util.List;
 
-/**
- * Port of the 1.12.2 {@code rustic.common.Config} (Forge {@code Configuration} + {@code Property})
- * onto NeoForge's {@link ModConfigSpec}.
- *
- * <p>Every entry keeps the legacy Java field name so ported call sites still read like the
- * 1.12.2 reference, while the TOML key itself is lower_snake_case, which is the idiomatic form for
- * a TOML config (the old file used human-readable keys with spaces). Defaults, bounds and comment
- * text are copied verbatim from the 1.12.2 source, which is what
- * {@code porting/../PORT_BASELINE.md} documents as the golden config baseline.
- *
- * <p>List entries also carry an element supplier: the deprecated {@code defineList} overload without
- * one cannot grow a list from NeoForge's in-game config screen, and every Rustic list is meant to be
- * user-editable. The supplied sample is the value the "+" button inserts.
- *
- * <p>Registered as {@link net.neoforged.fml.config.ModConfig.Type#COMMON} in {@code Rustic}, so the
- * file lands at {@code config/rustic-common.toml}.
- */
 public final class RusticConfig {
 
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
-    // ------------------------------------------------------------------
-    // all.general -> [general]
-    // ------------------------------------------------------------------
     public static final ModConfigSpec.BooleanValue FLESH_SMELTING;
     public static final ModConfigSpec.BooleanValue EXTRA_ARMOR_HUD;
     public static final ModConfigSpec.BooleanValue TOUGHNESS_HUD;
@@ -53,9 +33,6 @@ public final class RusticConfig {
     public static final ModConfigSpec.IntValue MAX_BREW_TIME;
     public static final ModConfigSpec.BooleanValue ENABLE_BOTTLE_EMPTYING;
 
-    // ------------------------------------------------------------------
-    // all.world -> [world]
-    // ------------------------------------------------------------------
     public static final ModConfigSpec.BooleanValue NETHER_SLATE;
     public static final ModConfigSpec.IntValue SLATE_VEINS_PER_CHUNK;
     public static final ModConfigSpec.IntValue SLATE_VEIN_SIZE;
@@ -71,23 +48,13 @@ public final class RusticConfig {
     public static final ModConfigSpec.ConfigValue<List<? extends Integer>> OVERWORLD_GENERATION_WHITELIST;
     public static final ModConfigSpec.ConfigValue<List<? extends Integer>> NETHER_GENERATION_WHITELIST;
 
-    // ------------------------------------------------------------------
-    // all.bees -> [bees]
-    // ------------------------------------------------------------------
     public static final ModConfigSpec.DoubleValue BEEHIVE_GEN_CHANCE;
     public static final ModConfigSpec.IntValue MAX_BEEHIVE_ATTEMPTS;
     public static final ModConfigSpec.DoubleValue BEE_GROWTH_MULTIPLIER;
     public static final ModConfigSpec.DoubleValue BEE_REPRODUCTION_MULTIPLIER;
     public static final ModConfigSpec.DoubleValue BEE_HONEYCOMB_MULTIPLIER;
 
-    // ------------------------------------------------------------------
-    // all.compat -> [compat]
-    // ------------------------------------------------------------------
     public static final ModConfigSpec.BooleanValue ENABLE_SILVER_DECOR;
-    // ENABLE_FORESTRY_COMPAT was dropped in S10.4: the Forestry CE compat ships as plain datapack data
-    // (forestry:squeezer / forestry:fermenter recipes + a forestry:biogas_fuels fluid data map). Data of an
-    // absent mod is inert - unknown recipe types are skipped with a log warning, unregistered data map types
-    // are never read - so there is nothing a toggle could protect and no Java glue to guard.
 
     static {
         BUILDER.push("General Options");
@@ -144,8 +111,6 @@ public final class RusticConfig {
                 .comment("enable/disable lattice blocks")
                 .define("enable_lattice", true);
 
-        // Ships empty on purpose (the 1.12.2 default was an empty list), so this one uses the
-        // allow-empty overload: defineList() documents "this list cannot be empty".
         OLIVE_OIL_BLACKLIST = BUILDER
                 .comment("add an item's registry name to this list to prevent it from being craftable with olive oil")
                 .defineListAllowEmpty("olive_oil_food_blacklist", List.<String>of(), () -> "minecraft:apple",
@@ -235,8 +200,6 @@ public final class RusticConfig {
                 .comment("maximum number of times the generator will attempt to place an ironwood tree in a chunk")
                 .defineInRange("max_ironwood_generation_attempts", 4, 0, 128);
 
-        // 1.21-only addition; there is no 1.12.2 counterpart, hence it lives outside the golden baseline pair.
-        // Default false preserves the exact legacy behaviour so the port stays faithful until a user opts in.
         NATURAL_TREE_PLACEMENT = BUILDER
                 .comment("when true, olive and ironwood trees roll their generation chance once per scatter attempt",
                         "spreading a low density of trees evenly across the biome for a more natural forest;",
@@ -260,8 +223,6 @@ public final class RusticConfig {
                 .comment("maximum number of times the generator will attempt to place a wildberry bush in a chunk")
                 .defineInRange("max_wildberry_generation_attempts", 4, 0, 128);
 
-        // 1.12.2 stored these as strings and Integer.parseInt'd them inside a catch-all block, so one
-        // bad entry silently aborted the whole whitelist. TOML keeps them as real integers instead.
         OVERWORLD_GENERATION_WHITELIST = BUILDER
                 .comment("add numerical dimension ids to this list to allow Rustic's overworld world gen to occur in those dimensions",
                         "dimensions that are not listed here will not receive Rustic's overworld world generation")

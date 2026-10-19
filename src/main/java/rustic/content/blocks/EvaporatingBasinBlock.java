@@ -29,17 +29,10 @@ import org.jetbrains.annotations.Nullable;
 import rustic.content.blockentity.EvaporatingBasinBlockEntity;
 import rustic.content.blockentity.RusticBlockEntities;
 
-/**
- * 1.12.2's {@code BlockEvaporatingBasin}: the fill-in / dust-out machine behind {@link EvaporatingBasinBlockEntity}.
- * No GUI. Right-clicking with a bucket (or any fluid container) pours it in or draws it out; an empty-hand click
- * collects the crystallised dust, and sneak-clicking with an otherwise-empty hand pulls a bucket's worth of fluid
- * back out. The evaporation itself runs on the server tick.
- */
 public class EvaporatingBasinBlock extends BaseEntityBlock {
 
     public static final MapCodec<EvaporatingBasinBlock> CODEC = simpleCodec(EvaporatingBasinBlock::new);
 
-    // 1.12.2's BlockEvaporatingBasin: a shallow full-footprint basin.
     private static final VoxelShape SHAPE = Shapes.box(0.0D, 0.0D, 0.0D, 1.0D, 0.25D, 1.0D);
 
     public EvaporatingBasinBlock(BlockBehaviour.Properties properties) {
@@ -59,9 +52,7 @@ public class EvaporatingBasinBlock extends BaseEntityBlock {
 
     @Override
     protected RenderShape getRenderShape(BlockState state) {
-        // S9.1: the basin's evaporating-fluid surface and crystallised-dust layers are a BlockEntityRenderer, which
-        // only runs under ENTITYBLOCK_ANIMATED; the renderer also redraws the shallow open-tray model via
-        // renderSingleBlock.
+
         return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
@@ -86,7 +77,7 @@ public class EvaporatingBasinBlock extends BaseEntityBlock {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
         if (level.getBlockEntity(pos) instanceof EvaporatingBasinBlockEntity basin) {
-            // Pour a held container into the tank, or draw the tank into an empty one.
+
             if (FluidUtil.interactWithFluidHandler(player, hand, basin.getTank())) {
                 return ItemInteractionResult.SUCCESS;
             }
@@ -103,7 +94,7 @@ public class EvaporatingBasinBlock extends BaseEntityBlock {
         if (!(level.getBlockEntity(pos) instanceof EvaporatingBasinBlockEntity basin)) {
             return InteractionResult.PASS;
         }
-        // Plain empty-hand click collects the dust output; sneak + empty hand pulls a bucket of fluid back out.
+
         if (!player.isSecondaryUseActive()) {
             ItemStack stored = basin.getItemHandler().getStackInSlot(EvaporatingBasinBlockEntity.OUTPUT_SLOT);
             if (!stored.isEmpty()) {

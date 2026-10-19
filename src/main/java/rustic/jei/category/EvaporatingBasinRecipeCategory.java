@@ -12,10 +12,6 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import rustic.content.blocks.RusticMachineBlocks;
 import rustic.content.crafting.EvaporatingBasinRecipe;
 
-/**
- * The evaporating basin: an input fluid evaporates over time into an output dust item. Port of 1.12.2's
- * {@code EvaporatingRecipeCategory}.
- */
 public class EvaporatingBasinRecipeCategory extends AbstractRecipeCategory<RecipeHolder<EvaporatingBasinRecipe>> {
 
     public EvaporatingBasinRecipeCategory(IGuiHelper guiHelper, RecipeType<RecipeHolder<EvaporatingBasinRecipe>> recipeType) {

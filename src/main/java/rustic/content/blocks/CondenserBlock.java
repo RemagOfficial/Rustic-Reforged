@@ -37,28 +37,12 @@ import org.jetbrains.annotations.Nullable;
 import rustic.content.blockentity.CondenserBlockEntity;
 import rustic.content.blockentity.RusticBlockEntities;
 
-/**
- * 1.12.2's {@code BlockCondenser}: the two-block basic elixir still. The lower half ({@code top=false}) owns the five-slot
- * inventory and the eight-bucket water tank in its {@link CondenserBlockEntity}; the upper half ({@code top=true}) carries
- * no block entity and only forwards interaction down, exactly like {@link CondenserAdvancedBlock} does for its column.
- * This restores the legacy two-block shape ({@code onBlockAdded} grew a {@code bottom=false} top over the placed base, and
- * breaking either half removed the partner), which the earlier single-block rebuild had collapsed.
- *
- * <p>The legacy {@code FACING} property and the {@code hasRetorts} gate are restored too: the still only opens when flanked
- * on both sides (perpendicular to its facing) by outward-turned {@link RusticMachineBlocks#RETORT retorts} of its own tier.
- * {@link CondenserFlanking} holds the shared rule. {@code FACING} also drives the model rotation, so the front panel turns
- * with the block just as the 1.12.2 orientable body did.
- *
- * <p>Right-clicking the (correctly flanked) still pours a held bucket into the water tank or draws one back, and any other
- * click opens the GUI where fuel, bottle and ingredients are loaded - the legacy {@code activate} order.
- */
 public class CondenserBlock extends BaseEntityBlock {
 
     public static final MapCodec<CondenserBlock> CODEC = simpleCodec(CondenserBlock::new);
 
-    /** 1.12.2 {@code BOTTOM}, inverted to the {@code top} convention the cabinet and advanced condenser use. */
     public static final BooleanProperty TOP = CondenserAdvancedBlock.TOP;
-    /** Legacy {@code FACING}: which way the front panel looks and which axis the retorts flank. */
+
     public static final DirectionProperty FACING = RetortBlock.FACING;
 
     private static final VoxelShape BOTTOM_SHAPE = Shapes.box(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
@@ -80,7 +64,6 @@ public class CondenserBlock extends BaseEntityBlock {
         builder.add(TOP, FACING);
     }
 
-    /** Place as a bottom half facing the placer, and only when there is headroom above - the legacy placement rule. */
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
@@ -92,7 +75,6 @@ public class CondenserBlock extends BaseEntityBlock {
                 .setValue(FACING, context.getHorizontalDirection().getOpposite());
     }
 
-    /** A freshly placed bottom grows its top half above it, mirroring legacy {@code onBlockAdded}. */
     @Override
     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
         if (!level.isClientSide && !state.getValue(TOP)) {
@@ -103,7 +85,6 @@ public class CondenserBlock extends BaseEntityBlock {
         }
     }
 
-    /** Breaking either half silently removes the partner, mirroring legacy {@code onBlockHarvested}. */
     @Override
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (!level.isClientSide) {
@@ -119,7 +100,7 @@ public class CondenserBlock extends BaseEntityBlock {
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        // Only the bottom half has an inventory to hold; the top half is decoration + a click forwarder.
+
         return state.getValue(TOP) ? null : new CondenserBlockEntity(pos, state);
     }
 
@@ -148,15 +129,11 @@ public class CondenserBlock extends BaseEntityBlock {
                                               Player player, InteractionHand hand, BlockHitResult hit) {
         CondenserBlockEntity condenser = operatableBottom(level, pos, state);
         if (condenser == null) {
-            // The still is not correctly flanked by its retorts (or the bottom half is not resolved yet). CONSUME the
-            // interaction so the held item is not used: ServerPlayerGameMode.useItemOn only skips a held BlockItem's
-            // own placement when the block returns a result whose consumesAction() is true (SUCCESS/CONSUME); PASS,
-            // SKIP_DEFAULT and FAIL all fall through to stack.useOn and STILL place the block. CONSUME (no swing) is
-            // therefore "do nothing until the column is shaped", matching the hasRetorts gate on the GUI/bucket paths.
+
             return ItemInteractionResult.CONSUME;
         }
         if (level.isClientSide) {
-            // Operable, but the menu/bucket action is server-side: consume so the client never predicts a placement.
+
             return ItemInteractionResult.sidedSuccess(true);
         }
         if (FluidUtil.interactWithFluidHandler(player, hand, condenser.getTank())) {
@@ -176,7 +153,7 @@ public class CondenserBlock extends BaseEntityBlock {
         if (condenser == null) {
             return InteractionResult.PASS;
         }
-        // Empty hand: sneak pulls a bucket of water back out; a plain click opens the GUI.
+
         if (player.isSecondaryUseActive()) {
             FluidStack simulated = condenser.getTank().drain(FluidType.BUCKET_VOLUME, IFluidHandler.FluidAction.SIMULATE);
             if (!simulated.isEmpty() && !FluidUtil.getFilledBucket(simulated).isEmpty()) {
@@ -192,12 +169,6 @@ public class CondenserBlock extends BaseEntityBlock {
         return InteractionResult.CONSUME;
     }
 
-    /**
-     * The bottom half's block entity when the column is correctly flanked by retorts, otherwise {@code null}. This is
-     * the restored legacy {@code hasRetorts} gate: without its two outward-facing tier retorts a still will not open, so
-     * both the GUI and the bucket interaction require a properly shaped multi-block. Resolves a top-half click down to
-     * the inventory-owning bottom before checking, then evaluates the flank at that bottom position.
-     */
     @Nullable
     private CondenserBlockEntity operatableBottom(Level level, BlockPos pos, BlockState state) {
         BlockPos bottom = state.getValue(TOP) ? pos.below() : pos;
@@ -221,7 +192,7 @@ public class CondenserBlock extends BaseEntityBlock {
 
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moving) {
-        // Eject the item slots when the block actually leaves the world; the water tank is lost, as legacy breakBlock did.
+
         if (!state.is(newState.getBlock()) && !state.getValue(TOP)
                 && level.getBlockEntity(pos) instanceof CondenserBlockEntity condenser) {
             net.neoforged.neoforge.items.ItemStackHandler handler = condenser.getItemHandler();

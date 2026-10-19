@@ -22,23 +22,8 @@ import rustic.content.items.ItemElixir;
 import rustic.content.items.RusticItems;
 import rustic.content.potions.ElixirUtils;
 
-/**
- * Bug-fix gate (2026-10-19) for the elixir tooltip: legacy {@code ElixirUtils.addPotionTooltip} printed the
- * effect name, then a potency suffix when the amplifier was above zero, then the duration whenever the effect
- * lasted longer than 20 ticks - so the instant-health elixir showed no clock while regeneration showed 45
- * seconds. Vanilla 1.21 builds that same line as {@code potion.withDuration{name, MobEffectUtil
- * .formatDuration(effect, 1.0F, 20.0F)}} inside {@code PotionContents.addPotionTooltip}, and {@code
- * ItemElixir.appendHoverText} now mirrors it (the wrapper only when {@code !effect.endsWithin(20)}).
- *
- * <p>The tooltip is asserted <em>structurally</em> - reading the {@link TranslatableContents} key/args and the
- * {@link Style} colour directly - because headless there is no language map, so the resolved text is not
- * available. The clock value is pinned separately through {@code MobEffectUtil.formatDuration}: on this
- * version {@code StringUtil.formatTickDuration} returns the zero-padded {@code "%02d:%02d"} with no
- * parentheses (the {@code " (%s)"} grouping comes from the lang template, not the value).
- */
 public class ElixirTooltipDurationTest {
 
-    /** A timed effect gets the vanilla duration wrapper; the inner component stays the plain effect name. */
     @Test
     public void aTimedEffectCarriesTheDurationWrapper() {
         MobEffectInstance effect = new MobEffectInstance(MobEffects.REGENERATION, 900, 0);
@@ -53,7 +38,6 @@ public class ElixirTooltipDurationTest {
         assertEquals(blue(), line.getStyle(), "regeneration is a benign effect");
     }
 
-    /** Potency and duration stack the way legacy nested them: withDuration(name + " potion.potency.N", time). */
     @Test
     public void amplifierAndDurationCombine() {
         MobEffectInstance effect = new MobEffectInstance(MobEffects.DAMAGE_BOOST, 3600, 1);
@@ -64,14 +48,13 @@ public class ElixirTooltipDurationTest {
         MutableComponent name = (MutableComponent) args[0];
         assertEquals(MobEffects.DAMAGE_BOOST.value().getDescriptionId(), key(name),
                 "the inner component still leads with the effect name");
-        // The port appends " potion.potency.N" as siblings, legacy's s1 += " " + ... form.
+
         boolean potency = name.getSiblings().stream().anyMatch(sibling -> "potion.potency.1".equals(key(sibling)));
         assertTrue(potency, "amplifier 1 must append potion.potency.1");
         assertEquals("03:00", ((Component) args[1]).getString(), "3600 ticks is three minutes");
         assertEquals(blue(), line.getStyle(), "strength is a benign effect");
     }
 
-    /** An instant effect (legacy's duration <= 20 check, vanilla's endsWithin(20)) shows no clock at all. */
     @Test
     public void anInstantEffectShowsNoDuration() {
         MobEffectInstance effect = new MobEffectInstance(MobEffects.HEAL, 1, 0);
@@ -82,7 +65,6 @@ public class ElixirTooltipDurationTest {
         assertFalse("potion.withDuration".equals(key(line)), "an instant effect must not be wrapped");
     }
 
-    /** A harmful effect is red - the legacy isBadEffect / vanilla MobEffectCategory.HARMFUL branch. */
     @Test
     public void aHarmfulEffectIsRed() {
         MobEffectInstance effect = new MobEffectInstance(MobEffects.WITHER, 900, 0);
@@ -92,7 +74,6 @@ public class ElixirTooltipDurationTest {
         assertEquals(red(), line.getStyle(), "wither is HARMFUL on both versions");
     }
 
-    /** The empty elixir keeps the legacy gray "effect.none" line. */
     @Test
     public void anEmptyElixirSaysNoEffect() {
         ItemStack empty = new ItemStack(RusticItems.ELIXIR.get());
@@ -104,9 +85,6 @@ public class ElixirTooltipDurationTest {
         assertEquals(gray(), ((MutableComponent) tooltip.get(0)).getStyle(), "effect.none is gray");
     }
 
-    // ------------------------------------------------------------------ helpers
-
-    /** The single styled tooltip line the item produces for a stack carrying exactly {@code effect}. */
     private static MutableComponent tooltipLine(MobEffectInstance effect) {
         ItemStack stack = new ItemStack(RusticItems.ELIXIR.get());
         ElixirUtils.addEffect(effect, stack);
@@ -116,14 +94,12 @@ public class ElixirTooltipDurationTest {
         return (MutableComponent) tooltip.get(0);
     }
 
-    /** The contents of a translatable component (asserts the assumption that it is one). */
     private static TranslatableContents contents(Component component) {
         assertTrue(component.getContents() instanceof TranslatableContents,
                 "expected a translatable component but got " + component.getContents());
         return (TranslatableContents) component.getContents();
     }
 
-    /** The lang key of a translatable component, or {@code ""} for a non-translatable one (a literal sibling). */
     private static String key(Component component) {
         return component.getContents() instanceof TranslatableContents translatable ? translatable.getKey() : "";
     }

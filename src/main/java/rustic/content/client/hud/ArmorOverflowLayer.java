@@ -12,16 +12,6 @@ import net.neoforged.api.distmarker.OnlyIn;
 import rustic.config.RusticConfig;
 import rustic.content.client.hud.ArmorHudLayout.Icon;
 
-/**
- * S9.5: draws the armor rows vanilla omits. {@code Gui#renderArmor} paints a single row of ten icons and
- * clips anything above 20 armour points, so a player carrying Rustic's iron-skin {@code Attributes.ARMOR}
- * bonus loses the excess from view. Registered immediately above {@code VanillaGuiLayers.ARMOR_LEVEL}, this
- * layer paints only the overflow rows (row index 1+) directly on top of the vanilla row, in the vanilla
- * full/half/empty sprites so the two halves read as one continuous meter.
- *
- * <p>No-ops when {@code EXTRA_ARMOR_HUD} is off or armour fits in one row; the vanilla layer is left
- * untouched, so the common case is pixel-identical to an unmodded client.
- */
 @OnlyIn(Dist.CLIENT)
 public final class ArmorOverflowLayer implements LayeredDraw.Layer {
 
@@ -45,14 +35,13 @@ public final class ArmorOverflowLayer implements LayeredDraw.Layer {
         int armor = player.getArmorValue();
         int rows = ArmorHudLayout.rows(armor);
         if (rows <= 1) {
-            // Everything fits in the single row vanilla already drew.
+
             return;
         }
 
         int rowHeight = ArmorHudLayout.rowHeight(rows);
         int x0 = guiGraphics.guiWidth() / 2 - 91;
-        // Row 0 (the vanilla row) sat at guiHeight - leftHeightBefore; leftHeight has since been bumped by 10,
-        // so reconstruct it, then stack each overflow row one rowHeight higher.
+
         int baselineY = guiGraphics.guiHeight() - minecraft.gui.leftHeight + ArmorHudLayout.BASE_ROW_HEIGHT;
 
         RenderSystem.enableBlend();

@@ -32,32 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-/**
- * Dev/debug tool for Phase 10 / S10.3 natural generation. Not shipped gameplay content - it exists so the
- * "why can't I find olive/ironwood in the wild?" question can be answered from the running game rather than by
- * guessing at the biome-populator JSON.
- *
- * <p>{@code /dtgen [samples]} reads the exact structure Dynamic Trees' world generator consults - the live
- * {@link BiomeDatabase} for the biome the player is standing in - and prints, for that biome: the forestness value,
- * a density sample, and a histogram of the species its {@link BiomePropertySelectors.SpeciesSelector} actually
- * returns when sampled {@code samples} times (the same call the tree feature makes when it decides what to plant).
- *
- * <p>How to read the output:
- * <ul>
- *   <li>olive/ironwood present in the histogram &rarr; the {@code world_gen/rustic.json} populator is assigned; if the
- *       percentage is small the trees are simply competing with oak/birch (raise their weight), and if it is large yet
- *       none are seen in the world the failure is in generation validation, not the database.</li>
- *   <li>olive/ironwood absent (only dynamictrees:* species, or every draw unhandled/none) &rarr; the populator is not
- *       being applied to this biome (wrong tag/select, or {@code method} semantics), which is a data fix.</li>
- * </ul>
- *
- * <p>Touches the {@code compileOnly} Dynamic Trees API, so it is reached only through
- * {@link RusticDynamicTreesCompat#registerCommands}, itself wired behind the {@code ModList.isLoaded("dynamictrees")}
- * guard in {@link rustic.Rustic}; the class is never loaded when Dynamic Trees is absent.
- */
 public final class DtGenDebugCommand {
 
-    /** Number of selector draws per run when the player does not pass an explicit count. */
     private static final int DEFAULT_SAMPLES = 2000;
 
     private DtGenDebugCommand() {
@@ -98,9 +74,6 @@ public final class DtGenDebugCommand {
         final RandomSource rand = level.getRandom();
         final BlockState soil = level.getBlockState(pos.below());
 
-        // Sample the species selector the way the tree feature does: at varied positions within a chunk, one draw
-        // each. A weighted-random pool returns a fresh pick per call; position variance also covers selectors that
-        // key their result off coordinates.
         final Map<String, Integer> counts = new TreeMap<>();
         int unhandled = 0;
         int none = 0;
@@ -148,30 +121,14 @@ public final class DtGenDebugCommand {
             }
         }
 
-        // Prove at runtime whether Dynamic Trees can resolve our species by the exact lookup its populator parser
-        // uses (Species.findSpeciesSloppy -> parseDTLocation -> REGISTRY.has). If these are valid, an empty rustic
-        // pool is NOT the cause and the failure must be structural in how rustic.json is deserialized.
         probeRusticSpecies(source);
 
-        // Reflectively dump Dynamic Trees' per-biome JsonEntry templates so we can SEE whether the rustic populator
-        // is present for this biome and whether DT's own default template is applied after (and so overwrites) it.
         dumpMatchingTemplates(source, db, biome.unwrapKey().orElse(null));
 
-        // Selection clearly resolves to olive/ironwood, yet a fresh world has no trees at all. The tree feature runs
-        // on the LOGICAL SERVER, so replay its post-selection gates there: soil acceptance and a real world-gen
-        // generate() attempt. This tells us whether the failure is the species builder (generate returns false /
-        // throws) or is entirely outside the populator (species generate fine, so DT is not running its tree feature
-        // for this biome at all - e.g. the AddDynamicTrees biome modifier / DT config toggle).
         probeGeneration(source, biome, pos);
         return 1;
     }
 
-    /**
-     * Replays the exact placement steps {@code DynamicTreeFeature.genTree} takes AFTER it has selected a species, so a
-     * "selected in the histogram but nothing spawns in the world" case can be attributed to soil, to the species
-     * builder, or ruled out entirely. Non-destructive for the soil check; the generate step is run on a scratch
-     * position a few blocks away and is wrapped so a builder exception is reported instead of crashing the command.
-     */
     private static void probeGeneration(CommandSourceStack source, Holder<Biome> biome, BlockPos playerPos) {
         source.sendSuccess(() -> Component.literal("--- generation probe (server-side, mirrors DynamicTreeFeature.genTree) ---"), false);
         final ServerLevel serverLevel;
@@ -187,8 +144,7 @@ public final class DtGenDebugCommand {
                 source.sendSuccess(() -> Component.literal("  " + id + ": not resolvable, skipping"), false);
                 continue;
             }
-            // Find a surface (soil) position a handful of blocks ahead of the player: walk down from +6 to -8 and take
-            // the first solid block whose top neighbour is air, i.e. a place a tree could root.
+
             BlockPos soilPos = findSurface(serverLevel, playerPos);
             if (soilPos == null) {
                 source.sendSuccess(() -> Component.literal("  " + id + ": could not locate a surface block near the player"), false);
@@ -207,10 +163,10 @@ public final class DtGenDebugCommand {
             source.sendSuccess(() -> Component.literal("  " + id + " @" + soilPos.getX() + "," + soilPos.getY() + "," + soilPos.getZ()
                     + " soil=" + soilId + "  isAcceptableSoilForWorldgen=" + soilVerdict), false);
             if (!soilVerdict) {
-                continue; // genTree would stop here with FAIL_SOIL, so a generate attempt would be misleading.
+                continue;
+
             }
-            // Actually run world-gen generation. If this plants a tree, the species builder is fine and the reason the
-            // world is empty is that DT's tree feature is not being invoked for this biome (data/config, not species).
+
             try {
                 LevelContext ctx = LevelContext.create(serverLevel);
                 DynamicTreeGenerationContext genCtx = new DynamicTreeGenerationContext(
@@ -227,7 +183,6 @@ public final class DtGenDebugCommand {
         }
     }
 
-    /** Walks a short column near {@code origin} to find a solid block with air above (a plausible tree surface). */
     private static BlockPos findSurface(ServerLevel level, BlockPos origin) {
         BlockPos probe = origin.offset(4, 6, 4);
         for (int dy = 0; dy <= 14; dy++) {
@@ -243,7 +198,6 @@ public final class DtGenDebugCommand {
         return null;
     }
 
-    /** Runs Dynamic Trees' own species lookup against the two ids our populator references and reports the verdict. */
     private static void probeRusticSpecies(CommandSourceStack source) {
         source.sendSuccess(() -> Component.literal("--- findSpeciesSloppy probe (what the populator parser uses) ---"), false);
         for (String id : new String[]{"rustic:olive", "rustic:ironwood", "olive", "ironwood"}) {
@@ -255,17 +209,6 @@ public final class DtGenDebugCommand {
         }
     }
 
-    /**
-     * Reads Dynamic Trees' private {@code BiomeDatabase.jsonEntries} (a {@link java.util.LinkedHashMap}, so its
-     * iteration order is insertion order = populator read order) and prints every template that covers the given biome,
-     * with its species pool, its merge {@code Operation}, and its position. A higher position is copied into the biome
-     * later and therefore wins: if the {@code dynamictrees} default template sits at a higher index than the {@code rustic}
-     * one and uses REPLACE, it wipes the rustic species, which is the natural-generation failure being diagnosed.
-     *
-     * <p>Reflection is used deliberately - this is a development diagnostic, not shipped logic, and the fields it reads
-     * are Dynamic Trees' private world-gen state with no public accessor. Every reflective read is guarded so the command
-     * still prints the histogram even if the DT internals differ from what is expected.
-     */
     private static void dumpMatchingTemplates(CommandSourceStack source, BiomeDatabase db, ResourceKey<Biome> biomeKey) {
         source.sendSuccess(() -> Component.literal("--- JsonEntry templates (#N = apply order, higher wins) ---"), false);
         if (biomeKey == null) {
@@ -298,16 +241,13 @@ public final class DtGenDebugCommand {
                 if (mentionsRustic) {
                     rusticRefs++;
                 }
-                // How many biomes this template's holder-set resolves to, plus its include/exclude component count,
-                // so a template that silently resolved to an empty/wrong set is visible even when it does not match.
+
                 final long biomeCount = holderSet.stream().count();
                 final int includes = holderSet.getIncludeComponents().size();
                 final int excludes = holderSet.getExcludeComponents().size();
                 final boolean detailed = match || mentionsRustic;
                 final int pos = index;
-                // Print the biome-matching templates and any that look like our splice in full; every other
-                // species-changing template gets a terse line so the total picture (did our entries create ANY
-                // template?) is visible without drowning the reader in DT's own pools.
+
                 if (detailed) {
                     source.sendSuccess(() -> Component.literal("  #" + pos + (match ? " [MATCH]" : "        ")
                             + "  speciesChanged=" + changed + "  op=" + op
@@ -332,7 +272,6 @@ public final class DtGenDebugCommand {
         }
     }
 
-    /** Renders a species selector's pool when it is Dynamic Trees' random-weighted table; otherwise its class name. */
     private static String describeSelector(Object selector) {
         if (selector == null) {
             return "null";
@@ -352,11 +291,10 @@ public final class DtGenDebugCommand {
             }
             return sb.append(']').toString();
         }
-        // A spliced chain is a composed lambda with no readable table; report the type so it is recognisable.
+
         return "<" + selector.getClass().getName() + ">";
     }
 
-    /** Reads a (possibly private, possibly inherited) field reflectively, returning null when absent or inaccessible. */
     private static Object readField(Object target, String name) {
         Class<?> type = target.getClass();
         while (type != null) {

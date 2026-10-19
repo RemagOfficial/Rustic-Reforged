@@ -87,72 +87,40 @@ import rustic.content.blocks.RusticFarmBlocks;
 import rustic.content.blocks.RusticMachineBlocks;
 import rustic.content.fluids.RusticFluidBlocks;
 
-/**
- * Phase 2 characterisation test for the decor slice: the 33 blocks 1.12.2 built in
- * {@code ModBlocks.init()} behind the {@code ENABLE_SLATE / ENABLE_PILLARS / ENABLE_CLAY_WALLS /
- * ENABLE_PAINTED_WOOD} flags, plus their items, their numbers, their block states and the datagen
- * output that replaced the hand-written asset files.
- *
- * <p>The expected values are hand-listed below from the legacy source rather than read back out of
- * {@link RusticBlocks}, so that a rename or a dropped block fails here instead of quietly agreeing
- * with itself. The one deliberate disagreement is the id list: 1.12.2 registered
- * {@code slate_roof_doubleslab} and {@code slate_brick_doubleslab} as hidden blocks behind
- * {@code ItemBlockSlabBase}, and 1.21 stores {@code SlabType.DOUBLE} in the slab itself, so those two
- * ids must be absent now - asserted in {@link #theLegacyHiddenDoubleSlabsAreGone()}.
- *
- * <p>Runs in ModDevGradle's FML unit-test JVM, which is what makes {@code BuiltInRegistries}
- * populated and the creative tab's {@code displayItems} predicate readable. Resource assertions read
- * from the classpath, because {@code src/generated/resources} is a main source directory: they check
- * the committed datagen output, so forgetting to re-run {@code runData} after adding a block fails
- * here rather than in someone's game.
- */
+
+
 public class RusticDecorRegistrationTest {
 
-    /** What 1.12.2 made a block out of, and how hard it was. */
+    
     private record Expected(Class<? extends Block> type, float hardness, Float resistance) {
-        /** Every block that got its numbers from a legacy {@code setHardness} call has a zero resistance. */
+        
         Expected(Class<? extends Block> type, float hardness) {
             this(type, hardness, 0.0F);
         }
 
-        /**
-         * A block whose 1.21 properties are copied off a vanilla one with
-         * {@code RusticBlockProperties.ofBase}, so hardness, resistance and sound all belong to vanilla
-         * and are not re-asserted here: the log, the leaves and the sapling of each wood.
-         */
+
+
         static Expected derived(Class<? extends Block> type, float hardness) {
             return new Expected(type, hardness, null);
         }
 
-        /** Material.WOOD plus the legacy {@code setResistance(5F)}, which reported as 3.0F. */
+        
         static Expected resistant(Class<? extends Block> type, float hardness) {
             return new Expected(type, hardness, 3.0F);
         }
     }
 
-    /**
-     * The golden list. Hardness comes from the legacy {@code setHardness} calls ({@code ModBlocks}
-     * L201-222 for slate and clay, L255-286 for painted wood, {@code BlockPillar} L22,
-     * {@code BlockSlabBase} L30), and every one of those blocks reported an explosion resistance of
-     * <em>zero</em>: 1.12.2 kept resistance in its own {@code blockResistance} field, the {@code Material}
-     * constructor never touched it, and nothing in this family called {@code setResistance}. That is why
-     * the resistance is asserted as an absolute value below and not as a multiple of hardness.
-     *
-     * <p>The two stair blocks used to be the one family whose legacy numbers were not readable from
-     * Rustic's own source - {@code new BlockStairsBase(SLATE_ROOF.getDefaultState(), ...)} inherits from
-     * vanilla. Verified from the 1.12.2 bytecode: {@code BlockStairs}'s constructor copies the source
-     * block's {@code blockHardness} verbatim and its raw {@code blockResistance} verbatim, so the stairs
-     * really are slate's 2.0F / 0.0F.
-     */
+
+
     private static final Map<String, Expected> EXPECTED = expected();
 
     private static Map<String, Expected> expected() {
         Map<String, Expected> expected = new LinkedHashMap<>();
-        // BlockPillar(type) -> "<type>_pillar", Material.ROCK, hardness 2.0
+
         for (String type : List.of("stone", "andesite", "diorite", "granite", "slate")) {
             expected.put(type + "_pillar", new Expected(RotatedPillarBlock.class, 2.0F));
         }
-        // Material.ROCK cubes, hardness 2.0
+
         for (String slate : List.of("slate", "slate_roof", "slate_tile", "slate_brick", "slate_chiseled")) {
             expected.put(slate, new Expected(Block.class, 2.0F));
         }
@@ -160,11 +128,11 @@ public class RusticDecorRegistrationTest {
         expected.put("slate_roof_slab", new Expected(SlabBlock.class, 2.0F));
         expected.put("stairs_slate_brick", new Expected(StairBlock.class, 2.0F));
         expected.put("slate_brick_slab", new Expected(SlabBlock.class, 2.0F));
-        // Material.CLAY with SoundType.GROUND, hardness 1.0
+
         expected.put("clay_wall", new Expected(Block.class, 1.0F));
         expected.put("clay_wall_cross", new Expected(Block.class, 1.0F));
         expected.put("clay_wall_diag", new Expected(BlockClayWallDiag.class, 1.0F));
-        // sixteen Material.WOOD colours, hardness 2.0, spelled the way 1.12.2 spelled them
+
         for (String colour : List.of("white", "orange", "magenta", "light_blue", "yellow", "lime", "pink",
                 "gray", "silver", "cyan", "purple", "blue", "brown", "green", "red", "black")) {
             expected.put("painted_wood_" + colour, new Expected(Block.class, 2.0F));
@@ -172,19 +140,11 @@ public class RusticDecorRegistrationTest {
         return Map.copyOf(expected);
     }
 
-    /** The legacy ids that must no longer exist, and why. */
+    
     private static final List<String> REMOVED_IDS = List.of("slate_roof_doubleslab", "slate_brick_doubleslab");
 
-    /**
-     * Phase 3b: the wood family, the mounted metal decor, the furniture and the three hanging blocks, with
-     * the hardness each legacy constructor set - {@code BlockCandle} 1F, {@code BlockChain} 1F,
-     * {@code BlockChandelier} 2F, {@code BlockIronTorch} 0F, {@code BlockLantern} 2.0F,
-     * {@code BlockGargoyle} 1.0F, {@code BlockWoodLantern} 1F, {@code BlockChair} 1F, {@code BlockTable} 1F,
-     * {@code BlockPlanksRustic} 2F, {@code BlockFenceRustic} 2F, {@code BlockFenceGateRustic} 2F,
-     * {@code BlockSlabBase} 2.0F, {@code BlockLattice} 2.0F, {@code BlockRope} 0.5F and
-     * {@code BlockFertileSoil} 0.5F. The stairs take the planks' numbers the way vanilla's {@code BlockStairs}
-     * copies them, and the log, leaves and sapling are asserted as vanilla's own ({@link #derived}).
-     */
+
+
     private static final Map<String, Expected> EXPECTED_WOOD = expectedWood();
 
     private static Map<String, Expected> expectedWood() {
@@ -193,20 +153,16 @@ public class RusticDecorRegistrationTest {
             expected.put("planks_" + wood, Expected.resistant(Block.class, 2.0F));
             expected.put("fence_" + wood, Expected.resistant(FenceBlock.class, 2.0F));
             expected.put("fence_gate_" + wood, Expected.resistant(FenceGateBlock.class, 2.0F));
-            // BlockSlabBase set its own hardness and never touched the resistance field, which is why the
-            // slab is wood(2.0F) and not a copy of the planks' properties, unlike the stairs below.
+
             expected.put(wood + "_slab", new Expected(SlabBlock.class, 2.0F));
             expected.put("stairs_" + wood, Expected.resistant(StairBlock.class, 2.0F));
-            // Phase 13: BlockDoorRustic set hardness 3F, Material.WOOD and SoundType.WOOD, never a resistance,
-            // so the two-argument Expected (resistance 0.0F) is its exact 1.21 restatement.
+
             expected.put(wood + "_door", new Expected(DoorBlock.class, 3.0F));
             expected.put("log_" + wood, Expected.derived(RotatedPillarBlock.class, 2.0F));
             expected.put("leaves_" + wood, Expected.derived(LeavesBlock.class, 0.2F));
             expected.put("sapling_" + wood, Expected.derived(SaplingBlock.class, 0.0F));
         }
-        // The mounted metal decor: the iron set, the gold set, the silver set and the gargoyle. 1.12.2
-        // registered them in this order, and every one of them called setHardness by hand without ever
-        // touching the resistance field, so all of them land on the two-argument Expected.
+
         for (String suffix : List.of("", "_gold", "_silver")) {
             expected.put("chain" + suffix, new Expected(BlockChain.class, 1.0F));
             expected.put("candle" + suffix, new Expected(BlockCandle.class, 1.0F));
@@ -219,21 +175,20 @@ public class RusticDecorRegistrationTest {
         expected.put("golden_lantern", new Expected(BlockLantern.class, 2.0F));
         expected.put("silver_lantern", new Expected(BlockLantern.class, 2.0F));
         expected.put("gargoyle", new Expected(BlockGargoyle.class, 1.0F));
-        // The wooden lantern and the eight pairs of furniture, all of Material.WOOD without a resistance
-        // call - the lantern at full light, the furniture burning like the planks they are made of.
+
         expected.put("lantern_wood", new Expected(BlockWoodLantern.class, 1.0F));
         for (String wood : List.of("oak", "big_oak", "birch", "spruce", "acacia", "jungle", "olive", "ironwood")) {
             expected.put("chair_" + wood, new Expected(BlockChair.class, 1.0F));
             expected.put("table_" + wood, new Expected(BlockTable.class, 1.0F));
         }
-        // The lattice is iron at 2.0F, the rope is cloth at 0.5F and the fertile soil is dirt at 0.5F.
+
         expected.put("iron_lattice", new Expected(BlockLattice.class, 2.0F));
         expected.put("rope", new Expected(BlockRope.class, 0.5F));
         expected.put("fertile_soil", new Expected(BlockFertileSoil.class, 0.5F));
         return Map.copyOf(expected);
     }
 
-    /** Every block the port has produced so far, the two golden lists merged. */
+    
     private static final Map<String, Expected> EXPECTED_ALL = merged();
 
     private static Map<String, Expected> merged() {
@@ -242,23 +197,15 @@ public class RusticDecorRegistrationTest {
         return Map.copyOf(all);
     }
 
-    /**
-     * The ids that go to the agriculture tab rather than the decor one, which is the only difference
-     * between the two lists 1.12.2 filled from {@code Rustic.farmingTab}. Phase 5 still owns the tab's
-     * contents, so these are the blocks the decor tab must <em>not</em> show.
-     */
+
+
     private static final List<String> FARMING_TAB_IDS = List.of(
             "log_olive", "leaves_olive", "sapling_olive",
             "log_ironwood", "leaves_ironwood", "sapling_ironwood",
             "fertile_soil");
 
-    /**
-     * Which tool 1.12.2's {@code Material} made effective, as the {@code minecraft:mineable/*} tag that
-     * replaces it. {@code null} means no tool at all: the rope's {@code MaterialRope} was a custom
-     * subclass, and the legacy speed table is keyed on the vanilla constants, so nothing mined it faster
-     * than a hand. Every registered block has to appear here, which is what makes the assertion below a
-     * baseline rather than a description.
-     */
+
+
     private static final Map<String, String> TOOLS = tools();
 
     private static Map<String, String> tools() {
@@ -283,7 +230,7 @@ public class RusticDecorRegistrationTest {
         tools.put("iron_lantern", "pickaxe");
         tools.put("golden_lantern", "pickaxe");
         tools.put("silver_lantern", "pickaxe");
-        // Material.STONE, whatever the 1.21 mount looks like: the port gives it the pickaxe family.
+
         tools.put("gargoyle", "pickaxe");
         tools.put("lantern_wood", "axe");
         for (String wood : List.of("oak", "big_oak", "birch", "spruce", "acacia", "jungle", "olive", "ironwood")) {
@@ -296,7 +243,7 @@ public class RusticDecorRegistrationTest {
         return Collections.unmodifiableMap(tools);
     }
 
-    /** The legacy {@code Blocks.FIRE.setFireInfo(block, x, y)} calls of phase 3b, as {spread, burn}. */
+    
     private static final Map<String, int[]> FIRE = fire();
 
     private static Map<String, int[]> fire() {
@@ -308,8 +255,7 @@ public class RusticDecorRegistrationTest {
             fire.put("fence_gate_" + wood, new int[]{5, 20});
             fire.put(wood + "_slab", new int[]{5, 20});
             fire.put("stairs_" + wood, new int[]{5, 20});
-            // BlockLogRustic asked for 5 and 5, BlockLeavesRustic for 30 and 60, and the sapling never
-            // asked at all - the one plant block in the mod that fire does not take hold of.
+
             fire.put("log_" + wood, new int[]{5, 5});
             fire.put("leaves_" + wood, new int[]{30, 60});
         }
@@ -317,13 +263,13 @@ public class RusticDecorRegistrationTest {
             fire.put("chair_" + wood, new int[]{5, 20});
             fire.put("table_" + wood, new int[]{5, 20});
         }
-        // The rope's own constructor paired its custom MaterialRope.setBurning() with 20 and 60.
+
         fire.put("rope", new int[]{20, 60});
         return Collections.unmodifiableMap(fire);
     }
 
 
-    // ---------------------------------------------------------------- registration
+
 
     @Test
     public void everyLegacyDecorBlockIsRegisteredUnderItsLegacyIdWithALegacyShapedClass() {
@@ -350,13 +296,8 @@ public class RusticDecorRegistrationTest {
         }
     }
 
-    /**
-     * 1.12.2 registered an {@code ItemBlock} for every block from inside {@code BlockBase.register()}
-     * with the block's own registry name, so a block with no item was impossible. {@code RusticItems}
-     * reproduces that loop, and this is the assertion that keeps it honest - including for the two slab
-     * families, whose legacy item was the special {@code ItemBlockSlabBase} that swapped in the hidden
-     * double slab and is replaced by a plain {@link BlockItem} here.
-     */
+
+
     @Test
     public void everyBlockHasABlockItemUnderTheSameId() {
         Map<String, Block> registered = rusticBlocks();
@@ -374,14 +315,8 @@ public class RusticDecorRegistrationTest {
                 "a rustic item exists that is not a block item, which is a later phase's work");
     }
 
-    /**
-     * Phase 13: the two doors, the crux being that 1.12.2's {@code ItemDoor} placed a two-high block and 1.21
-     * keeps that in {@link DoubleHighBlockItem} (there is no {@code DoorItem} any more). A plain {@code BlockItem}
-     * would place only the bottom panel and leave the top missing, so this asserts the special item, the vanilla
-     * door state set the legacy {@code setDefaultState} spelled out (facing, half, hinge, open, powered), and that
-     * the generated blockstate ignores {@code POWERED} exactly as {@code BlockDoorRustic.initModel}'s
-     * {@code StateMap.Builder().ignore(BlockDoor.POWERED)} did.
-     */
+
+
     @Test
     public void theWoodenDoorsAreTwoHighAndIgnorePoweredLikeTheLegacyBlockDoor() {
         for (String wood : List.of("olive", "ironwood")) {
@@ -397,7 +332,7 @@ public class RusticDecorRegistrationTest {
             assertEquals(List.of("facing", "half", "hinge", "open", "powered"), properties,
                     wood + "_door lost one of the legacy door's five states");
 
-            // No generated variant may key on powered, because the state mapper ignored it.
+
             JsonObject variants = json("/assets/rustic/blockstates/" + wood + "_door.json")
                     .getAsJsonObject("variants");
             for (Map.Entry<String, JsonElement> variant : variants.entrySet()) {
@@ -408,16 +343,10 @@ public class RusticDecorRegistrationTest {
         }
     }
 
-    // ---------------------------------------------------------------- the numbers 1.12.2 set
 
-    /**
-     * Hardness copies straight across, but resistance has no equivalent call in 1.12.2's
-     * {@code setHardness(x)}, so it has to be restated: a block that never called
-     * {@code setResistance} reported {@code getExplosionResistance() == 0} (the field defaulted to 0 and
-     * the getter divided it by 5), while {@code Properties.strength(x)} sets the resistance <em>equal
-     * to</em> the hardness. Writing {@code strength(2.0F)} for slate roof would therefore have made every
-     * block in the slice blast-proof, which no screenshot would ever show.
-     */
+
+
+
     @Test
     public void hardnessAndExplosionResistanceFollowTheLegacyNumbers() {
         EXPECTED_ALL.forEach((id, expected) -> {
@@ -425,8 +354,7 @@ public class RusticDecorRegistrationTest {
             assertNotNull(block, id);
             assertEquals(expected.hardness(), block.defaultDestroyTime(), 0.0001F, id + " hardness");
             if (expected.resistance() == null) {
-                // A block built with ofBase: whatever vanilla's own number is, that is what 1.12.2 handed
-                // over by inheriting the source block, so the assertion is the inheritance itself.
+
                 Block source = vanillaSource(id);
                 assertEquals(source.getExplosionResistance(source.defaultBlockState(), null, null, null),
                         block.getExplosionResistance(block.defaultBlockState(), null, null, null),
@@ -438,30 +366,23 @@ public class RusticDecorRegistrationTest {
         });
     }
 
-    /**
-     * The sound came from the {@code Material} in 1.12.2, with two explicit overrides in this slice:
-     * the clay walls' {@code SoundType.GROUND} and painted wood's {@code SoundType.WOOD}. 1.12.2's
-     * GROUND played the gravel samples, which 1.21 simply calls {@link SoundType#GRAVEL}.
-     */
+
+
     @Test
     public void soundsMatchTheLegacyMaterialsAndTheirOverrides() {
         EXPECTED_ALL.forEach((id, expected) -> {
             Block block = rusticBlocks().get(id);
             SoundType sound = block.getSoundType(block.defaultBlockState(), null, null, null);
             if (expected.resistance() == null) {
-                return; // inherits vanilla's sound along with its numbers, so there is nothing Rustic-side to check
+                return;
+
             }
             assertSame(expectedSound(id), sound, id);
         });
     }
 
-    /**
-     * The sound 1.12.2's {@code Material} answered with, plus the overrides the mod put on top of it:
-     * the chandelier's {@code SoundType.ANVIL}, the clay walls' and the fertile soil's {@code GROUND} -
-     * which 1.21 simply calls {@link SoundType#GRAVEL} - and the metal mounts' {@code METAL}. Spelled out
-     * id by id where a prefix would catch the wrong block, since {@code slate_roof_slab} and
-     * {@code olive_slab} end the same way but sound nothing like each other.
-     */
+
+
     private static SoundType expectedSound(String id) {
         if (id.startsWith("chandelier")) {
             return SoundType.ANVIL;
@@ -479,11 +400,11 @@ public class RusticDecorRegistrationTest {
         if (id.startsWith("clay_wall") || id.equals("fertile_soil")) {
             return SoundType.GRAVEL;
         }
-        // The slate stairs inherit the slate's Material.ROCK rather than starting with one of their own.
+
         if (id.startsWith("stairs_slate")) {
             return SoundType.STONE;
         }
-        // MaterialRope asked for SoundType.CLOTH by hand, which 1.21 names WOOL.
+
         if (id.equals("rope")) {
             return SoundType.WOOL;
         }
@@ -493,24 +414,18 @@ public class RusticDecorRegistrationTest {
         return SoundType.METAL;
     }
 
-    /**
-     * The legacy blocks never set a harvest level, so they always dropped their item. 1.21 can say
-     * "needs the right tool" two ways - the property and an {@code incorrect_for_*} tag - and neither
-     * may appear, or hand-mining a slate block would start losing the item.
-     */
+
+
     @Test
     public void noDecorBlockEverRequiresTheCorrectToolForDrops() {
         rusticBlocks().forEach((id, block) -> assertFalse(block.defaultBlockState().requiresCorrectToolForDrops(),
                 id + " would stop dropping its item when mined by hand"));
     }
 
-    // ---------------------------------------------------------------- block states, which replaced metadata
 
-    /**
-     * {@code BlockPillar}'s hand-written axis property, its {@code getMetaFromState} pair and its
-     * "rotate around the clicked face" placement are vanilla {@link RotatedPillarBlock}'s, including
-     * the Y default that legacy metadata 0 stood for.
-     */
+
+
+
     @Test
     public void pillarsStoreTheirAxisTheWayTheLegacyMetadataDid() {
         Map<String, Block> registered = rusticBlocks();
@@ -520,7 +435,7 @@ public class RusticDecorRegistrationTest {
                     type + "_pillar properties");
             assertEquals(Direction.Axis.Y, pillar.defaultBlockState().getValue(RotatedPillarBlock.AXIS),
                     type + "_pillar default, which was legacy metadata 0");
-            // 1.12.2: super.getStateForPlacement(...).withProperty(AXIS, facing.getAxis())
+
             assertEquals(List.of(Direction.Axis.X, Direction.Axis.Y, Direction.Axis.Z),
                     new ArrayList<>(RotatedPillarBlock.AXIS.getPossibleValues()),
                     type + "_pillar lost an axis, so it can no longer lie on its side");
@@ -545,11 +460,8 @@ public class RusticDecorRegistrationTest {
         }
     }
 
-    /**
-     * The diagonal wall's {@code PropertyDirection.create("facing", Plane.HORIZONTAL)} is
-     * {@link BlockStateProperties#HORIZONTAL_FACING}, whose four values and NORTH default (legacy
-     * {@code setDefaultState}) are what the generated blockstate variants key off.
-     */
+
+
     @Test
     public void theDiagonalWallStoresOneHorizontalFacing() {
         BlockClayWallDiag diag = (BlockClayWallDiag) rusticBlocks().get("clay_wall_diag");
@@ -564,7 +476,7 @@ public class RusticDecorRegistrationTest {
                 new ArrayList<>(BlockStateProperties.HORIZONTAL_FACING.getPossibleValues()),
                 "facing must stay horizontal");
 
-        // 1.12.2's withRotation(state, rot) was rot.rotate(facing); structure rotation must agree.
+
         assertEquals(Direction.EAST, diag.rotate(diag.defaultBlockState(), null, null, Rotation.CLOCKWISE_90)
                 .getValue(BlockRotatable.FACING));
         assertEquals(Direction.WEST, diag.rotate(diag.defaultBlockState(), null, null, Rotation.COUNTERCLOCKWISE_90)
@@ -573,14 +485,10 @@ public class RusticDecorRegistrationTest {
                 .getValue(BlockRotatable.FACING));
     }
 
-    // ---------------------------------------------------------------- placement arithmetic
 
-    /**
-     * The one genuinely custom piece of logic in the slice, and a pure function, so the legacy
-     * arithmetic can be replayed exactly: a top or bottom click has no facing to read, so 1.12.2
-     * looked at how far from the centre of the face the click landed on each axis, took whichever
-     * offset was larger, and used its sign.
-     */
+
+
+
     @Test
     public void diagonalWallPlacementReproducesTheLegacyClickArithmetic() {
         BlockClayWallDiag diag = (BlockClayWallDiag) rusticBlocks().get("clay_wall_diag");
@@ -589,13 +497,13 @@ public class RusticDecorRegistrationTest {
         assertEquals(Direction.WEST, diagFacing(diag, Direction.UP, 0.25D, 0.5D, 0.5D));
         assertEquals(Direction.SOUTH, diagFacing(diag, Direction.UP, 0.5D, 0.5D, 0.75D));
         assertEquals(Direction.NORTH, diagFacing(diag, Direction.UP, 0.5D, 0.5D, 0.25D));
-        // the exact centre is the tie case: both offsets are 0, so the x branch wins and is not positive
+
         assertEquals(Direction.WEST, diagFacing(diag, Direction.UP, 0.5D, 0.5D, 0.5D));
-        // a bottom click runs the same arithmetic, which is what made the legacy branch axis-test
+
         assertEquals(Direction.EAST, diagFacing(diag, Direction.DOWN, 0.9D, 0.1D, 0.4D));
-        // x wins when it is the larger offset, even though z is also off-centre
+
         assertEquals(Direction.WEST, diagFacing(diag, Direction.UP, 0.1D, 0.5D, 0.7D));
-        // a side click says which way the player was standing, so the wall turns to meet them
+
         for (Direction side : List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST)) {
             assertEquals(side.getOpposite(), diagFacing(diag, side, 0.5D, 0.5D, 0.5D), "clicked " + side);
         }
@@ -607,14 +515,10 @@ public class RusticDecorRegistrationTest {
                 clickedFace, hitX, hitY, hitZ).getValue(BlockRotatable.FACING);
     }
 
-    // ---------------------------------------------------------------- flammability
 
-    /**
-     * {@code Blocks.FIRE.setFireInfo(paintedWood, 5, 20)} per block in 1.12.2. 1.21.1 keeps that table
-     * on the fire block, and NeoForge reads it back as {@code getFireSpreadSpeed} = the encouragement
-     * and {@code getFlammability} = the flammability, which is why the pair is asserted in that order.
-     * The stone and clay families were never flammable and must not become so.
-     */
+
+
+
     @Test
     public void paintedWoodBurnsWithTheLegacyFireNumbersAndNothingElseDoes() {
         EXPECTED_ALL.forEach((id, ignored) -> {
@@ -632,14 +536,14 @@ public class RusticDecorRegistrationTest {
             }
         });
 
-        // the same pair vanilla uses for planks, which is what the legacy numbers lined up with
+
         assertEquals(5, Blocks.OAK_PLANKS.getFireSpreadSpeed(Blocks.OAK_PLANKS.defaultBlockState(), null, null,
                 Direction.NORTH));
         assertEquals(20, Blocks.OAK_PLANKS.getFlammability(Blocks.OAK_PLANKS.defaultBlockState(), null, null,
                 Direction.NORTH));
     }
 
-    // ---------------------------------------------------------------- creative tab
+
 
     @Test
     public void theDecorTabHoldsEveryBlockOfEveryFamily() {
@@ -650,19 +554,15 @@ public class RusticDecorRegistrationTest {
         assertEquals(idsOf(decorIds), decorTabItemIds(), "the DECOR tab is not the legacy decor list");
     }
 
-    /**
-     * The {@code enable_*} flags used to decide whether a family was registered at all, which is why
-     * turning one off in an existing world deleted the blocks. Now they only gate the tab, so a disabled
-     * family must vanish from the creative menu while staying in the registry.
-     */
+
+
     @Test
     public void disablingAFamilyOnlyRemovesItFromTheTab() {
         int full = decorTabItemIds().size();
         assertEquals(EXPECTED_ALL.size() - FARMING_TAB_IDS.size(), full, "the tab is not every decor family");
         gateLeavesTheRegistry(RusticConfig.ENABLE_CLAY_WALLS, 3,
                 List.of("clay_wall", "clay_wall_cross", "clay_wall_diag"));
-        // The two 3b flags: eight chairs of their own, and the lattice behind the switch that 1.12.2 put
-        // in front of its single block.
+
         gateLeavesTheRegistry(RusticConfig.ENABLE_CHAIRS, 8,
                 List.of("chair_oak", "chair_big_oak", "chair_birch", "chair_spruce", "chair_acacia",
                         "chair_jungle", "chair_olive", "chair_ironwood"));
@@ -670,7 +570,7 @@ public class RusticDecorRegistrationTest {
         assertEquals(full, decorTabItemIds().size(), "the tab must come back with every flag restored");
     }
 
-    /** Turns one family off, checks it vanished from the tab but stayed registered, and puts it back. */
+    
     private static void gateLeavesTheRegistry(ModConfigSpec.BooleanValue gate, int removed, List<String> ids) {
         int before = decorTabItemIds().size();
         assertTrue(gate.get(), "the shipped default of " + gate + " is on");
@@ -688,7 +588,7 @@ public class RusticDecorRegistrationTest {
         assertEquals(before, decorTabItemIds().size(), "the tab must come back with the flag restored");
     }
 
-    /** Rebuilds the tab's contents the way the creative menu does, then maps them to ids. */
+    
     private static List<String> decorTabItemIds() {
         CreativeModeTab decor = RusticCreativeTabs.DECOR.get();
         decor.buildContents(new CreativeModeTab.ItemDisplayParameters(FeatureFlags.DEFAULT_FLAGS, true, null));
@@ -700,12 +600,8 @@ public class RusticDecorRegistrationTest {
                 .toList();
     }
 
-    /**
-     * Phase 5 owns the crops and Phase 6 the brews, but the wood family's agriculture half and the fertile
-     * soil already went to this tab with 3b. Phase 5 has now appended its own stake-crop poles, produce and
-     * seeds to the same tab, so the decor baseline asserts the wood half as <em>membership</em> - that the
-     * seven 3b ids are still offered - and leaves the exact crop list to {@code RusticFarmRegistrationTest}.
-     */
+
+
     @Test
     public void theFarmingTabStillHoldsTheAgricultureHalfOfTheWoodFamilies() {
         CreativeModeTab farming = RusticCreativeTabs.FARMING.get();
@@ -717,18 +613,13 @@ public class RusticDecorRegistrationTest {
             assertTrue(shown.contains("rustic:" + id),
                     "the wood-family agriculture half left the FARMING tab: rustic:" + id);
         }
-        // The ALCHEMY tab's content is no longer the Phase 6 brew stub - it now carries the legacy
-        // setCreativeTab(alchemyTab) membership in legacy order - and is golden-checked, together with that
-        // order and the recipe-data sync, by RusticAlchemyTabTest.
+
     }
 
-    // ---------------------------------------------------------------- datagen output
 
-    /**
-     * Every block needs a blockstate, an item model and a loot table or it renders as the missing-texture
-     * cube and drops nothing. All three are generated, so this is the check that they were generated -
-     * re-run {@code runData} when it fails, do not hand-write the files.
-     */
+
+
+
     @Test
     public void datagenProducedAStateModelAndLootTableForEveryBlock() {
         EXPECTED_ALL.keySet().forEach(id -> {
@@ -741,8 +632,7 @@ public class RusticDecorRegistrationTest {
             JsonArray entries = loot.getAsJsonArray("pools").get(0).getAsJsonObject()
                     .getAsJsonArray("entries");
             if (id.startsWith("leaves_")) {
-                // BlockLeavesRustic hand-rolled a harvestBlock instead of dropping itself: shears or silk
-                // touch get the leaves, anything else rolls for that wood's sapling.
+
                 JsonObject alternatives = entries.get(0).getAsJsonObject();
                 assertEquals("minecraft:alternatives", alternatives.get("type").getAsString(), id);
                 JsonArray children = alternatives.getAsJsonArray("children");
@@ -756,11 +646,8 @@ public class RusticDecorRegistrationTest {
         });
     }
 
-    /**
-     * The double-slab replacement in loot terms: 1.12.2's hidden double slab block dropped one of the
-     * single slab item, and the legacy {@code ItemBlockSlabBase} turned two slabs into it. 1.21 keeps one
-     * block and asks the loot table for two items when the state is {@code type=double}.
-     */
+
+
     @Test
     public void aDoubleSlabDropsTwoOfItself() {
         for (String slab : List.of("slate_roof_slab", "slate_brick_slab")) {
@@ -784,16 +671,11 @@ public class RusticDecorRegistrationTest {
         }
     }
 
-    /**
-     * The {@code minecraft:mineable/*} tags are where the legacy {@code Material} went: ROCK mined with a
-     * pickaxe, WOOD with an axe, CLAY with a shovel. A wrong entry here is a silent gameplay change
-     * (wrong tool speed), which is exactly the kind of thing the user cannot spot in a screenshot.
-     */
+
+
     @Test
     public void theMineableTagsSayWhichToolTheLegacyMaterialImplied() {
-        // Tag order carries no meaning to the game, so every list is compared sorted. Distinct, because the
-        // wood family reaches minecraft:mineable/axe twice - once as a family tool and once from the loop
-        // that writes the vanilla class tags - and a tag file is allowed to say the same thing twice.
+
         assertEquals(idsOf(TOOLS.keySet()), idsOf(rusticBlocks().keySet()),
                 "a registered block has no golden tool, so the mineable tags cannot be checked");
 
@@ -807,18 +689,17 @@ public class RusticDecorRegistrationTest {
             assertEquals(idsOf(byTool.getOrDefault(tool, List.of())), distinctTag("mineable/" + tool),
                     "mineable/" + tool + ": 1.12.2's Material decided which tool was effective");
         }
-        // The rope is in none of them, because the legacy custom Material matched no entry in the mining
-        // speed table at all - writing a tool here would be an improvement rather than a port.
+
         for (String tool : List.of("axe", "pickaxe", "shovel")) {
             assertFalse(distinctTag("mineable/" + tool).contains("rustic:rope"),
                     "rustic:rope is in mineable/" + tool);
         }
     }
 
-    /** The shape tags 1.12.2 spelled out through the ore dictionary entries {@code slabStone} and {@code stairs}. */
+    
     @Test
     public void theSlabAndStairShapeTagsListTheRusticOnes() {
-        // The ore dictionary entries slabStone / slabWood / stairWood, which other mods' recipes read.
+
         assertEquals(idsOf(List.of("rustic:slate_roof_slab", "rustic:slate_brick_slab", "rustic:olive_slab",
                 "rustic:ironwood_slab")), distinctTag("slabs"), "slabs");
         assertEquals(idsOf(List.of("rustic:stairs_slate_roof", "rustic:stairs_slate_brick",
@@ -829,12 +710,8 @@ public class RusticDecorRegistrationTest {
                 distinctTag("wooden_fences"), "fenceWood");
     }
 
-    /**
-     * The vanilla block a derived phase-3b block inherited its properties from, so the assertion above
-     * checks the inheritance rather than a restated number. Each wood's log, leaves and sapling were built
-     * with {@code RusticBlockProperties.ofBase} on the oak equivalent, exactly as 1.12.2's classes extended
-     * the vanilla block and never called {@code setHardness}/{@code setResistance}.
-     */
+
+
     private static Block vanillaSource(String id) {
         if (id.startsWith("log_")) {
             return Blocks.OAK_LOG;
@@ -845,15 +722,10 @@ public class RusticDecorRegistrationTest {
         return Blocks.OAK_SAPLING;
     }
 
-    // ---------------------------------------------------------------- the hanging blocks (3b)
 
-    /**
-     * 1.12.2's {@code BlockRopeBase} stored one axis and computed the sagging flag on the fly in
-     * {@code getActualState}. That mechanism is gone, so the sag is a listed property, the axis default is
-     * still the legacy metadata 0, and the generated multipart file has to carry every answer the old
-     * actual state could have produced - three axes, plus a dangle bar and a knot for each of the two
-     * branches.
-     */
+
+
+
     @Test
     public void theRopeStoresOneAxisAndItsSag() {
         BlockRope rope = (BlockRope) rusticBlocks().get("rope");
@@ -866,7 +738,7 @@ public class RusticDecorRegistrationTest {
         assertEquals(7, json("/assets/rustic/blockstates/rope.json").getAsJsonArray("multipart").size(),
                 "the rope blockstate lost one of the legacy getActualState's answers");
 
-        // 1.12.2's Forge isLadder == true for the whole rope base, which 1.21 reads back as a tag.
+
         List<String> climbable = new ArrayList<>(List.of("rustic:chain", "rustic:chain_gold", "rustic:rope"));
         if (RusticBlocks.silverDecorEnabled()) {
             climbable.add("rustic:chain_silver");
@@ -876,12 +748,8 @@ public class RusticDecorRegistrationTest {
                 "the lattice is not a rope base and never answered the ladder question");
     }
 
-    /**
-     * The lattice's six connection flags were <em>unlisted</em> properties in 1.12.2, read out of the
-     * neighbours by {@code getExtendedState}. They are stored here, which means the property list, the all
-     * false base state and the 14 multipart conditions (a bare and a leafy centre, and an iron and a leafy
-     * bar per direction) are what replaces the custom baked model.
-     */
+
+
     @Test
     public void theLatticeStoresSixArmsAndItsLeavesFlag() {
         BlockLattice lattice = (BlockLattice) rusticBlocks().get("iron_lattice");
@@ -904,13 +772,8 @@ public class RusticDecorRegistrationTest {
                 "the lattice blockstate is not the legacy extended state's answer set");
     }
 
-    /**
-     * The two hooks 1.12.2 answered through Forge and NeoForge answers through {@code IBlockExtension},
-     * with {@code TriState} replacing the boolean so that {@code DEFAULT} can mean the legacy
-     * {@code super.canSustainPlant} fallthrough. The order of the legacy {@code EnumPlantType} switch is
-     * what the two refusals test: a nether wart is a {@link CropBlock} and a waterlily a BushBlock, so both
-     * would otherwise be accepted by the branch above them.
-     */
+
+
     @Test
     public void theFertileSoilTakesEveryGroundPlantAndRefusesTheTwoItDidIn1122() {
         BlockFertileSoil soil = (BlockFertileSoil) rusticBlocks().get("fertile_soil");
@@ -927,7 +790,7 @@ public class RusticDecorRegistrationTest {
         }
         assertSame(TriState.FALSE, sustain(soil, pos, Blocks.NETHER_WART.defaultBlockState()), "nether wart");
         assertSame(TriState.FALSE, sustain(soil, pos, Blocks.LILY_PAD.defaultBlockState()), "waterlily");
-        // The legacy Plausible.Nether/Water cases were the only refusals; anything else fell through.
+
         assertSame(TriState.DEFAULT, sustain(soil, pos, Blocks.STONE.defaultBlockState()), "not a plant at all");
     }
 
@@ -936,11 +799,8 @@ public class RusticDecorRegistrationTest {
                 Direction.UP, plant);
     }
 
-    /**
-     * The rotation the legacy blockstate file wrote by hand: {@code facing=north} meant "no y rotation",
-     * east 90, south 180, west 270. Vanilla's {@code toYRot} puts south at 0, so the provider has to add
-     * 180 or every diagonal wall in an old world turns a quarter turn.
-     */
+
+
     @Test
     public void theGeneratedDiagonalWallBlockstateKeepsTheLegacyRotationTable() {
         JsonObject variants = json("/assets/rustic/blockstates/clay_wall_diag.json").getAsJsonObject("variants");
@@ -954,8 +814,7 @@ public class RusticDecorRegistrationTest {
 
         expected.forEach((variant, yRot) -> {
             JsonElement model = variants.get(variant);
-            // A variant with exactly one model is written as a plain object; only a weighted list is an
-            // array, so both spellings are accepted but a random-selection weight list is not.
+
             JsonObject single;
             if (model.isJsonArray()) {
                 assertEquals(1, model.getAsJsonArray().size(), variant + " should resolve to one model");
@@ -963,21 +822,14 @@ public class RusticDecorRegistrationTest {
             } else {
                 single = model.getAsJsonObject();
             }
-            // y is omitted when it would be 0, which is exactly the legacy "facing=north, no rotation".
+
             assertEquals(yRot.intValue(), single.has("y") ? single.get("y").getAsInt() : 0,
                     variant + " y rotation");
         });
     }
 
-    /**
-     * The model 1.12.2 hand-authored (MrCrayfish's Model Creator) gives its west face
-     * {@code uv: [16,0,0,16]} while east keeps the default {@code [0,0,16,16]}. That is not decoration: with a plain
-     * {@code cube} the two faces' u axes run in opposite world directions, so the diagonal texture
-     * would mirror itself across the block. Bug-fix 2026-10-19 (part 4) recovered this legacy static verbatim
-     * into {@code src/main/resources} (with its display section, so the inventory item renders correctly) and
-     * pointed datagen at it via {@code existing()}, so the file now carries MrCrayfish's numeric texture keys
-     * and an explicit east default rather than the datagen helper's named keys and omitted east.
-     */
+
+
     @Test
     public void theGeneratedDiagonalWallModelKeepsTheLegacyUvFlipOnWestOnly() {
         JsonObject model = json("/assets/rustic/models/block/clay_wall_diag.json");
@@ -1006,11 +858,8 @@ public class RusticDecorRegistrationTest {
         return ids;
     }
 
-    /**
-     * Reads a JSON resource out of the merged main resources, which is where {@code src/generated}
-     * lands as well as {@code src/main}. A missing file fails here with its name, because the usual
-     * cause is a new block whose datagen was never re-run.
-     */
+
+
     private static JsonObject json(String classpathResource) {
         try (Reader reader = new InputStreamReader(resourceStream(classpathResource), StandardCharsets.UTF_8)) {
             return JsonParser.parseReader(reader).getAsJsonObject();
@@ -1030,14 +879,8 @@ public class RusticDecorRegistrationTest {
         return prefixedIds.stream().sorted().toList();
     }
 
-    /**
-     * A tag's entries, sorted and deduplicated - the order and any repeats mean nothing to the game.
-     *
-     * <p>The {@code minecraft:mineable/*} files are shared with the Phase 4 machines (the barrel is
-     * legitimately axe-mined), so the machine ids are filtered out here just as they are from
-     * {@link #rusticBlocks()}: this is the decor baseline, and it asserts the decor half of each tag.
-     * {@code RusticMachineRegistrationTest} covers the machine's own tag membership.
-     */
+
+
     private static List<String> distinctTag(String name) {
         return tag(name).stream()
                 .filter(id -> !machineIds().contains(id.substring(id.lastIndexOf(':') + 1)))
@@ -1046,7 +889,7 @@ public class RusticDecorRegistrationTest {
                 .distinct().sorted().toList();
     }
 
-    /** The rustic half of the block registry, keyed by path and sorted so failures read as a list. */
+    
     private static Map<String, Block> rusticBlocks() {
         Map<String, Block> out = new TreeMap<>();
         for (Block block : BuiltInRegistries.BLOCK) {
@@ -1073,27 +916,16 @@ public class RusticDecorRegistrationTest {
         return out;
     }
 
-    /**
-     * The Phase 4 machine blocks live in their own register ({@code RusticMachineBlocks}) and are
-     * characterised by {@code RusticMachineRegistrationTest}. This test is the decor baseline, so its
-     * registry scans and its creative-tab comparison exclude these ids - a new machine then cannot
-     * silently shift the decor count, and the decor tab assertion still checks every decor family is
-     * present.
-     */
+
+
     private static java.util.Set<String> machineIds() {
         return RusticMachineBlocks.entries().stream()
                 .map(holder -> holder.getId().getPath())
                 .collect(java.util.stream.Collectors.toSet());
     }
 
-    /**
-     * Phase 5's crop content lives in its own register ({@code RusticFarmBlocks}) plus a handful of
-     * standalone produce / seed items, and is characterised by {@code RusticFarmRegistrationTest}. The decor
-     * baseline excludes these ids exactly as it excludes the machine ids, so a new crop cannot silently
-     * shift the decor block / item counts or the mineable-tag comparison. Phase 8 added the beehive and the
-     * apple tree's leaves/sapling to that same register, so their block items drop out via {@code entries()}
-     * above; the beehive's {@code bee} drop is a plain standalone item and is parked here alongside the produce.
-     */
+
+
     private static java.util.Set<String> farmIds() {
         java.util.Set<String> ids = new java.util.HashSet<>();
         RusticFarmBlocks.entries().forEach(holder -> ids.add(holder.getId().getPath()));
@@ -1102,15 +934,8 @@ public class RusticDecorRegistrationTest {
         return ids;
     }
 
-    /**
-     * Phase 6's fluid/brew content lives in {@code RusticFluidBlocks} (the eight source fluid blocks, whose
-     * same-id block items {@code RusticItems} loops out) plus the standalone bucket/bottle/elixir/tree-fruit
-     * items, and is characterised by {@code RusticFluidRegistrationTest}, {@code RusticBoozeQualityTest} and
-     * {@code RusticThrownProduceTest}. The decor baseline excludes these ids exactly as it excludes the machine
-     * and farm ids, so the fluid slice cannot silently shift the decor block / item counts or the mineable-tag
-     * comparison. Fluid blocks are liquids and appear in no {@code minecraft:mineable/*} tag, so the tag filter
-     * is a defensive no-op rather than a correction.
-     */
+
+
     private static java.util.Set<String> phase6Ids() {
         java.util.Set<String> ids = new java.util.HashSet<>();
         RusticFluidBlocks.entries().forEach(holder -> ids.add(holder.getId().getPath()));
@@ -1121,13 +946,8 @@ public class RusticDecorRegistrationTest {
         return ids;
     }
 
-    /**
-     * Phase 7's prerequisite items - the two bee products, the flesh tallow, the two smelting dusts and the
-     * two crushing-tub / viney seed byproducts - are plain ingredient items with no block behind them, so they
-     * are later-phase work exactly like the produce the farm and phase-6 exclusions already park. The decor
-     * baseline counts only blocks and their same-id block items, so adding these seven here keeps that
-     * block == item identity honest and stops the recipe slice from silently shifting the decor count.
-     */
+
+
     private static java.util.Set<String> phase7Ids() {
         return java.util.Set.of("honeycomb", "beeswax", "tallow", "dust_tiny_iron", "dust_gold",
                 "apple_seeds", "grape_seeds");

@@ -27,36 +27,12 @@ import rustic.content.potions.RusticMobEffects;
 import rustic.content.potions.ShameEffect;
 import rustic.content.potions.TipsyEffect;
 
-/**
- * Phase 6 characterisation test for the eleven Rustic potion effects ported from 1.12.2's
- * {@code PotionsRustic}. It runs in ModDevGradle's FML unit-test JVM, so {@code BuiltInRegistries} is
- * populated and the deferred holders resolve.
- *
- * <p>What is pinned here is the contract the rest of the phase (and the golden baseline tests) leans on:
- * the eleven registry ids are the legacy paths verbatim, each holder resolves to the same object in the
- * live registry, the six behavioural effects are their own {@link MobEffect} subclasses while the five
- * marker effects are the shared {@link MarkerEffect}, and the two attribute-carrying effects
- * ({@link FullmetalEffect}, {@link IronSkinEffect}) expose exactly the modifier set the legacy
- * {@code registerPotionAttributeModifier} calls produced — including the deliberate amplifier-scaling
- * split the port records (fullmetal's amounts are flat at every amplifier, ironskin's scale by
- * {@code amplifier + 1}).
- *
- * <p>Per-tick behaviour ({@code applyEffectTick}) is not exercised: it needs a ticking {@code Level} and a
- * real {@code LivingEntity}, which is a live-game check, and the plan parks in-game feel until the
- * post-Phase-11 comparison. This is a registration + arithmetic gate, not a simulation.
- */
 public class RusticPotionRegistrationTest {
 
     private static final List<String> LEGACY_IDS = List.of(
             "ironskin", "feather", "blazing_trail", "shame", "fullmetal", "tipsy",
             "fire_power", "full", "magic_resistance", "wither_ward", "undying");
 
-    // ------------------------------------------------------------------ the eleven ids
-
-    /**
-     * Every effect resolves in the vanilla mob-effect registry under its legacy path, and Rustic owns
-     * exactly these eleven — no more (nothing was registered twice), no fewer (the count is the ledger).
-     */
     @Test
     public void allElevenEffectsAreRegisteredUnderTheirLegacyIds() {
         List<String> registered = new ArrayList<>();
@@ -72,7 +48,6 @@ public class RusticPotionRegistrationTest {
         }
     }
 
-    /** Each deferred holder is backed by the identical instance the registry holds. */
     @Test
     public void everyDeferredHolderResolvesToTheRegisteredInstance() {
         for (var holder : List.of(RusticMobEffects.IRON_SKIN, RusticMobEffects.FEATHER,
@@ -86,13 +61,6 @@ public class RusticPotionRegistrationTest {
         }
     }
 
-    // ------------------------------------------------------------------ class shape: 6 behavioural + 5 marker
-
-    /**
-     * The six effects that tick are their own subclasses; the five whose logic lives in the potion event
-     * handler are the shared {@link MarkerEffect}. Guarding the concrete types keeps a later slice from
-     * silently registering a bare marker where a behaviour was ported, or vice-versa.
-     */
     @Test
     public void theBehaviouralEffectsAreTypedAndTheMarkersAreMarkerEffect() {
         assertSame(IronSkinEffect.class, RusticMobEffects.IRON_SKIN.value().getClass());
@@ -109,9 +77,6 @@ public class RusticPotionRegistrationTest {
         }
     }
 
-    // ------------------------------------------------------------------ colour + category (legacy PotionBase args)
-
-    /** Colours are the 1.12.2 {@code PotionBase(isBad, colour, name)} arguments, category the isBad flag. */
     @Test
     public void coloursAndCategoriesMatchTheLegacyPotionBaseArguments() {
         assertColourAndCategory(RusticMobEffects.IRON_SKIN.value(), 16777148, MobEffectCategory.BENEFICIAL);
@@ -133,15 +98,6 @@ public class RusticPotionRegistrationTest {
         assertSame(category, effect.getCategory(), id + " changed the legacy isBad category");
     }
 
-    // ------------------------------------------------------------------ fullmetal attribute map (flat)
-
-    /**
-     * Fullmetal carries four modifiers whose amounts are flat at every amplifier (the legacy class
-     * overrode {@code getAttributeModifierAmount} to ignore the amplifier, which the port reproduces with
-     * NeoForge's constant-curve overload). Movement/flying/attack speed are total-multiplier negatives,
-     * knockback resistance is a huge ADD_VALUE. The legacy SWIM_SPEED modifier is deliberately absent —
-     * 1.21 has no such attribute, and MOVEMENT_SPEED already covers submersion.
-     */
     @Test
     public void fullmetalAppliesFourFlatAttributeModifiersAtEveryAmplifier() {
         for (int amplifier : new int[] {0, 2}) {
@@ -157,18 +113,11 @@ public class RusticPotionRegistrationTest {
             assertModifier(mods, "rustic:fullmetal_knockback_resistance", Attributes.KNOCKBACK_RESISTANCE,
                     9001.0, AttributeModifier.Operation.ADD_VALUE, amplifier);
         }
-        // The dropped swim-speed modifier must not have crept back in under some other id.
+
         assertTrue(modifiersAt(RusticMobEffects.FULLMETAL.value(), 0).size() == 4,
                 "a fifth fullmetal modifier appeared (the legacy SWIM_SPEED modifier was dropped on purpose)");
     }
 
-    // ------------------------------------------------------------------ ironskin attribute map (scaled)
-
-    /**
-     * Iron Skin is armor +3 and toughness +2, and unlike fullmetal these DO scale with the amplifier
-     * (the legacy class left {@code getAttributeModifierAmount} alone, so vanilla's {@code amount *
-     * (amplifier + 1)} is the faithful form): +3/+2 at amplifier 0, +6/+4 at amplifier 1.
-     */
     @Test
     public void ironSkinScalesItsTwoArmorModifiersWithTheAmplifier() {
         Map<ResourceLocation, Bound> base = modifiersAt(RusticMobEffects.IRON_SKIN.value(), 0);
@@ -185,9 +134,6 @@ public class RusticPotionRegistrationTest {
                 "ironskin toughness must scale by amplifier + 1");
     }
 
-    // ------------------------------------------------------------------ description ids / lang keys
-
-    /** The description key derives to {@code effect.rustic.<path>}, the lang entries the plan requires. */
     @Test
     public void descriptionKeysFollowTheEffectRusticLangConvention() {
         for (String id : LEGACY_IDS) {
@@ -197,13 +143,9 @@ public class RusticPotionRegistrationTest {
         }
     }
 
-    // ------------------------------------------------------------------ helpers
-
-    /** A modifier bound to the attribute it targets, as the engine emits it from {@code createModifiers}. */
     private record Bound(Holder<Attribute> attribute, AttributeModifier modifier) {
     }
 
-    /** Enumerates an effect's modifiers through the engine's own amplifier-aware {@code createModifiers}. */
     private static Map<ResourceLocation, Bound> modifiersAt(MobEffect effect, int amplifier) {
         Map<ResourceLocation, Bound> byId = new java.util.LinkedHashMap<>();
         effect.createModifiers(amplifier, (attribute, modifier) -> byId.put(modifier.id(), new Bound(attribute, modifier)));

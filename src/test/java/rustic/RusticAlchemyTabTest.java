@@ -41,27 +41,8 @@ import rustic.content.potions.ElixirUtils;
 import rustic.content.potions.RusticMobEffects;
 import rustic.registry.RusticRegistries;
 
-/**
- * Bug-fix gate for the ALCHEMY creative tab: 1.12.2 filled it from every
- * {@code setCreativeTab(Rustic.alchemyTab)} member - the condenser/retort pair twice, the thirteen herbs
- * and the condenser-recipe elixirs plus the bottle of vanta oil - and the Item.REGISTRY walk rendered them
- * in registration order. The port's tabs are explicit hand-lists, so this is where that membership and
- * order are pinned, against the legacy oracle ({@code ModBlocks} lines 346-349, {@code Herbs.init},
- * {@code ItemFluidBottle}'s alchemy branch and {@code Recipes.addCondenserRecipes}).
- *
- * <p>Runs in ModDevGradle's FML unit-test JVM like the registration tests, so the registries are live and
- * the generated condenser recipe data is on the classpath - which the second test uses to pin
- * {@link ItemElixir#condenserElixirs()} against the actual recipe JSON, the 1.21 stand-in for legacy's
- * {@code getSubItems}-over-the-recipe-list behaviour.
- */
 public class RusticAlchemyTabTest {
 
-    /**
-     * The tab's ids in legacy order: the four still blocks (condenser, retort, then the advanced pair, per
-     * ModBlocks lines 346-349), the nine self-herb block items in Herbs.init creation order (wind_thistle
-     * before vanta_lily), the four crop-herb edibles, the vanta oil bottle (fluid_bottle registered before
-     * elixir in ModItems), then the thirty-one elixirs.
-     */
     private static final List<String> EXPECTED_ORDER = List.of(
             "condenser", "retort", "condenser_advanced", "retort_advanced",
             "aloe_vera", "blood_orchid", "chamomile", "cohosh", "deathstalk_mushroom", "horsetail",
@@ -69,7 +50,6 @@ public class RusticAlchemyTabTest {
             "cloudsbluff", "core_root", "ginseng", "marsh_mallow",
             "fluid_bottle");
 
-    /** The golden effect triples, in Recipes.addCondenserRecipes order - the tab's entries 19..49. */
     private static final List<MobEffectInstance> EXPECTED_ELIXIRS = List.of(
             new MobEffectInstance(MobEffects.HEAL, 1, 0),
             new MobEffectInstance(MobEffects.HEAL, 1, 1),
@@ -103,7 +83,6 @@ public class RusticAlchemyTabTest {
             new MobEffectInstance(RusticMobEffects.BLAZING_TRAIL, 3600, 0),
             new MobEffectInstance(RusticMobEffects.BLAZING_TRAIL, 9600, 0));
 
-    /** The condenser recipe ids in {@code RusticRecipeProvider.addCondenser} emission order. */
     private static final List<String> RECIPE_IDS = List.of(
             "heal_basic", "heal_advanced",
             "regeneration_basic", "regeneration_extended", "regeneration_strong",
@@ -118,9 +97,6 @@ public class RusticAlchemyTabTest {
             "feather_basic", "feather_extended",
             "blazing_trail_basic", "blazing_trail_extended");
 
-    // ------------------------------------------------------------------ membership and order
-
-    /** The ALCHEMY tab is exactly the legacy membership, in the legacy Item.REGISTRY order. */
     @Test
     public void theAlchemyTabHoldsTheLegacyMembershipInLegacyOrder() {
         List<ItemStack> shown = alchemyDisplayItems();
@@ -134,13 +110,11 @@ public class RusticAlchemyTabTest {
         }
         assertEquals(expected, paths, "the ALCHEMY tab is not the legacy membership in legacy order");
 
-        // Entry 18 is not just "a fluid bottle": the alchemy branch listed exactly the vanta oil bottle.
         ItemStack bottle = shown.get(EXPECTED_ORDER.size() - 1);
         assertSame(RusticItems.FLUID_BOTTLE.get(), bottle.getItem(), "the bottle entry is a fluid bottle");
         assertSame(RusticFluids.VANTA_OIL.value(), ItemFluidBottle.getFluidContent(bottle).getFluid(),
                 "the alchemy tab's bottle is vanta oil, the legacy branch's only entry");
 
-        // Entries 19.. are the elixirs, each carrying its one golden effect.
         for (int i = 0; i < EXPECTED_ELIXIRS.size(); i++) {
             ItemStack stack = shown.get(EXPECTED_ORDER.size() + i);
             assertSame(RusticItems.ELIXIR.get(), stack.getItem(), "tab entry " + i + " is an elixir");
@@ -148,7 +122,6 @@ public class RusticAlchemyTabTest {
         }
     }
 
-    /** The first elixir entry is the tab icon's default instance, exactly as legacy's walk began. */
     @Test
     public void theElixirListOpensWithTheDefaultInstance() {
         List<ItemStack> shown = alchemyDisplayItems();
@@ -157,15 +130,6 @@ public class RusticAlchemyTabTest {
         assertSingleEffect(first, EXPECTED_ELIXIRS.get(0), "the tab's first elixir");
     }
 
-    // ------------------------------------------------------------------ recipe-data sync
-
-    /**
-     * The single-source guard: {@link ItemElixir#condenserElixirs()} mirrors the generated
-     * {@code rustic:condenser} recipe data, so the tab can never drift from the recipes the condensers
-     * actually craft. Each generated JSON is decoded through the registered serializer - the same path
-     * {@code RecipeManager.fromJson} takes - and its result stack compared to the catalogue entry with the
-     * same index. Re-run {@code runData} if the data side moved; edit both sides together, never one.
-     */
     @Test
     public void theElixirCatalogueMatchesTheGeneratedCondenserRecipes() {
         List<ItemStack> catalogue = ItemElixir.condenserElixirs();
@@ -181,13 +145,6 @@ public class RusticAlchemyTabTest {
         }
     }
 
-    // ------------------------------------------------------------------ the moves out of the other tabs
-
-    /**
-     * The herbs left FARMING for ALCHEMY (legacy {@code BlockHerbBase} / {@code ItemHerbEdible} were
-     * alchemyTab members), and the still blocks left DECOR's old blanket machine append - while every one
-     * of them stays registered, so existing worlds are untouched.
-     */
     @Test
     public void herbsAndStillBlocksLeftTheirWrongTabsButStayRegistered() {
         List<String> farming = tabPaths(RusticCreativeTabs.FARMING.get());
@@ -200,14 +157,12 @@ public class RusticAlchemyTabTest {
             assertFalse(decor.contains(still), "rustic:" + still + " is an alchemyTab block and leaked into DECOR");
         }
 
-        // Still registered (a tab move is not a registry move).
         assertNotNull(RusticMachineBlocks.RETORT.get().asItem(), "the retort lost its block item");
         assertNotNull(RusticMachineBlocks.RETORT_ADVANCED.get().asItem(), "the advanced retort lost its block item");
         RusticFarmBlocks.herbs().forEach(herb -> assertNotNull(BuiltInRegistries.BLOCK.get(herb.getId()),
                 herb.getId() + " left the register, not just the tab"));
     }
 
-    /** The machines legacy hung on FARMING arrived there when they left the DECOR append. */
     @Test
     public void theProcessMachinesAreOfferedInTheFarmingTab() {
         List<String> farming = tabPaths(RusticCreativeTabs.FARMING.get());
@@ -220,12 +175,10 @@ public class RusticAlchemyTabTest {
         }
     }
 
-    // ------------------------------------------------------------------ helpers
-
     private static List<ItemStack> alchemyDisplayItems() {
         CreativeModeTab alchemy = RusticCreativeTabs.ALCHEMY.get();
         alchemy.buildContents(new CreativeModeTab.ItemDisplayParameters(FeatureFlags.DEFAULT_FLAGS, true, null));
-        // getDisplayItems hands back the tab's live collection; copy it so index assertions read a stable list.
+
         return List.copyOf(alchemy.getDisplayItems());
     }
 
@@ -236,7 +189,6 @@ public class RusticAlchemyTabTest {
                 .toList();
     }
 
-    /** A single stored effect matching {@code expected} on identity, duration and amplifier. */
     private static void assertSingleEffect(ItemStack stack, MobEffectInstance expected, String label) {
         List<MobEffectInstance> effects = ElixirUtils.getEffects(stack);
         assertEquals(1, effects.size(), label + " must carry exactly one effect");
@@ -247,7 +199,6 @@ public class RusticAlchemyTabTest {
         assertEquals(expected.getAmplifier(), actual.getAmplifier(), label + " amplifier");
     }
 
-    /** Read a generated condenser recipe off the classpath and decode it through the registered serializer. */
     private static CondenserRecipe decodeGeneratedCondenser(String id) {
         String path = "/data/rustic/recipe/condenser/" + id + ".json";
         JsonObject obj;

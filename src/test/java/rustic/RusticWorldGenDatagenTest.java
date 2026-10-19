@@ -20,26 +20,11 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-/**
- * Phase 8 read-back over the world-generation JSON {@code rustic.data.RusticWorldGenProvider} writes into
- * {@code src/generated/resources/data/rustic/worldgen/} and {@code data/rustic/neoforge/biome_modifier/}.
- *
- * <p>Like {@code RusticRecipeDatagenTest} this never boots Minecraft or re-runs datagen - the generated dir is a main
- * resource root, so each assertion reads the shipped JSON off the classpath. What it locks down is the hybrid's data
- * half against the legacy {@code WorldGeneratorRustic} table: every generator is a bare feature (the <em>what</em>)
- * whose block set / tree shape must match 1.12.2, a {@code rustic:config_gated} wrapper that must name the right
- * {@link rustic.content.world.RusticGenKnob} and inner feature, a placed feature with an empty placement list (the
- * gate owns scatter), and a {@code neoforge:add_features} biome modifier on the right dimension tag and decoration
- * step. It also checks the two Phase-8 blocks landed in their class tags so the trees/hive are actually plantable and
- * harvestable. A codec slip in the provider, a wrong herb set, or a mis-routed biome modifier fails here by file name.
- */
 public class RusticWorldGenDatagenTest {
 
     private static final String CF = "/data/rustic/worldgen/configured_feature/";
     private static final String PF = "/data/rustic/worldgen/placed_feature/";
     private static final String BM = "/data/rustic/neoforge/biome_modifier/";
-
-    // ------------------------------------------------------------------ slate ore
 
     @Test
     public void slateOreReplacesStoneInTheOverworldAndNetherrackInTheNether() {
@@ -49,7 +34,7 @@ public class RusticWorldGenDatagenTest {
         assertEquals("rustic:slate", owTarget.getAsJsonObject("state").get("Name").getAsString());
         assertEquals("minecraft:tag_match", owTarget.getAsJsonObject("target").get("predicate_type").getAsString());
         assertEquals("minecraft:stone_ore_replaceables", owTarget.getAsJsonObject("target").get("tag").getAsString());
-        // vein size mirrors the shipped slate_vein_size default (20), baked statically into the JSON
+
         assertEquals(20, overworld.getAsJsonObject("config").get("size").getAsInt());
 
         JsonObject nether = configured("slate_ore_nether");
@@ -64,15 +49,12 @@ public class RusticWorldGenDatagenTest {
         assertGated("slate_ore_overworld", "rustic:slate_ore_overworld", "SLATE_OVERWORLD");
         assertGated("slate_ore_nether", "rustic:slate_ore_nether", "SLATE_NETHER");
 
-        // each gated feature is exposed with an empty placement (the gate scatters live from config)
         assertPlacedEmpty("slate_ore_overworld", "rustic:slate_ore_overworld_gated");
         assertPlacedEmpty("slate_ore_nether", "rustic:slate_ore_nether_gated");
 
         assertBiomeModifier("slate_ore_overworld", "#c:is_overworld", "rustic:slate_ore_overworld_placed", "underground_ores");
         assertBiomeModifier("slate_ore_nether", "#c:is_nether", "rustic:slate_ore_nether_placed", "underground_ores");
     }
-
-    // ------------------------------------------------------------------ trees
 
     @Test
     public void oliveAndIronwoodTreesRebuildTheLegacyOakStyleShapes() {
@@ -87,11 +69,6 @@ public class RusticWorldGenDatagenTest {
         assertBiomeModifier("ironwood_tree", "#c:is_overworld", "rustic:ironwood_tree_placed", "vegetal_decoration");
     }
 
-    /**
-     * The apple tree is sapling-grown only (legacy {@code WorldGenAllTrees} never placed it biomedly): it gets a bare
-     * configured feature - vanilla oak trunk + the fruit-bearing apple leaves at age 0 - but no gate, no placed
-     * feature and no biome modifier, exactly the plan's faithful reproduction.
-     */
     @Test
     public void appleTreeExistsButIsNeverBiomePlaced() {
         JsonObject apple = configured("apple_tree");
@@ -111,8 +88,6 @@ public class RusticWorldGenDatagenTest {
         assertFalse(exists(BM + "apple_tree.json"), "apple must have no biome modifier");
     }
 
-    // ------------------------------------------------------------------ surface herbs (the eight legacy categories)
-
     @Test
     public void surfaceHerbCategoriesMatchGetRandomHerbForBiome() {
         assertHerbSet("herbs_jungle", "rustic:blood_orchid", "rustic:horsetail", "rustic:marsh_mallow", "rustic:mooncap_mushroom");
@@ -127,8 +102,7 @@ public class RusticWorldGenDatagenTest {
 
     @Test
     public void eachSurfaceHerbCategorySharesTheGateAndTargetsItsOwnBiomeTag() {
-        // All eight wrap the same SURFACE_HERB knob; the category identity comes from the biome modifier's tag,
-        // which is what replaces the legacy if/else-if chain (the eight tags are disjoint in vanilla biomes).
+
         assertGated("herbs_jungle", "rustic:herbs_jungle", "SURFACE_HERB");
         assertGated("herbs_sandy", "rustic:herbs_sandy", "SURFACE_HERB");
         assertGated("herbs_savanna", "rustic:herbs_savanna", "SURFACE_HERB");
@@ -141,7 +115,7 @@ public class RusticWorldGenDatagenTest {
         assertBiomeModifier("herbs_jungle", "#c:is_jungle", "rustic:herbs_jungle_placed", "vegetal_decoration");
         assertBiomeModifier("herbs_sandy", "#c:is_sandy", "rustic:herbs_sandy_placed", "vegetal_decoration");
         assertBiomeModifier("herbs_savanna", "#c:is_savanna", "rustic:herbs_savanna_placed", "vegetal_decoration");
-        // the legacy MESA maps to the modern badlands tag
+
         assertBiomeModifier("herbs_mesa", "#c:is_badlands", "rustic:herbs_mesa_placed", "vegetal_decoration");
         assertBiomeModifier("herbs_mountain", "#c:is_mountain", "rustic:herbs_mountain_placed", "vegetal_decoration");
         assertBiomeModifier("herbs_swamp", "#c:is_swamp", "rustic:herbs_swamp_placed", "vegetal_decoration");
@@ -149,15 +123,12 @@ public class RusticWorldGenDatagenTest {
         assertBiomeModifier("herbs_plains", "#c:is_plains", "rustic:herbs_plains_placed", "vegetal_decoration");
     }
 
-    // ------------------------------------------------------------------ cave + nether herbs, wildberries
-
     @Test
     public void caveHerbsAreCoreRootAndMooncapDroppedUnderground() {
         assertHerbSet("herbs_cave", "rustic:core_root", "rustic:mooncap_mushroom");
         assertGated("herbs_cave", "rustic:herbs_cave", "CAVE_HERB");
         assertPlacedEmpty("herbs_cave", "rustic:herbs_cave_gated");
-        // the legacy WorldGenCaveHerbs asked no biome, it only scattered underground - so every overworld biome,
-        // and the underground_decoration step so the drop-from-ceiling runs below the surface pass
+
         assertBiomeModifier("herbs_cave", "#c:is_overworld", "rustic:herbs_cave_placed", "underground_decoration");
     }
 
@@ -168,12 +139,6 @@ public class RusticWorldGenDatagenTest {
         assertBiomeModifier("herbs_nether", "#c:is_nether", "rustic:herbs_nether_placed", "vegetal_decoration");
     }
 
-    /**
-     * The wildberry bush carries all six {@code AGE_5} states at equal weight - the JSON form of the legacy
-     * {@code withAge(rand.nextInt(6))} - and routes to every overworld biome; the legacy blacklist
-     * (cold/snowy/sandy/savanna/mesa/mushroom/nether/end/dead/wasteland) lives in the WILDBERRY knob's none-of list,
-     * evaluated per chunk, not in the biome tag.
-     */
     @Test
     public void wildberriesRollEveryBushAge() {
         JsonObject berries = configured("wildberries");
@@ -189,14 +154,6 @@ public class RusticWorldGenDatagenTest {
         assertBiomeModifier("wildberries", "#c:is_overworld", "rustic:wildberries_placed", "vegetal_decoration");
     }
 
-    // ------------------------------------------------------------------ beehive
-
-    /**
-     * The beehive is the one generator with no data block-set to declare: {@code rustic:beehive} places the hive
-     * itself after its leaves walk-down, so its configured feature names the code feature with an empty config, its
-     * placed feature points straight at that bare feature (no {@code _gated} wrapper), and the whole
-     * {@code RusticGenKnob.BEEHIVE} gate lives inside {@code place()}.
-     */
     @Test
     public void beehiveIsAnUngatedCodeFeature() {
         JsonObject hive = configured("beehive");
@@ -211,15 +168,12 @@ public class RusticWorldGenDatagenTest {
         assertFalse(exists(CF + "beehive_gated.json"), "there is no gated beehive variant");
     }
 
-    // ------------------------------------------------------------------ the two Phase-8 blocks in their class tags
-
     @Test
     public void appleLeavesAndSaplingJoinTheVanillaClassTags() {
         assertTrue(tagContains("leaves", "rustic:leaves_apple"), "apple leaves must be in #minecraft:leaves");
         assertTrue(tagContains("saplings", "rustic:sapling_apple"), "apple sapling must be in #minecraft:saplings");
     }
 
-    /** The beehive and the apple leaves/sapling are real registered, lootable, modelled blocks, not just JSON hooks. */
     @Test
     public void theNewBlocksHaveLootAndBlockstate() {
         assertTrue(exists("/data/rustic/loot_table/blocks/beehive.json"), "beehive needs a loot table");
@@ -227,8 +181,6 @@ public class RusticWorldGenDatagenTest {
         assertTrue(exists("/assets/rustic/blockstates/leaves_apple.json"), "apple leaves need a blockstate");
         assertTrue(exists("/assets/rustic/blockstates/sapling_apple.json"), "apple sapling needs a blockstate");
     }
-
-    // ------------------------------------------------------------------ helpers
 
     private static void assertGated(String name, String expectedInner, String expectedKnob) {
         JsonObject gated = configured(name + "_gated");
@@ -252,7 +204,6 @@ public class RusticWorldGenDatagenTest {
         assertEquals(step, modifier.get("step").getAsString(), name + " decoration step");
     }
 
-    /** An oak-style tree: the given log/leaves under a {@code straight} trunk of {@code base + rand(randA)}. */
     private static void assertTree(String name, String log, String leaves, int baseHeight, int heightRandA) {
         JsonObject tree = configured(name);
         assertEquals("minecraft:tree", tree.get("type").getAsString(), name + " type");
@@ -267,7 +218,6 @@ public class RusticWorldGenDatagenTest {
                 config.getAsJsonObject("foliage_placer").get("type").getAsString(), name + " foliage placer");
     }
 
-    /** A bare surface/cave/nether herb feature: simple_block over an equal-weight list of age-3 herb states. */
     private static void assertHerbSet(String name, String... herbs) {
         JsonObject feature = configured(name);
         assertEquals("minecraft:simple_block", feature.get("type").getAsString(), name + " type");
@@ -275,12 +225,12 @@ public class RusticWorldGenDatagenTest {
         assertEquals("minecraft:weighted_state_provider", provider.get("type").getAsString(), name + " provider");
         List<String> expected = new ArrayList<>();
         for (String herb : herbs) {
-            expected.add(herb + "@3"); // 1.12.2 planted every herb fully ripe (withProperty(AGE, 3))
+            expected.add(herb + "@3");
+
         }
         assertEquals(expected, herbStates(provider), name + " herb set");
     }
 
-    /** The {@code Name@age} of every entry in a weighted state provider, in the JSON's declared order. */
     private static List<String> herbStates(JsonObject provider) {
         List<String> states = new ArrayList<>();
         for (JsonElement entry : provider.getAsJsonArray("entries")) {
@@ -309,7 +259,6 @@ public class RusticWorldGenDatagenTest {
         return json(CF + name + ".json");
     }
 
-    /** Placed features are written as {@code <stem>_placed.json} - the same stem as their configured features. */
     private static JsonObject placed(String name) {
         return json(PF + name + "_placed.json");
     }
@@ -318,7 +267,6 @@ public class RusticWorldGenDatagenTest {
         return json(BM + name + ".json");
     }
 
-    /** Whether a generated data/asset file is present on the classpath, without asserting it parses. */
     private static boolean exists(String classpathResource) {
         return RusticWorldGenDatagenTest.class.getResource(classpathResource) != null;
     }

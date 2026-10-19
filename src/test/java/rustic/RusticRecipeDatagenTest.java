@@ -18,22 +18,9 @@ import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.Test;
 
-/**
- * Phase 7.1 baseline for the vanilla crafting + smelting JSON {@code rustic.data.RusticRecipeProvider}
- * generates into {@code src/generated/resources/data/rustic/recipe/}.
- *
- * <p>The files land on the test classpath (the generated dir is a main resource directory), so each
- * assertion reads the actual shipped JSON rather than re-running datagen. The subset checked here is
- * deliberately representative across every recipe family - pillars, the slate chain, clay walls, the
- * furniture pair, painted wood, the condition-gated silver set, the half that 1.12.2 kept in JSON files
- * (the metal mounts, the workstations, the Rustic wood parts, the loose decor) and the smelting rows -
- * so a broken builder, a wrong result count or a lost legacy id fails fast and names the file.
- */
 public class RusticRecipeDatagenTest {
 
     private static final String DIR = "/data/rustic/recipe/";
-
-    // ------------------------------------------------------------------ shaped families
 
     @Test
     public void stonePillarCraftsSixFromStone() {
@@ -48,11 +35,11 @@ public class RusticRecipeDatagenTest {
     public void slateChainKeepsLegacyResultIdsAndCounts() {
         assertEquals("rustic:slate_brick", resultId(recipe("slate_brick")));
         assertEquals(4, resultCount(recipe("slate_brick")));
-        // The two tile recipes share a result item but keep distinct ids (slate, then brick).
+
         assertEquals("rustic:slate_tile", resultId(recipe("slate_tile")));
         assertEquals("rustic:slate_tile", resultId(recipe("slate_tile_1")));
         assertEquals("rustic:slate_chiseled", resultId(recipe("slate_chiseled")));
-        // Roof stairs/slab are their own ids; result points at the *stairs/slab* block, not the roof.
+
         assertEquals("rustic:stairs_slate_roof", resultId(recipe("slate_roof_stairs")));
         assertEquals("rustic:slate_roof_slab", resultId(recipe("slate_roof_slab")));
     }
@@ -68,13 +55,12 @@ public class RusticRecipeDatagenTest {
 
     @Test
     public void furnitureUsesPerWoodPlanksAndLegacyRecipeIds() {
-        // Legacy id is <wood>_chair / <wood>_table; the result is the <chair/table_>_<wood> block item.
+
         JsonObject oakChair = recipe("oak_chair");
         assertEquals(4, resultCount(oakChair));
         assertEquals("rustic:chair_oak", resultId(oakChair));
         assertEquals("minecraft:oak_planks", key(oakChair, "P").get("item").getAsString());
 
-        // 1.12.2's "big_oak" is 1.21 dark oak.
         assertEquals("minecraft:dark_oak_planks", key(recipe("big_oak_chair"), "P").get("item").getAsString());
 
         JsonObject oliveTable = recipe("olive_table");
@@ -88,18 +74,10 @@ public class RusticRecipeDatagenTest {
         JsonObject recipe = recipe("iron_lattice");
         assertEquals(16, resultCount(recipe));
         assertEquals("rustic:iron_lattice", resultId(recipe));
-        // The legacy "ingotIron" ore name is NeoForge's conventional tag, which NeoForge itself fills
-        // from vanilla, so this crafts in a Rustic-only install.
+
         assertEquals("c:ingots/iron", key(recipe, "I").get("tag").getAsString());
     }
 
-    /**
-     * The cabinet is an ordinary shaped crafting-table recipe. It used to be a custom {@code rustic:cabinet} recipe
-     * type, which is why no crafting table ever matched it and the recipe book could not show it. Legacy accepted
-     * the plank and the wooden trapdoor on either side of the empty centre; the mirroring is dropped, so the trapdoor
-     * sits on the right and one pattern is enough. {@code #minecraft:planks} + {@code #minecraft:wooden_trapdoors}
-     * in the middle row (that tag excludes the iron trapdoor, as legacy's {@code trapdoorWood} did).
-     */
     @Test
     public void cabinetIsOneShapedRecipeWithTheTrapdoorOnTheRight() {
         JsonObject recipe = recipe("cabinet");
@@ -118,17 +96,15 @@ public class RusticRecipeDatagenTest {
 
     @Test
     public void paintedWoodKeepsLegacySilverIdAndDyeTag() {
-        // LIGHT_GRAY keeps the legacy id painted_wood_silver, and its dye input is the c:dyes/light_gray tag.
+
         JsonObject recipe = recipe("painted_wood_silver");
         assertEquals(8, resultCount(recipe));
         assertEquals("rustic:painted_wood_silver", resultId(recipe));
         assertEquals("c:dyes/light_gray", key(recipe, "D").get("tag").getAsString());
         assertEquals("minecraft:planks", key(recipe, "P").get("tag").getAsString());
-        // A non-aliased colour confirms the path spelling for the rest.
+
         assertEquals("rustic:painted_wood_blue", resultId(recipe("painted_wood_blue")));
     }
-
-    // ------------------------------------------------------------------ silver (condition-gated)
 
     @Test
     public void silverRecipesCarryTheTagEmptySilverCondition() {
@@ -156,14 +132,6 @@ public class RusticRecipeDatagenTest {
         assertEquals("minecraft:charcoal", items[1]);
     }
 
-    // ------------------------------------------------------------------ the legacy JSON half
-
-    /**
-     * 1.12.2 kept these recipes in {@code assets/rustic/recipes/*.json} rather than in {@code Recipes.init()},
-     * and the port first walked only the code half - which is why the chains, candles, chandeliers, lanterns
-     * and workstations had nothing to craft in game. Iron and gold go through NeoForge's conventional tags,
-     * which NeoForge fills from vanilla, so unlike the silver six above they carry no condition at all.
-     */
     @Test
     public void ironAndGoldMountsCraftFromTheConventionalMetalTags() {
         assertMount("", "rustic:chain", "rustic:candle", "rustic:candle_double", "rustic:candle_lever",
@@ -180,7 +148,6 @@ public class RusticRecipeDatagenTest {
         assertEquals("minecraft:stick", key(ironTorch, "S").get("item").getAsString());
     }
 
-    /** {@code idSuffix} is the legacy file tail ({@code ""} for iron, {@code "_gold"}) for one metal's six mounts. */
     private void assertMount(String idSuffix, String chain, String candle, String candleDouble,
                              String candleLever, String chandelier, String lantern, String lanternId, String ingots) {
         JsonObject chainRecipe = recipe("chain" + idSuffix);
@@ -207,14 +174,13 @@ public class RusticRecipeDatagenTest {
         assertEquals(lantern, resultId(lanternRecipe));
         assertEquals(4, resultCount(lanternRecipe));
         assertEquals(ingots, key(lanternRecipe, "I").get("tag").getAsString());
-        // Legacy wrote coal meta 0 and meta 1 as one slot, which is today's coal-or-charcoal ingredient.
+
         JsonElement coal = keyElement(lanternRecipe, "C");
         assertTrue(coal.isJsonArray(), lantern + " coal slot must offer both fuels");
         assertEquals("minecraft:coal", coal.getAsJsonArray().get(0).getAsJsonObject().get("item").getAsString());
         assertEquals("minecraft:charcoal", coal.getAsJsonArray().get(1).getAsJsonObject().get("item").getAsString());
     }
 
-    /** The workstations: the four banded wood cases, the terracotta basin and the two condensers. */
     @Test
     public void workstationsCraftFromPlanksWoodenSlabsAndIron() {
         assertEquals(2, resultCount(recipe("barrel")));
@@ -232,7 +198,6 @@ public class RusticRecipeDatagenTest {
             assertFalse(recipe.has("neoforge:conditions"), id + " must always be craftable");
         }
 
-        // 1.12's hardened_clay is today's terracotta.
         JsonObject basin = recipe("evaporating_basin");
         assertEquals("minecraft:terracotta", key(basin, "#").get("item").getAsString());
         assertEquals("rustic:evaporating_basin", resultId(basin));
@@ -247,7 +212,6 @@ public class RusticRecipeDatagenTest {
         assertEquals("rustic:condenser_advanced", resultId(advanced));
     }
 
-    /** The rest of the JSON files: rope, the crop stake, the vase, the wooden lantern, the gargoyle and the two shapeless rows. */
     @Test
     public void miscDecorCraftsFromTheLegacyPatterns() {
         assertEquals(12, resultCount(recipe("rope")));
@@ -268,11 +232,9 @@ public class RusticRecipeDatagenTest {
         assertEquals("minecraft:dirt", fertile.get(1).getAsJsonObject().get("item").getAsString());
         assertEquals("rustic:fertile_soil", resultId(recipe("fertile_soil")));
 
-        // The legacy file was grape_seeds.json while its result was the plantable grape stem block.
         assertEquals("rustic:grape_stem", resultId(recipe("grape_stem")));
     }
 
-    /** The Rustic woods' own plank parts, from the per-wood JSON files 1.12.2 shipped for them. */
     @Test
     public void rusticWoodPartsCraftInVanillasOwnPatterns() {
         for (String wood : new String[] {"olive", "ironwood"}) {
@@ -299,8 +261,6 @@ public class RusticRecipeDatagenTest {
         }
     }
 
-    // ------------------------------------------------------------------ smelting
-
     @Test
     public void smeltingRowsMapLegacyInputsToOutputs() {
         assertSmelt("beeswax_from_smelting", "rustic:honeycomb", "rustic:beeswax", 0.3F);
@@ -320,14 +280,6 @@ public class RusticRecipeDatagenTest {
         assertEquals(experience, recipe.get("experience").getAsFloat(), 0.0F, id);
     }
 
-    // ------------------------------------------------------------------ fuels (data map)
-
-    /**
-     * Phase 7.4: the legacy {@code IFuelHandler} moved to the {@code neoforge:furnace_fuels} item data map.
-     * The generated file keys on the block-item ids and carries the two legacy burn times verbatim - 100
-     * ticks for the Rustic saplings (olive + ironwood, the one legacy meta block split per family) and 200
-     * for the wildberry bush. The apple sapling is absent because that block is still Phase 8 worldgen.
-     */
     @Test
     public void furnaceFuelDataMapCarriesTheLegacyBurnTimes() {
         JsonObject values = json("/data/neoforge/data_maps/item/furnace_fuels.json").getAsJsonObject("values");
@@ -335,8 +287,6 @@ public class RusticRecipeDatagenTest {
         assertEquals(100, values.getAsJsonObject("rustic:sapling_ironwood").get("burn_time").getAsInt());
         assertEquals(200, values.getAsJsonObject("rustic:wildberry_bush").get("burn_time").getAsInt());
     }
-
-    // ------------------------------------------------------------------ helpers
 
     private static JsonObject recipe(String fileName) {
         return json(DIR + fileName + ".json");
@@ -350,12 +300,10 @@ public class RusticRecipeDatagenTest {
         return recipe.getAsJsonObject("result").get("count").getAsInt();
     }
 
-    /** A shaped recipe's keyed ingredient entry, asserted to be a single object, by pattern symbol. */
     private static JsonObject key(JsonObject recipe, String symbol) {
         return keyElement(recipe, symbol).getAsJsonObject();
     }
 
-    /** The raw keyed ingredient entry, which is a single object or - for an either/or slot - an array. */
     private static JsonElement keyElement(JsonObject recipe, String symbol) {
         return recipe.getAsJsonObject("key").get(symbol);
     }

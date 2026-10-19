@@ -24,24 +24,6 @@ import rustic.content.crafting.RecipeNonIngredientReturn;
 import rustic.content.crafting.RecipeOliveOil;
 import rustic.content.crafting.RecipeVantaOil;
 
-/**
- * The registry handles every content class registers into. Phase 1 only wires the plumbing up;
- * Phase 2 fills these with the actual blocks, items, fluids, ... that 1.12.2 built by hand in
- * {@code ModBlocks.init()} / {@code ModItems.init()} / {@code ModFluids.init()} and friends.
- *
- * <p>The 1.12.2 pattern was: construct an object, assign it to a public static field, then call a
- * static {@code init()} that did {@code registry.register(...)}. Here a content class declares
- * {@code DeferredRegister} entries in its own static initialiser and everything is registered when
- * NeoForge fires the registry event, which removes the init-ordering constraints completely.
- *
- * <p>Blocks and items are the exception: they are owned by the content classes that fill them
- * ({@link rustic.content.blocks.RusticBlocks} and {@link rustic.content.items.RusticItems}) rather
- * than by a handle here, because {@code DeferredRegister.createBlocks}/{@code createItems} give
- * {@code DeferredBlock}/{@code DeferredItem} holders with the block-item helpers on them. Several
- * registers may point at one registry, so a content class that gains blocks later (fluid blocks,
- * crops, machines) keeps its own. Entities follow the same rule: the chair seat and the tomato are
- * declared by {@link rustic.content.entities.RusticEntities}, which owns its own register.
- */
 public final class RusticRegistries {
 
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES =
@@ -50,34 +32,21 @@ public final class RusticRegistries {
     public static final DeferredRegister<MenuType<?>> MENU_TYPES =
             DeferredRegister.create(Registries.MENU, Rustic.MODID);
 
-    /** The seven potion effects (fullmetal, shame, iron skin, ...). */
     public static final DeferredRegister<MobEffect> MOB_EFFECTS =
             DeferredRegister.create(Registries.MOB_EFFECT, Rustic.MODID);
 
-    /** Fluid types carry the render/steam/sound data that 1.12.2 kept on {@code Fluid} itself. */
     public static final DeferredRegister<FluidType> FLUID_TYPES =
             DeferredRegister.create(NeoForgeRegistries.Keys.FLUID_TYPES, Rustic.MODID);
 
-    /**
-     * The sixteen Rustic fluids, still/flowing pairs included. The vanilla registry is typed
-     * {@code Registry<Fluid>}, so the register is too and concrete entries use {@code FlowingFluid}.
-     */
     public static final DeferredRegister<Fluid> FLUIDS =
             DeferredRegister.create(Registries.FLUID, Rustic.MODID);
 
-    /** Custom recipe types: barrel, brewing barrel, condenser, crushing tub, evaporating basin, elixir. */
     public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS =
             DeferredRegister.create(Registries.RECIPE_SERIALIZER, Rustic.MODID);
 
-    /** The machine {@link RecipeType}s. A {@code RecipeMap} keys recipes by type registry name, so these must be registered. */
     public static final DeferredRegister<RecipeType<?>> RECIPE_TYPES =
             DeferredRegister.create(Registries.RECIPE_TYPE, Rustic.MODID);
 
-    /**
-     * Custom {@link ItemSubPredicate}s referenced from advancement JSON. NeoForge proves this vanilla registry is
-     * forgeable (it registers {@code neoforge:item_ability} here the same way), so {@code rustic:alcohol} - the
-     * booze-quality predicate the legacy advancement tree used - lands as a {@link ItemSubPredicate.Type} codec entry.
-     */
     public static final DeferredRegister<ItemSubPredicate.Type<?>> ITEM_SUB_PREDICATES =
             DeferredRegister.create(Registries.ITEM_SUB_PREDICATE_TYPE, Rustic.MODID);
 
@@ -106,15 +75,6 @@ public final class RusticRegistries {
     public static final DeferredHolder<RecipeSerializer<?>, CondenserRecipe.Serializer> CONDENSER_SERIALIZER =
             RECIPE_SERIALIZERS.register("condenser", CondenserRecipe.Serializer::new);
 
-    // ------------------------------------------------------------------
-    // Phase 7.3 crafting-table recipes. The cabinet is now an ordinary shaped minecraft:crafting_shaped recipe (see
-    // RusticRecipeProvider), so only the three genuinely dynamic crafting-table recipes are registered here. They craft
-    // in the vanilla crafting table, so their Recipe implementations report {@link RecipeType#CRAFTING} (like vanilla
-    // armor-dye / map-clone) rather than a dedicated type - only the serializers are registered. The JSON "type"
-    // discriminator is the serializer id (rustic:olive_oil etc); the recipe folds into the vanilla CRAFTING type at
-    // load time, which is what lets a crafting table match it. Each is {@code isSpecial()} so it never shows in the
-    // recipe book, as legacy {@code isDynamic()} did.
-    // ------------------------------------------------------------------
     public static final DeferredHolder<RecipeSerializer<?>, RecipeNonIngredientReturn.Serializer> NON_INGREDIENT_RETURN_SERIALIZER =
             RECIPE_SERIALIZERS.register("non_ingredient_return", RecipeNonIngredientReturn.Serializer::new);
     public static final DeferredHolder<RecipeSerializer<?>, RecipeOliveOil.Serializer> OLIVE_OIL_SERIALIZER =
@@ -122,10 +82,6 @@ public final class RusticRegistries {
     public static final DeferredHolder<RecipeSerializer<?>, RecipeVantaOil.Serializer> VANTA_OIL_SERIALIZER =
             RECIPE_SERIALIZERS.register("vanta_oil", RecipeVantaOil.Serializer::new);
 
-    /**
-     * Attaches every {@link DeferredRegister} above to the mod event bus. Must be called from the
-     * mod constructor, before the loader fires the registry events.
-     */
     public static void register(IEventBus modEventBus) {
         BLOCK_ENTITY_TYPES.register(modEventBus);
         MENU_TYPES.register(modEventBus);

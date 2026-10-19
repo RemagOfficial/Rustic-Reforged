@@ -15,37 +15,15 @@ import net.neoforged.neoforge.common.ModConfigSpec.ConfigValue;
 import net.neoforged.neoforge.common.ModConfigSpec.Range;
 import rustic.config.RusticConfig;
 
-/**
- * Phase 1 port of {@code ConfigBaselineTest}: the same golden contract, re-asserted against the new
- * {@link RusticConfig} {@code ModConfigSpec} instead of the 1.12.2 {@code Configuration}.
- *
- * <p>Everything here runs in a plain JVM on purpose - the spec's defaults, paths, comments, bounds and
- * validators are all reachable without a game, so this class is the cheap guard rail while the phases
- * that actually read the config are still being ported. The in-game half of the same contract (the file
- * NeoForge writes to {@code config/rustic-common.toml}, the clamping log lines, live reload) was
- * verified with {@code runServer} and stays on the manual checklist.
- *
- * <p>The legacy class also pinned two 1.12.2 bugs, recorded in PORT_BASELINE.md, that this port fixes on
- * purpose: the dimension whitelists were string lists parsed with {@code Integer.parseInt} inside a
- * catch-all block, and one bad id silently aborted the rest of the parsing. Those are asserted as fixed
- * below rather than reproduced.
- */
 public class RusticConfigBaselineTest {
 
-    /** The legacy category comments, which 1.21 spells as TOML table headers instead. */
     private static final String GENERAL = "General Options";
     private static final String WORLD = "World Generation Options";
     private static final String BEES = "Bee Related Options";
     private static final String COMPAT = "Mod Compatability Related Options";
 
-    /**
-     * Every property of the spec, hand-listed. The size check in
-     * {@link #theSpecIsExactlyTheFortyThreePortedLegacyProperties()} is what turns this into a completeness
-     * assertion: change a property in {@code RusticConfig} without updating the baseline and this test
-     * fails instead of quietly drifting.
-     */
     private static final List<ConfigValue<?>> ALL = List.of(
-            // general
+
             RusticConfig.FLESH_SMELTING,
             RusticConfig.EXTRA_ARMOR_HUD,
             RusticConfig.TOUGHNESS_HUD,
@@ -70,7 +48,7 @@ public class RusticConfigBaselineTest {
             RusticConfig.MAX_BREW_QUALITY_CHANGE,
             RusticConfig.MAX_BREW_TIME,
             RusticConfig.ENABLE_BOTTLE_EMPTYING,
-            // world
+
             RusticConfig.NETHER_SLATE,
             RusticConfig.SLATE_VEINS_PER_CHUNK,
             RusticConfig.SLATE_VEIN_SIZE,
@@ -84,17 +62,14 @@ public class RusticConfigBaselineTest {
             RusticConfig.MAX_WILDBERRY_ATTEMPTS,
             RusticConfig.OVERWORLD_GENERATION_WHITELIST,
             RusticConfig.NETHER_GENERATION_WHITELIST,
-            // bees
+
             RusticConfig.BEEHIVE_GEN_CHANCE,
             RusticConfig.MAX_BEEHIVE_ATTEMPTS,
             RusticConfig.BEE_GROWTH_MULTIPLIER,
             RusticConfig.BEE_REPRODUCTION_MULTIPLIER,
             RusticConfig.BEE_HONEYCOMB_MULTIPLIER,
-            // compat. The legacy 44th property, "Enable Forestry Compat", is deliberately not ported (S10.4):
-            // the Forestry CE compat is pure datapack data, inert when Forestry is absent, so it needs no toggle.
-            RusticConfig.ENABLE_SILVER_DECOR);
 
-    // ---------------------------------------------------------------- shape of the spec
+            RusticConfig.ENABLE_SILVER_DECOR);
 
     @Test
     public void theSpecIsExactlyTheFortyThreePortedLegacyProperties() {
@@ -113,19 +88,12 @@ public class RusticConfigBaselineTest {
         }
     }
 
-    /**
-     * 1.12.2 put the human-readable label in the category <em>comment</em> and the dotted
-     * {@code all.general} prefix in the name. 1.21 keeps the label as the table header and drops the
-     * synthetic {@code all} parent, so there are exactly four sections and no level comment on them -
-     * repeating the header text as a comment would put the same words on screen twice.
-     */
     @Test
     public void thereAreFourLegacyCategoriesAndNoSynthesizedAllParent() {
         assertEquals(24, countIn(GENERAL), GENERAL);
         assertEquals(13, countIn(WORLD), WORLD);
         assertEquals(5, countIn(BEES), BEES);
-        // compat: only ENABLE_SILVER_DECOR remains after the legacy "Enable Forestry Compat" toggle was dropped
-        // (S10.4, Forestry CE compat is pure datapack data), so the category holds one property, not the legacy two.
+
         assertEquals(1, countIn(COMPAT), COMPAT);
 
         assertNull(RusticConfig.SPEC.getLevelComment(List.of(GENERAL)));
@@ -135,12 +103,9 @@ public class RusticConfigBaselineTest {
         assertFalse(RusticConfig.SPEC.isEmpty(), "an empty spec means nothing was registered");
     }
 
-    // ---------------------------------------------------------------- defaults
-
-    /** The {@code aFreshFileGetsTheShippedDefaults} half of the baseline, read straight off the spec. */
     @Test
     public void shippedScalarsMatchTheLegacyDefaults() {
-        // world gen
+
         assertEquals(0.03D, RusticConfig.BEEHIVE_GEN_CHANCE.getDefault(), 0.0001D);
         assertEquals(3, RusticConfig.MAX_BEEHIVE_ATTEMPTS.getDefault().intValue());
         assertFalse(RusticConfig.NETHER_SLATE.getDefault());
@@ -155,12 +120,10 @@ public class RusticConfigBaselineTest {
         assertEquals(0.05D, RusticConfig.WILDBERRY_GEN_CHANCE.getDefault(), 0.0001D);
         assertEquals(4, RusticConfig.MAX_WILDBERRY_ATTEMPTS.getDefault().intValue());
 
-        // bees
         assertEquals(1.0D, RusticConfig.BEE_GROWTH_MULTIPLIER.getDefault(), 0.0001D);
         assertEquals(1.0D, RusticConfig.BEE_REPRODUCTION_MULTIPLIER.getDefault(), 0.0001D);
         assertEquals(1.0D, RusticConfig.BEE_HONEYCOMB_MULTIPLIER.getDefault(), 0.0001D);
 
-        // toggles
         assertTrue(RusticConfig.FLESH_SMELTING.getDefault());
         assertTrue(RusticConfig.EXTRA_ARMOR_HUD.getDefault());
         assertTrue(RusticConfig.TOUGHNESS_HUD.getDefault());
@@ -179,14 +142,10 @@ public class RusticConfigBaselineTest {
         assertFalse(RusticConfig.GRAPE_DROP_NEEDS_TOOL.getDefault());
         assertEquals(7, RusticConfig.SEED_DROP_RATE.getDefault().intValue());
 
-        // brewing
         assertEquals(-1, RusticConfig.MIN_BREW_QUALITY_CHANGE.getDefault().intValue());
         assertEquals(4, RusticConfig.MAX_BREW_QUALITY_CHANGE.getDefault().intValue());
         assertEquals(12000, RusticConfig.MAX_BREW_TIME.getDefault().intValue());
 
-        // compat. The legacy "Enable Forestry Compat" toggle has no ported counterpart (S10.4): the Forestry CE
-        // compat is pure datapack data and is inert when Forestry is absent, so there is nothing to opt into or
-        // disable. ENABLE_SILVER_DECOR still matches the legacy true.
         assertTrue(RusticConfig.ENABLE_SILVER_DECOR.getDefault());
     }
 
@@ -196,25 +155,16 @@ public class RusticConfigBaselineTest {
                 RusticConfig.IRONSKIN_RENDER_ENTITY_BLACKLIST.getDefault());
         assertEquals(List.of("minecraft:iron_hoe", "minecraft:diamond_hoe"),
                 RusticConfig.GRAPE_TOOL_WHITELIST.getDefault());
-        // The legacy 1.12.2 default was the ore-dict name "#stickWood"; the port maps it to the 1.21
-        // common tag #c:rods/wooden (which contains exactly minecraft:stick), because ResourceLocation
-        // rejects the capital W in the old ore name and a # entry now has to spell a real item tag.
+
         assertEquals(List.of("#c:rods/wooden", "minecraft:bone", "tconstruct:broadsword", "tconstruct:longsword",
                 "tconstruct:rapier", "tconstruct:frypan", "tconstruct:battlesign", "tconstruct:cleaver"),
                 RusticConfig.VANTA_OIL_WHITELIST.getDefault());
         assertTrue(RusticConfig.OLIVE_OIL_BLACKLIST.getDefault().isEmpty());
 
-        // Pinned fix for baseline bug 5: these are real integer lists now, not strings that
-        // readConfig() had to Integer.parseInt.
         assertEquals(List.of(0), RusticConfig.OVERWORLD_GENERATION_WHITELIST.getDefault());
         assertEquals(List.of(-1), RusticConfig.NETHER_GENERATION_WHITELIST.getDefault());
     }
 
-    /**
-     * The olive oil blacklist ships empty, which plain {@code defineList} documents as invalid ("this
-     * list cannot be empty"). Asserting the validator accepts it keeps the allow-empty overload from
-     * being swapped back by accident.
-     */
     @Test
     public void theOliveOilBlacklistIsAllowedToStayEmpty() {
         assertTrue(RusticConfig.OLIVE_OIL_BLACKLIST.getSpec().test(List.of()));
@@ -223,16 +173,6 @@ public class RusticConfigBaselineTest {
                 "blank entries are rejected");
     }
 
-    // ---------------------------------------------------------------- comments and keys
-
-    /**
-     * 1.12.2 appended {@code " [range: 1200 ~ 120000, default: 12000]"} to the comment text and used the
-     * spaced property name as the lang key. NeoForge keeps the legacy comment text verbatim and adds the
-     * same metadata as trailing {@code Default:}/{@code Range:} comment lines, which the TOML writer then
-     * renders as {@code # Default:}/{@code # Range:}. Only ranged properties get those lines, so the
-     * booleans and lists must read exactly like the 1.12.2 source - and none of them may carry the old
-     * {@code [range: ...]} spelling, which would put the bounds on screen twice.
-     */
     @Test
     public void commentsAreTheLegacyTextWithNeoForgesMetadataLinesAppended() {
         String brewTime = RusticConfig.MAX_BREW_TIME.getSpec().getComment();
@@ -244,12 +184,10 @@ public class RusticConfigBaselineTest {
                 "the legacy suffix must not be spelled out by hand as well");
         assertFalse(RusticConfig.SLATE_VEIN_SIZE.getSpec().getComment().contains("[range:"));
 
-        // properties without a range keep the comment exactly as 1.12.2 worded it
         assertEquals("enable/disable all slate blocks and world gen", RusticConfig.ENABLE_SLATE.getSpec().getComment());
         assertEquals("add entity ids to this list to disable the iron skin visual effect for the specified entities",
                 RusticConfig.IRONSKIN_RENDER_ENTITY_BLACKLIST.getSpec().getComment());
 
-        // multi-line comments survive as separate lines, in the legacy order
         assertEquals("if enabled, allows the armor meter to go beyond one row\n"
                 + "only one extra row will ever be rendered, because the armor stat is naturally capped at 30",
                 RusticConfig.EXTRA_ARMOR_HUD.getSpec().getComment());
@@ -278,19 +216,10 @@ public class RusticConfigBaselineTest {
         assertBounds(RusticConfig.BEE_REPRODUCTION_MULTIPLIER, 0.0D, 10.0D);
         assertBounds(RusticConfig.BEE_HONEYCOMB_MULTIPLIER, 0.0D, 10.0D);
 
-        // toggles and lists never had a range and must not gain one
         assertNull(RusticConfig.ENABLE_SLATE.getSpec().getRange());
         assertNull(RusticConfig.VANTA_OIL_WHITELIST.getSpec().getRange());
     }
 
-    // ---------------------------------------------------------------- validation
-
-    /**
-     * The same out-of-range inputs as the legacy
-     * {@code outOfRangeNumbersAreClampedToTheDeclaredBounds} and the same results: NeoForge clamps to the
-     * declared bound instead of falling back to the default. {@code runServer} confirmed the corrected
-     * value is then written back to disk.
-     */
     @Test
     public void outOfRangeNumbersClampToTheSameBoundsAsForgeDid() {
         assertEquals(120000, clampedInt(RusticConfig.MAX_BREW_TIME, 500000));
@@ -303,18 +232,12 @@ public class RusticConfigBaselineTest {
         assertEquals(10.0D, clampedDouble(RusticConfig.BEE_GROWTH_MULTIPLIER, 11.0D), 0.0001D);
         assertEquals(10.0D, clampedDouble(RusticConfig.BEE_HONEYCOMB_MULTIPLIER, 99.0D), 0.0001D);
 
-        // in-range values are untouched, which is what keeps a good file quiet on load
         assertEquals(12000, clampedInt(RusticConfig.MAX_BREW_TIME, 12000));
         assertTrue(RusticConfig.MAX_BREW_TIME.getSpec().test(6000));
         assertFalse(RusticConfig.MAX_BREW_TIME.getSpec().test(50),
                 "this is what makes the server log the clamping line");
     }
 
-    /**
-     * The legacy {@code garbageNumbersFallBackToTheDefault} case: an unparseable value yields the default
-     * instead of throwing. One divergence, recorded on purpose - Forge left the junk string in the file,
-     * NeoForge replaces the entry, so a typo does not haunt the user forever.
-     */
     @Test
     public void garbageNumbersFallBackToTheDefaultWithoutThrowing() {
         assertFalse(RusticConfig.MAX_BREW_TIME.getSpec().test("banana"));
@@ -322,35 +245,16 @@ public class RusticConfigBaselineTest {
         assertEquals(20, clampedInt(RusticConfig.SLATE_VEIN_SIZE, "banana"));
     }
 
-    /**
-     * Pinned fix for baseline bug 5: a non-numeric dimension id used to throw inside
-     * {@code readConfig()}'s empty catch block and silently cost the user the <em>other</em> whitelist.
-     * Now each list validates on its own, bad entries are dropped, and the sibling list is unaffected.
-     */
     @Test
     public void oneBadDimensionIdNoLongerTakesTheOtherListDownWithIt() {
         assertTrue(RusticConfig.OVERWORLD_GENERATION_WHITELIST.getSpec().test(List.of(0, 2, 7)));
         assertFalse(RusticConfig.OVERWORLD_GENERATION_WHITELIST.getSpec().test(List.of("banana")));
 
-        // a list whose only entry is invalid collapses to the default ...
         assertEquals(List.of(0), RusticConfig.OVERWORLD_GENERATION_WHITELIST.getSpec().correct(List.of("banana")));
-        // ... and the nether list still keeps its own default, which is the half of the config Forge
-        // used to lose when the parse of the first list threw
+
         assertEquals(List.of(-1), RusticConfig.NETHER_GENERATION_WHITELIST.getDefault());
     }
 
-    // ---------------------------------------------------------------- loader contract
-
-    /**
-     * The loader side of the contract, and the reason ModDevGradle's {@code unitTest} support is switched
-     * on: FML boots in this JVM, {@code Rustic}'s constructor runs and the COMMON config is registered and
-     * loaded, so {@code get()} reads real values instead of throwing
-     * {@code IllegalStateException("Cannot get config value before config is loaded.")}.
-     *
-     * <p>That exception is the trap to avoid when porting the 1.12.2 static {@code Config.X} reads: those
-     * were assigned once in {@code readConfig()}, so ported code may only touch {@code get()} after the
-     * mod has been constructed - never from a static initialiser of another class.
-     */
     @Test
     public void theRunningModContainerLoadsTheSpecAndTheValuesReadThrough() {
         assertTrue(RusticConfig.SPEC.isLoaded(), "the config was never loaded, so the mod constructor did not run");
@@ -365,8 +269,6 @@ public class RusticConfigBaselineTest {
         assertEquals(List.of(-1), RusticConfig.NETHER_GENERATION_WHITELIST.get());
         assertTrue(RusticConfig.OLIVE_OIL_BLACKLIST.get().isEmpty());
     }
-
-    // ---------------------------------------------------------------- helpers
 
     private static int countIn(String category) {
         return (int) ALL.stream().map(ConfigValue::getPath).filter(path -> path.get(0).equals(category)).count();

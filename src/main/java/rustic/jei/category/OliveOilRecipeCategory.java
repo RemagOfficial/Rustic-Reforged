@@ -14,12 +14,6 @@ import net.minecraft.world.item.crafting.RecipeHolder;
 import rustic.content.fluids.RusticFluids;
 import rustic.content.crafting.RecipeOliveOil;
 
-/**
- * Olive oiling. {@link RecipeOliveOil} is a stateless, config-gated pattern recipe: any eligible food plus a fluid
- * bottle of olive oil yields that food marked {@code rustic:oiled}. There is no enumerable per-recipe data, so this
- * category renders one representative example (the legacy {@code OliveOilRecipeWrapper} did the same) - bread plus
- * olive oil in, oiled bread out. The oil is shown as a searchable fluid ingredient.
- */
 public class OliveOilRecipeCategory extends AbstractRecipeCategory<RecipeHolder<RecipeOliveOil>> {
 
     public OliveOilRecipeCategory(IGuiHelper guiHelper, RecipeType<RecipeHolder<RecipeOliveOil>> recipeType) {

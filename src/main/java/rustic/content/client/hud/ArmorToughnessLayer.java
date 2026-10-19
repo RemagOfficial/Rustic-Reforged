@@ -14,16 +14,6 @@ import net.neoforged.api.distmarker.OnlyIn;
 import rustic.Rustic;
 import rustic.config.RusticConfig;
 
-/**
- * S9.5: the armour-toughness meter. Vanilla draws no toughness HUD at all, so the whole thing is custom -
- * a right-side stack (mirroring the food bar) of icons pulled from {@code rustic:textures/gui/icons.png}
- * at the legacy full/half/empty u-offsets (34/25/16, v 0, 9x9). Registered above {@code VanillaGuiLayers.FOOD_LEVEL},
- * it grows upward out of {@code Gui.rightHeight} exactly as the 1.12.2 {@code onRenderArmorToughnessEvent}
- * grew out of {@code GuiIngameForge.right_height}.
- *
- * <p>No-ops when {@code TOUGHNESS_HUD} is off or the camera player's {@code ARMOR_TOUGHNESS} attribute is
- * zero, so an unmodded load-out renders nothing extra.
- */
 @OnlyIn(Dist.CLIENT)
 public final class ArmorToughnessLayer implements LayeredDraw.Layer {
 
@@ -50,7 +40,7 @@ public final class ArmorToughnessLayer implements LayeredDraw.Layer {
         }
 
         int rowHeight = ArmorHudLayout.rowHeight(rows);
-        // Row 0 sits just above the food bar; rightHeight already carries the food bump when this layer runs.
+
         int baselineY = guiGraphics.guiHeight() - minecraft.gui.rightHeight;
 
         RenderSystem.enableBlend();

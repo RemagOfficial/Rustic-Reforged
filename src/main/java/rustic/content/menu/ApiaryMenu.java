@@ -14,19 +14,8 @@ import org.jetbrains.annotations.Nullable;
 import rustic.content.blockentity.ApiaryBlockEntity;
 import rustic.content.items.RusticItems;
 
-/**
- * The apiary's container, the 1.21 form of legacy {@code ContainerApiary}. Two machine slots over the
- * {@code apiary.png} panel - the bee slot at (80, 26), the honeycomb slot at (80, 44) - each bound to its own
- * one-slot handler on {@link ApiaryBlockEntity} and guarded to its one item, exactly like the legacy
- * anonymous {@code SlotItemHandler} subclasses. No {@code DataSlot}s: the legacy GUI drew no progress bars,
- * only the two titles, so the slot contents are the whole sync.
- *
- * <p>Shift-click routes bees to the bee slot and honeycomb to the comb slot; everything else falls through
- * to the ordinary player-inventory shuffle, mirroring legacy {@code transferStackInSlot}.
- */
 public class ApiaryMenu extends AbstractContainerMenu {
 
-    /** Legacy {@code ContainerApiary} machine-slot count: bee + honeycomb. */
     public static final int MACHINE_SLOTS = 2;
 
     private final ApiaryBlockEntity tile;
@@ -36,15 +25,13 @@ public class ApiaryMenu extends AbstractContainerMenu {
     public ApiaryMenu(int containerId, Inventory playerInventory, @Nullable ApiaryBlockEntity tile) {
         super(RusticMenus.APIARY.get(), containerId);
         this.tile = tile;
-        // The client copy is rebuilt from the position the server wrote, so by the time the packet is
-        // resolved the block entity exists; the fallbacks keep a null (mid-unload) menu slot-functional.
+
         this.beeHandler = tile != null ? tile.getBeeHandler() : new ItemStackHandler(1);
         this.honeyCombHandler = tile != null ? tile.getHoneyCombHandler() : new ItemStackHandler(1);
         addMachineSlots();
         addPlayerSlots(playerInventory);
     }
 
-    /** Rebuilds the client menu, resolving the world block entity from the position the server wrote. */
     public static ApiaryMenu client(int containerId, Inventory playerInventory, RegistryFriendlyByteBuf data) {
         BlockPos pos = data.readBlockPos();
         ApiaryBlockEntity tile = playerInventory.player.level().getBlockEntity(pos)
@@ -76,7 +63,7 @@ public class ApiaryMenu extends AbstractContainerMenu {
             ItemStack stack = slot.getItem();
             result = stack.copy();
             if (index < MACHINE_SLOTS) {
-                // Machine -> player: anything that will not fit anywhere in the 36 slots stays put.
+
                 if (!moveItemStackTo(stack, MACHINE_SLOTS, MACHINE_SLOTS + 36, true)) {
                     return ItemStack.EMPTY;
                 }
@@ -89,12 +76,12 @@ public class ApiaryMenu extends AbstractContainerMenu {
                     return ItemStack.EMPTY;
                 }
             } else if (index < MACHINE_SLOTS + 27) {
-                // Main inventory rows -> hotbar, the legacy (2..29 -> 29..38) branch.
+
                 if (!moveItemStackTo(stack, MACHINE_SLOTS + 27, MACHINE_SLOTS + 36, false)) {
                     return ItemStack.EMPTY;
                 }
             } else if (!moveItemStackTo(stack, MACHINE_SLOTS, MACHINE_SLOTS + 27, false)) {
-                // Hotbar -> main inventory, the legacy (29..38 -> 2..29) branch.
+
                 return ItemStack.EMPTY;
             }
             if (stack.isEmpty()) {
@@ -108,19 +95,15 @@ public class ApiaryMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        // Legacy canInteractWith: the player must stay within 8 blocks (squared distance 64) of the box.
+
         return tile == null || player.distanceToSqr(tile.getBlockPos().getCenter()) <= 64.0D;
     }
 
-    /** The bound apiary (server copy, or the synced client copy). */
     @Nullable
     public ApiaryBlockEntity getTile() {
         return this.tile;
     }
 
-    // ------------------------------------------------------------------ slot kinds
-
-    /** Only bee items - the legacy anonymous {@code isItemValid} guard on slot 0. */
     static final class BeeSlot extends SlotItemHandler {
         BeeSlot(IItemHandler handler, int index, int x, int y) {
             super(handler, index, x, y);
@@ -132,7 +115,6 @@ public class ApiaryMenu extends AbstractContainerMenu {
         }
     }
 
-    /** Only honeycomb items - the same guard on the bottom handler's slot. */
     static final class HoneyCombSlot extends SlotItemHandler {
         HoneyCombSlot(IItemHandler handler, int index, int x, int y) {
             super(handler, index, x, y);

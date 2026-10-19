@@ -12,18 +12,8 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import rustic.Rustic;
 import rustic.content.blockentity.EvaporatingBasinBlockEntity;
 
-/**
- * 1.21 form of the legacy {@code rustic.client.renderer.EvaporatingBasinRenderer}. Draws the crystallised dust in
- * the output slot as stacked flat layers and the evaporating fluid as a low top surface quad.
- *
- * <p>Faithful numbers from the legacy renderer: the item stack steps every {@code 16} items (the basin's divisor
- * differs from the tub's {@code 8}), and the fluid quad spans {@code 0.1875..0.8125} in x/z at
- * {@code y = 0.0625 + 0.1875 * amount/capacity} - the shallow fill of a wide basin - with a {@code 0.1875} sprite
- * UV inset. Both passes delegate to {@link FluidTankRenderUtil}.
- */
 public class EvaporatingBasinRenderer implements BlockEntityRenderer<EvaporatingBasinBlockEntity> {
 
-    /** Round-5 diagnostic, see {@link CrushingTubRenderer#FLUID_DIAG_LOGGED}; remove once the Phase 9 verdict is green. */
     private static final AtomicBoolean FLUID_DIAG_LOGGED = new AtomicBoolean();
 
     private final ItemRenderer itemRenderer;
@@ -35,10 +25,7 @@ public class EvaporatingBasinRenderer implements BlockEntityRenderer<Evaporating
     @Override
     public void render(EvaporatingBasinBlockEntity be, float partialTick, PoseStack poseStack,
                        MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
-        // ENTITYBLOCK_ANIMATED: draw the shallow open-tray container first (via the block's own baked model through
-        // the item renderer), then the evaporating fluid and the crystallised-dust layers on top of it.
-        // renderSingleBlock is unusable and renderStatic(NONE) leaves the model at full scale but translated by
-        // (-0.5,-0.5,-0.5), so a +0.5 pre-translate recentres it in the block's 0..1 space - see CrushingTubRenderer.
+
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
         this.itemRenderer.renderStatic(new ItemStack(be.getBlockState().getBlock()), ItemDisplayContext.NONE,
@@ -48,8 +35,7 @@ public class EvaporatingBasinRenderer implements BlockEntityRenderer<Evaporating
         if (!dust.isEmpty()) {
             FluidTankRenderUtil.renderStackedItems(dust, 16, be.getBlockPos().asLong(),
                     this.itemRenderer, poseStack, bufferSource, be.getLevel(), packedLight);
-            // Commit the dust billboards before the fluid so the translucent surface blends over the submerged dust
-            // (legacy order); see CrushingTubRenderer for why the batched flush order matters.
+
             if (bufferSource instanceof MultiBufferSource.BufferSource commits) {
                 commits.endBatch();
             }

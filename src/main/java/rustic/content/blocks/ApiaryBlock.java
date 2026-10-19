@@ -29,28 +29,15 @@ import org.jetbrains.annotations.Nullable;
 import rustic.content.blockentity.ApiaryBlockEntity;
 import rustic.content.blockentity.RusticBlockEntities;
 
-/**
- * 1.12.2's {@code BlockApiary}: the bee box. A {@code Material.WOOD} block at hardness 1.0 (the backlog's
- * "1.5" predates reading the legacy constructor - {@code setHardness(1F)} is what shipped), {@code SoundType.WOOD},
- * {@code isOpaqueCube=false} (hence {@code noOcclusion()}), a horizontal {@code FACING} set to the placer's
- * opposite on placement, and a {@link ApiaryBlockEntity} behind it that runs the colony and opens its two-slot
- * GUI on any right-click, with or without a held item - the legacy {@code onBlockActivated} had no item or
- * sneak branches at all.
- *
- * <p>Breaking ejects the two slots as items, the 1.21 form of legacy {@code BlockApiary.breakBlock} calling
- * {@code TileEntityApiary.breakBlock} (a {@code spawnAsEntity} per slot); the GUI's close distance check
- * ({@code canInteractWith}, 8 blocks) rides on {@code ApiaryMenu}.
- */
 public class ApiaryBlock extends BaseEntityBlock {
 
     public static final MapCodec<ApiaryBlock> CODEC = simpleCodec(ApiaryBlock::new);
 
-    /** Legacy {@code BlockApiary.FACING}, the horizontal plane property; the entrance points away from the placer. */
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
     public ApiaryBlock(BlockBehaviour.Properties properties) {
         super(properties);
-        // Legacy default was FACING=NORTH.
+
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
@@ -64,7 +51,6 @@ public class ApiaryBlock extends BaseEntityBlock {
         builder.add(FACING);
     }
 
-    /** 1.12.2 {@code getStateForPlacement}: {@code placer.getHorizontalFacing().getOpposite()}. */
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
@@ -101,15 +87,14 @@ public class ApiaryBlock extends BaseEntityBlock {
         if (level.getBlockEntity(pos) instanceof ApiaryBlockEntity apiary && !player.isSpectator()) {
             player.openMenu(apiary);
         }
-        // Legacy returned true unconditionally on activation - the click is always consumed.
+
         return InteractionResult.CONSUME;
     }
 
     @Override
     protected ItemInteractionResult useItemOn(ItemStack itemStack, BlockState state, Level level, BlockPos pos,
                                               Player player, InteractionHand hand, BlockHitResult hit) {
-        // Any held item opens the GUI too (legacy onBlockActivated ignored the hand entirely), so the item's
-        // own useOn must never see the click - hence SUCCESS rather than a pass-through.
+
         if (level.isClientSide) {
             return ItemInteractionResult.sidedSuccess(true);
         }
@@ -131,7 +116,7 @@ public class ApiaryBlock extends BaseEntityBlock {
 
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moving) {
-        // Legacy breakBlock spawned each slot's stack into the world; the timers die with the block, as there.
+
         if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof ApiaryBlockEntity apiary) {
             eject(level, pos, apiary.getBeeHandler());
             eject(level, pos, apiary.getHoneyCombHandler());
