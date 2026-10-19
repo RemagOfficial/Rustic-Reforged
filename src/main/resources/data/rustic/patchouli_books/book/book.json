@@ -5,7 +5,7 @@
   "i18n": true,
   "use_resource_pack": true,
   "advancements_tab": "rustic:main/root",
-  "creative_tab": "rustic:alchemy",
+  "creative_tab": "rustic:decor",
   "model": "rustic:book",
   "show_progress": false,
   "pause_game": false

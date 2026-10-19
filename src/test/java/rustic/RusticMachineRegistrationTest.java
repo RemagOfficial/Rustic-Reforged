@@ -263,9 +263,11 @@ public class RusticMachineRegistrationTest {
      * The datagen that makes the cabinet render and drop. Its blockstate enumerates every facing/mirror/top
      * combination but each one still resolves to the same static cube model (kept for particles/loot), so the
      * assertion is "every referenced model is rustic:block/cabinet", not a single empty-variant key like the
-     * property-less barrel. From S9.2 the ITEM model is different: the door is now drawn by the cabinet BER, so
-     * the hand-held/inventory item parents {@code minecraft:builtin/entity} to route through that renderer.
-     * Re-run {@code runData} when this fails; do not hand-write the files.
+     * property-less barrel. Bug-fix 2026-10-19 (part 4) recovered 1.12.2's own
+     * {@code models/item/cabinet.json}, which parents the static {@code rustic:block/cabinet} (that recovered
+     * block carries the legacy display section); the S9.2 {@code minecraft:builtin/entity} + BER route was
+     * dropped because without a display section the inventory item rendered off-centre. Re-run {@code runData}
+     * when this fails; do not hand-write the files.
      */
     @Test
     public void datagenProducedTheCabinetStateModelLootAndTag() {
@@ -274,8 +276,8 @@ public class RusticMachineRegistrationTest {
                 "every cabinet state should draw the one static cube (retained for particles/loot)");
 
         JsonObject itemModel = json("/assets/rustic/models/item/cabinet.json");
-        assertEquals("minecraft:builtin/entity", itemModel.get("parent").getAsString(),
-                "the cabinet item model defers to the BER now that S9.2 animates the door");
+        assertEquals("rustic:block/cabinet", itemModel.get("parent").getAsString(),
+                "the cabinet item model parents the recovered static block (with its display section)");
 
         JsonObject loot = json("/data/rustic/loot_table/blocks/cabinet.json");
         JsonElement entry = loot.getAsJsonArray("pools").get(0).getAsJsonObject()
@@ -397,7 +399,7 @@ public class RusticMachineRegistrationTest {
     // ==================================================================
     // Phase 4b fluid machines (liquid barrel, crushing tub, evaporating basin, brewing barrel, condenser,
     // advanced condenser). They share the storage machines' wiring contract - block + block item + block entity
-    // type + (for the GUI three) a menu type + datagen + a decor-tab entry - so these assertions mirror the
+    // type + (for the GUI three) a menu type + datagen + a creative-tab entry - so these assertions mirror the
     // barrel/cabinet/vase tests above, table-driven for the six. Phase 11 S11.1 restored the fluid-machine models as
     // static assets, so each fluid-machine blockstate now resolves to its restored rustic:block/<name> model (the
     // advanced condenser splitting its two TOP halves across condenser_adv and condenser_adv_top).
@@ -504,19 +506,41 @@ public class RusticMachineRegistrationTest {
         assertEquals(7, advanced.getItemHandler().getSlots(), "result/fuel/bottle/modifier/three ingredients");
     }
 
-    /** All six were offered in the decor tab in 1.12.2, so the machine entries() loop must reach them. */
+    /**
+     * Each fluid machine must be offered on the tab 1.12.2 setCreativeTab'd it on, not the blanket decor append:
+     * the liquid barrel inherited BlockBase's decorTab, but BlockCrushingTub, BlockEvaporatingBasin and
+     * BlockBrewingBarrel set farmingTab and BlockCondenser / BlockCondenserAdvanced set alchemyTab.
+     */
     @Test
-    public void everyFluidMachineAppearsInTheDecorTab() {
-        CreativeModeTab decor = RusticCreativeTabs.DECOR.get();
-        decor.buildContents(new CreativeModeTab.ItemDisplayParameters(FeatureFlags.DEFAULT_FLAGS, true, null));
+    public void everyFluidMachineAppearsInItsLegacyTab() {
+        List<String> decor = tabIds(RusticCreativeTabs.DECOR.get());
+        List<String> farming = tabIds(RusticCreativeTabs.FARMING.get());
+        List<String> alchemy = tabIds(RusticCreativeTabs.ALCHEMY.get());
+        assertTrue(decor.contains("rustic:liquid_barrel"), "the liquid barrel is not offered in DECOR: " + decor);
+        assertTrue(farming.contains("rustic:crushing_tub"), "the crushing tub is not offered in FARMING: " + farming);
+        assertTrue(farming.contains("rustic:evaporating_basin"),
+                "the evaporating basin is not offered in FARMING: " + farming);
+        assertTrue(farming.contains("rustic:brewing_barrel"),
+                "the brewing barrel is not offered in FARMING: " + farming);
+        assertTrue(alchemy.contains("rustic:condenser"), "the condenser is not offered in ALCHEMY: " + alchemy);
+        assertTrue(alchemy.contains("rustic:condenser_advanced"),
+                "the advanced condenser is not offered in ALCHEMY: " + alchemy);
+        // ...and none of the four left its legacy tab for the decor append.
+        assertFalse(decor.contains("rustic:crushing_tub"), "the farming-tab crushing tub leaked into DECOR");
+        assertFalse(decor.contains("rustic:evaporating_basin"), "the farming-tab basin leaked into DECOR");
+        assertFalse(decor.contains("rustic:brewing_barrel"), "the farming-tab brewing barrel leaked into DECOR");
+        assertFalse(decor.contains("rustic:condenser"), "the alchemy-tab condenser leaked into DECOR");
+        assertFalse(decor.contains("rustic:condenser_advanced"), "the alchemy-tab condenser leaked into DECOR");
+    }
+
+    /** Rebuilds a tab's contents the way the creative menu does, then maps them to ids. */
+    private static List<String> tabIds(CreativeModeTab tab) {
+        tab.buildContents(new CreativeModeTab.ItemDisplayParameters(FeatureFlags.DEFAULT_FLAGS, true, null));
         List<String> ids = new ArrayList<>();
-        for (net.minecraft.world.item.ItemStack stack : decor.getDisplayItems()) {
+        for (net.minecraft.world.item.ItemStack stack : tab.getDisplayItems()) {
             ids.add(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
         }
-        for (FluidSpec spec : FLUID_MACHINES) {
-            assertTrue(ids.contains(spec.holder().getId().toString()),
-                    spec.holder().getId() + " is not offered in the DECOR tab: " + ids);
-        }
+        return ids;
     }
 
     /**
@@ -611,16 +635,17 @@ public class RusticMachineRegistrationTest {
     /**
      * Phase 12: both retorts. 1.12.2's {@code BlockRetort} was a plain block (Material.ROCK, hardness 2, STONE sound,
      * no block entity), the two tiers differing only in texture, so both share {@link RetortBlock} and a horizontal
-     * FACING. They ride the machine {@code entries()} loops for block item / drop-self loot / DECOR tab, take the
+     * FACING. They ride the machine {@code entries()} loops for block item / drop-self loot / creative tab - the
+     * bug-fix pass moved that tab from the DECOR append to the legacy ALCHEMY membership - and take the
      * pickaxe tag, and their blockstate + item models are the restored MrCrayfish art (block id {@code retort_advanced}
      * draws the {@code retort_adv} model). Re-run {@code runData} if the model/datagen half fails.
      */
     @Test
     public void bothRetortsAreOrientablePlainBlocksWithTheirDatagen() {
-        CreativeModeTab decor = RusticCreativeTabs.DECOR.get();
-        decor.buildContents(new CreativeModeTab.ItemDisplayParameters(FeatureFlags.DEFAULT_FLAGS, true, null));
+        CreativeModeTab alchemy = RusticCreativeTabs.ALCHEMY.get();
+        alchemy.buildContents(new CreativeModeTab.ItemDisplayParameters(FeatureFlags.DEFAULT_FLAGS, true, null));
         List<String> tabIds = new ArrayList<>();
-        for (net.minecraft.world.item.ItemStack stack : decor.getDisplayItems()) {
+        for (net.minecraft.world.item.ItemStack stack : alchemy.getDisplayItems()) {
             tabIds.add(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
         }
 
@@ -641,7 +666,7 @@ public class RusticMachineRegistrationTest {
             assertTrue(item instanceof BlockItem, path + " has no block item");
             assertEquals(holder.getId().getPath(), BuiltInRegistries.ITEM.getKey(item).getPath(),
                     path + " block item drifted from the block id");
-            assertTrue(tabIds.contains(holder.getId().toString()), path + " is not offered in the DECOR tab");
+            assertTrue(tabIds.contains(holder.getId().toString()), path + " is not offered in the ALCHEMY tab");
 
             // Legacy model names: the basic retort uses "retort", the advanced one uses "retort_adv".
             String model = path.equals("retort") ? "retort" : "retort_adv";

@@ -61,8 +61,9 @@ public class PatchouliBookBaselineTest {
         assertEquals("rustic:book", book.get("model").getAsString());
         // A book only lands in a creative tab (and so in JEI's item list) when creative_tab names a registered tab;
         // Patchouli's processCreativeTabs adds ItemModBook.forBook(book) only while Book.creativeTab != null.
-        assertEquals("rustic:alchemy", book.get("creative_tab").getAsString(),
-                "the almanac must be parented to a Rustic creative tab so it shows in-game and in JEI");
+        // Legacy ItemBook.setCreativeTab(Rustic.decorTab) put the almanac in the decor tab, so the port must too.
+        assertEquals("rustic:decor", book.get("creative_tab").getAsString(),
+                "the almanac must be parented to the DECOR tab, matching legacy ItemBook");
         // Patchouli 1.20+ hard-throws in the Book ctor (book skipped, item never registered) unless this is true:
         // all categories/entries live clientside under assets/, only book.json stays under data/.
         assertTrue(book.get("use_resource_pack").getAsBoolean(),

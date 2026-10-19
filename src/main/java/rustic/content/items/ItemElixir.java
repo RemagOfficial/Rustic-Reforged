@@ -12,6 +12,7 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.effect.MobEffectUtil;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -21,7 +22,9 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 import rustic.content.potions.ElixirUtils;
+import rustic.content.potions.RusticMobEffects;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,12 +32,17 @@ import java.util.List;
  * carries an arbitrary, ordered list of effects in the {@code rustic:elixir_effects} data component (see
  * {@link ElixirUtils}) instead of the legacy {@code "ElixirEffects"} NBT list.
  *
- * <p><b>Tab-entry deviation.</b> Legacy overrode {@code getSubItems} to list every condenser recipe result; the
- * condenser recipes are Phase 7, so the tab shows the legacy default instance (one tick of instant health,
- * the old {@code getDefaultInstance}) until then. The item tint (legacy {@code IColoredItem} via
+ * <p><b>Tab entries.</b> Legacy overrode {@code getSubItems} to list every condenser recipe result; 1.21 has no
+ * {@code getSubItems} hook and creative tabs cannot read the recipe map at display time, so
+ * {@link #condenserElixirs()} mirrors those results in the legacy {@code Recipes.addCondenserRecipes} order - the
+ * same rows {@code RusticRecipeProvider.addCondenser} generates, pinned against that data by
+ * {@code RusticAlchemyTabTest} so the two cannot drift. The item tint (legacy {@code IColoredItem} via
  * {@code ElixirUtils.getColor}) landed in Phase 17 S17.4 as an {@code ItemColors} handler in {@code RusticClient};
- * the potion-style duration tooltip lines are still deferred; the plain effect-name
- * lines below are the headless-testable half of the old {@code addPotionTooltip}.
+ * the effect-name, potency and duration lines below
+ * mirror both legacy {@code ElixirUtils.addPotionTooltip} and vanilla {@code PotionContents.addPotionTooltip};
+ * the {@code potion.whenDrank} attribute block, which legacy also printed for attribute-granting effects such
+ * as health boost, stays deferred - no condenser elixir effect carries an attribute on 1.21, so it would
+ * print nothing.
  */
 public class ItemElixir extends Item {
 
@@ -43,11 +51,74 @@ public class ItemElixir extends Item {
         super(properties.stacksTo(16));
     }
 
-    /** The alchemy-tab entry, the 1.21 form of the legacy {@code getDefaultInstance} (Instant Health, 1 tick). */
+    /** The alchemy-tab icon, the 1.21 form of the legacy {@code getDefaultInstance} (Instant Health, 1 tick). */
     public static ItemStack defaultElixir() {
         ItemStack stack = new ItemStack(RusticItems.ELIXIR.get());
         ElixirUtils.addEffect(new MobEffectInstance(MobEffects.HEAL, 1, 0), stack);
         return stack;
+    }
+
+    /**
+     * Every condenser elixir, in the legacy {@code Recipes.addCondenserRecipes} order - the 1.21 form of the
+     * legacy {@code ItemElixir.getSubItems} walk over {@code Recipes.condenserRecipes}, which fed the alchemy
+     * tab its thirty-one elixir entries (the first, Instant Health I, is also {@link #defaultElixir()}). The
+     * triples below mirror the {@code condense} rows of {@code RusticRecipeProvider.addCondenser} one-for-one;
+     * {@code RusticAlchemyTabTest} decodes the generated {@code rustic:condenser} recipe data and fails if
+     * either side drifts. Fresh stacks per call: a creative-tab entry must not be a shared mutable instance.
+     */
+    public static List<ItemStack> condenserElixirs() {
+        List<MobEffectInstance> effects = List.of(
+                // Healing (instant health).
+                new MobEffectInstance(MobEffects.HEAL, 1, 0),
+                new MobEffectInstance(MobEffects.HEAL, 1, 1),
+                // Regeneration.
+                new MobEffectInstance(MobEffects.REGENERATION, 900, 0),
+                new MobEffectInstance(MobEffects.REGENERATION, 1800, 0),
+                new MobEffectInstance(MobEffects.REGENERATION, 450, 1),
+                // Wither.
+                new MobEffectInstance(MobEffects.WITHER, 900, 0),
+                new MobEffectInstance(MobEffects.WITHER, 1800, 0),
+                new MobEffectInstance(MobEffects.WITHER, 450, 1),
+                // Night vision.
+                new MobEffectInstance(MobEffects.NIGHT_VISION, 3600, 0),
+                new MobEffectInstance(MobEffects.NIGHT_VISION, 9600, 0),
+                // Speed.
+                new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 3600, 0),
+                new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 9600, 0),
+                new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 1800, 1),
+                // Fire resistance.
+                new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 3600, 0),
+                new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 9600, 0),
+                // Health boost.
+                new MobEffectInstance(MobEffects.HEALTH_BOOST, 3600, 0),
+                new MobEffectInstance(MobEffects.HEALTH_BOOST, 9600, 0),
+                new MobEffectInstance(MobEffects.HEALTH_BOOST, 1800, 1),
+                // Haste.
+                new MobEffectInstance(MobEffects.DIG_SPEED, 3600, 0),
+                new MobEffectInstance(MobEffects.DIG_SPEED, 9600, 0),
+                new MobEffectInstance(MobEffects.DIG_SPEED, 1800, 1),
+                // Strength.
+                new MobEffectInstance(MobEffects.DAMAGE_BOOST, 3600, 0),
+                new MobEffectInstance(MobEffects.DAMAGE_BOOST, 9600, 0),
+                new MobEffectInstance(MobEffects.DAMAGE_BOOST, 1800, 1),
+                // Iron skin (custom effect).
+                new MobEffectInstance(RusticMobEffects.IRON_SKIN, 3600, 0),
+                new MobEffectInstance(RusticMobEffects.IRON_SKIN, 9600, 0),
+                new MobEffectInstance(RusticMobEffects.IRON_SKIN, 1800, 1),
+                // Feather (custom effect).
+                new MobEffectInstance(RusticMobEffects.FEATHER, 3600, 0),
+                new MobEffectInstance(RusticMobEffects.FEATHER, 9600, 0),
+                // Blazing trail (custom effect).
+                new MobEffectInstance(RusticMobEffects.BLAZING_TRAIL, 3600, 0),
+                new MobEffectInstance(RusticMobEffects.BLAZING_TRAIL, 9600, 0));
+
+        List<ItemStack> elixirs = new ArrayList<>(effects.size());
+        for (MobEffectInstance effect : effects) {
+            ItemStack stack = new ItemStack(RusticItems.ELIXIR.get());
+            ElixirUtils.addEffect(effect, stack);
+            elixirs.add(stack);
+        }
+        return elixirs;
     }
 
     // ------------------------------------------------------------------ drinking
@@ -140,6 +211,13 @@ public class ItemElixir extends Item {
             MutableComponent text = Component.translatable(mobEffect.getDescriptionId());
             if (effect.getAmplifier() > 0) {
                 text = text.append(" ").append(Component.translatable("potion.potency." + effect.getAmplifier()));
+            }
+            if (!effect.endsWithin(20)) {
+                // Legacy: s1 += " (" + Potion.getPotionDurationString(effect, 1.0F) + ")" - instant effects
+                // (HEAL, 1 tick) stay bare, timed ones get the vanilla "potion.withDuration" "(M:SS)" tail.
+                // formatDuration's third argument is ticks-per-second: 20.0F reproduces the legacy division.
+                text = Component.translatable("potion.withDuration", text,
+                        MobEffectUtil.formatDuration(effect, 1.0F, 20.0F));
             }
             // The legacy bad-effect red / good-effect blue split.
             tooltip.add(text.withStyle(mobEffect.getCategory() == MobEffectCategory.HARMFUL

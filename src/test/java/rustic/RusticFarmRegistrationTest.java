@@ -110,15 +110,15 @@ public class RusticFarmRegistrationTest {
                 "Material.WOOD sound");
     }
 
-    /** 1.12.2 gave every placeable block a block item under its own id; the two poles are no exception. */
+    /** 1.12.2 gave every placeable-from-item block a block item under its own id: the crop_stake pole and the herbs. */
     @Test
-    public void theTwoPolesHaveBlockItemsUnderTheirOwnIds() {
+    public void thePlaceableFarmBlocksHaveBlockItemsUnderTheirOwnIds() {
         for (var holder : RusticFarmBlocks.blockItemEntries()) {
             Block block = holder.get();
             Item item = block.asItem();
             assertTrue(item instanceof BlockItem, holder.getId() + " has no block item");
             assertEquals(holder.getId().getPath(), BuiltInRegistries.ITEM.getKey(item).getPath(),
-                    "the pole block item drifted from the block id");
+                    "the block item drifted from the block id");
             assertSame(block, ((BlockItem) item).getBlock());
         }
     }
@@ -144,6 +144,19 @@ public class RusticFarmRegistrationTest {
                 .getCloneItemStack(null, BlockPos.ZERO, RusticFarmBlocks.STAKE_TIED.get().defaultBlockState());
         assertEquals("rope", BuiltInRegistries.ITEM.getKey(picked.getItem()).getPath(),
                 "the tied stake should pick as the rope that made it");
+    }
+
+    /**
+     * Bug-fix 2026-10-19 (part 4): stake_tied reproduces legacy {@code BlockStakeTied}'s block-only
+     * registration ({@code super(mat, name, false)}, no {@code ItemBlock}). It has no block item - it is not in
+     * {@code RusticFarmBlocks.blockItemEntries} - because it is made by clicking rope onto a pole, picks as that
+     * rope and reverts to the pole on break, so an inventory item would be a ghost entry with no legacy model.
+     */
+    @Test
+    public void stakeTiedHasNoBlockItem() {
+        Block tied = RusticFarmBlocks.STAKE_TIED.get();
+        assertFalse(tied.asItem() instanceof BlockItem,
+                "rustic:stake_tied must have no block item, matching legacy's block-only registration");
     }
 
     // ------------------------------------------------------------------ the two vines
@@ -275,7 +288,12 @@ public class RusticFarmRegistrationTest {
         assertTrue(food.effects().isEmpty(), "these three had no setPotionEffect in 1.12.2; effects are Phase 6");
     }
 
-    /** The stake crops and their produce are offered in the farming tab; the vines are not (no item). */
+    /**
+     * The stake crops and their produce are offered in the farming tab. The tied stake and the vines are not:
+     * legacy {@code BlockStakeTied} ran {@code super(mat, name, false)} and registered the block only (no
+     * {@code ItemBlock}), so {@code stake_tied} never had an item to offer, exactly like the vine crops - and
+     * the port now mirrors that faithfully, leaving stake_tied with no BlockItem (see {@link #stakeTiedHasNoBlockItem}).
+     */
     @Test
     public void theFarmingTabOffersThePolesSeedsAndProduce() {
         CreativeModeTab farming = RusticCreativeTabs.FARMING.get();
@@ -284,12 +302,13 @@ public class RusticFarmRegistrationTest {
         for (ItemStack stack : farming.getDisplayItems()) {
             shown.add(BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath());
         }
-        for (String id : List.of("crop_stake", "stake_tied", "tomato_seeds", "chili_pepper_seeds",
+        for (String id : List.of("crop_stake", "tomato_seeds", "chili_pepper_seeds",
                 "tomato", "chili_pepper", "ghost_pepper", "grape_stem", "grapes", "wildberry_bush", "wildberries",
                 "apple_seeds")) {
             assertTrue(shown.contains(id), "rustic:" + id + " is missing from the FARMING tab: " + shown);
         }
-        // The vines themselves have no item, so they can never appear.
+        // The tied stake and the vines themselves have no legacy item, so they can never appear.
+        assertFalse(shown.contains("stake_tied"), "stake_tied is block-only in legacy and must not be offered");
         assertFalse(shown.contains("tomato_crop"), "a vine leaked a block item into the FARMING tab");
         assertFalse(shown.contains("chili_crop"), "a vine leaked a block item into the FARMING tab");
         assertFalse(shown.contains("grape_leaves"), "a grape leaf leaked a block item into the FARMING tab");
@@ -742,11 +761,13 @@ public class RusticFarmRegistrationTest {
         assertMultiPart(tiedParts, "rustic:block/rope_attachment_n", 270, "west", "true");
         assertEquals(5, tiedParts.size(), "stake_tied multipart grew beyond the knot plus four attachments");
 
-        for (String pole : List.of("crop_stake", "stake_tied")) {
-            JsonObject itemModel = json("/assets/rustic/models/item/" + pole + ".json");
-            assertEquals("rustic:block/" + pole, itemModel.get("parent").getAsString(),
-                    pole + " item model parents the block model");
-        }
+        // Only crop_stake is placeable from an item, so only it gets an item model. stake_tied is the
+        // block-only legacy knot (no ItemBlock, no simpleBlockItem), so it has NO item model at all.
+        JsonObject stakeItemModel = json("/assets/rustic/models/item/crop_stake.json");
+        assertEquals("rustic:block/crop_stake", stakeItemModel.get("parent").getAsString(),
+                "crop_stake item model parents the block model");
+        assertNull(RusticFarmRegistrationTest.class.getResource("/assets/rustic/models/item/stake_tied.json"),
+                "stake_tied must have no item model - it is a block-only, item-less legacy block");
 
         // crop_stake drops itself; stake_tied returns the rope that turned the plain stake into a knot.
         assertEquals("rustic:crop_stake", lootFirstEntry("/data/rustic/loot_table/blocks/crop_stake.json"));

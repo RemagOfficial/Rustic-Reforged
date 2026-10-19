@@ -1,0 +1,55 @@
+{
+    "__comment": "Recovered from initial commit 7f707f5 (MrCrayfish Model Creator export). Deleted by d39bc08 during the asset cleanup; the pre-port file was the only source of the display section that makes the item render correctly, and the port's datagen diagonalCube helper recreates the geometry but has no equivalent. Texture folder updated to the 1.21 singular 'block' name and the legacy west-face uv [16,0,0,16] preserved so east/west diagonals run the same way in world space.",
+    "textures": {
+        "0": "rustic:block/clay_wall",
+        "1": "rustic:block/clay_wall_diag",
+        "particle": "rustic:block/clay_wall_diag"
+    },
+    "elements": [
+        {
+            "name": "Cube",
+            "from": [ 0.0, 0.0, 0.0 ],
+            "to": [ 16.0, 16.0, 16.0 ],
+            "faces": {
+                "north": { "texture": "#0", "uv": [ 0.0, 0.0, 16.0, 16.0 ] },
+                "east": { "texture": "#1", "uv": [ 0.0, 0.0, 16.0, 16.0 ] },
+                "south": { "texture": "#0", "uv": [ 0.0, 0.0, 16.0, 16.0 ] },
+                "west": { "texture": "#1", "uv": [ 16.0, 0.0, 0.0, 16.0 ] },
+                "up": { "texture": "#0", "uv": [ 0.0, 0.0, 16.0, 16.0 ] },
+                "down": { "texture": "#0", "uv": [ 0.0, 0.0, 16.0, 16.0 ] }
+            }
+        }
+    ],
+    "display": {
+        "gui": {
+            "rotation": [ 30, 225, 0 ],
+            "translation": [ 0, 0, 0],
+            "scale": [ 0.625, 0.625, 0.625 ]
+        },
+        "ground": {
+            "rotation": [ 0, 0, 0 ],
+            "translation": [ 0, 3, 0],
+            "scale": [ 0.25, 0.25, 0.25 ]
+        },
+        "fixed": {
+            "rotation": [ 0, 0, 0 ],
+            "translation": [ 0, 0, 0],
+            "scale": [ 0.5, 0.5, 0.5 ]
+        },
+        "thirdperson_righthand": {
+            "rotation": [ 75, 45, 0 ],
+            "translation": [ 0, 2.5, 0],
+            "scale": [ 0.375, 0.375, 0.375 ]
+        },
+        "firstperson_righthand": {
+            "rotation": [ 0, 45, 0 ],
+            "translation": [ 0, 0, 0 ],
+            "scale": [ 0.40, 0.40, 0.40 ]
+        },
+        "firstperson_lefthand": {
+            "rotation": [ 0, 225, 0 ],
+            "translation": [ 0, 0, 0 ],
+            "scale": [ 0.40, 0.40, 0.40 ]
+        }
+    }
+}

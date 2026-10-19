@@ -31,8 +31,11 @@ import java.util.function.Supplier;
  * <p>The one wrinkle the item pipeline has to know about: a {@link StakeCropBlock} is <em>never</em> given a
  * block item. Its {@code getCloneItemStack} hands back the seed, the harvest comes from its loot table and
  * it is planted by clicking a seed onto a stake - so a creative-pick or a drop of "the crop block" would be
- * wrong. Only the two pole blocks, {@link #CROP_STAKE} and {@link #STAKE_TIED}, are placeable and get a
- * block item, which is what {@link #blockItemEntries()} narrows the register down to for
+ * wrong. Only the {@link #CROP_STAKE} pole is placeable from an item and so gets a block item; the
+ * {@link #STAKE_TIED} knot reproduces legacy {@code BlockStakeTied}, which ran {@code super(mat, name, false)}
+ * and registered the block only (no {@code ItemBlock}): it is made by clicking rope onto a pole, picks as that
+ * rope and reverts to the pole on break, so it needs no item of its own. This is what
+ * {@link #blockItemEntries()} narrows the register down to for
  * {@link rustic.content.items.RusticItems}' third item loop.
  */
 public final class RusticFarmBlocks {
@@ -190,12 +193,14 @@ public final class RusticFarmBlocks {
     }
 
     /**
-     * The farm blocks that are placeable and so need a block item: the two poles and the nine self-herbs.
-     * {@link rustic.content.items.RusticItems} loops this, not {@link #entries()}, so the stake crops and the
-     * four crop-herbs are deliberately left item-less (their items are seeds and edibles, registered by hand).
+     * The farm blocks that are placeable from an item and so need a block item: the crop_stake pole and the
+     * nine self-herbs (plus the placeable vinery, bush, beehive and apple parts). {@link rustic.content.items.RusticItems}
+     * loops this, not {@link #entries()}, so the stake crops, the {@code stake_tied} knot and the four crop-herbs
+     * are deliberately left item-less - matching legacy, where {@code BlockStakeTied} registered the block only
+     * ({@code super(mat, name, false)}); its pick result and loot are the rope and it reverts to the pole on break.
      */
     public static List<DeferredHolder<Block, ? extends Block>> blockItemEntries() {
-        return List.of(CROP_STAKE, STAKE_TIED,
+        return List.of(CROP_STAKE,
                 ALOE_VERA, BLOOD_ORCHID, CHAMOMILE, COHOSH, DEATHSTALK_MUSHROOM, HORSETAIL,
                 MOONCAP_MUSHROOM, VANTA_LILY, WIND_THISTLE, GRAPE_STEM, WILDBERRY_BUSH,
                 // Phase 8: the placeable beehive and the apple tree's own parts, all giveable in creative.
@@ -206,6 +211,17 @@ public final class RusticFarmBlocks {
     public static List<DeferredBlock<HerbBlock>> herbs() {
         return List.of(ALOE_VERA, BLOOD_ORCHID, CHAMOMILE, COHOSH, DEATHSTALK_MUSHROOM, HORSETAIL,
                 MOONCAP_MUSHROOM, VANTA_LILY, WIND_THISTLE, CLOUDSBLUFF, CORE_ROOT, GINSENG, MARSH_MALLOW);
+    }
+
+    /**
+     * The nine self-herbs in the legacy {@code Herbs.init} creation order - the order 1.12.2's alchemy tab
+     * showed them in, because {@code BlockHerbBase}'s constructor registered the {@code ItemHerbBase} at the
+     * block's registry position. It differs from the register (and {@link #herbs()}) only in that wind_thistle
+     * precedes vanta_lily; the four crop-herbs are absent, they show as their {@code ItemHerbEdible} produce.
+     */
+    public static List<DeferredBlock<HerbBlock>> tabSelfHerbs() {
+        return List.of(ALOE_VERA, BLOOD_ORCHID, CHAMOMILE, COHOSH, DEATHSTALK_MUSHROOM, HORSETAIL,
+                MOONCAP_MUSHROOM, WIND_THISTLE, VANTA_LILY);
     }
 
     /**

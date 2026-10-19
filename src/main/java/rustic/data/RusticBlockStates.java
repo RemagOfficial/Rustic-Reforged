@@ -141,8 +141,10 @@ public class RusticBlockStates extends BlockStateProvider {
     // parent (a pole plus four transparent crop-face panels, hence its cutout) - ages 0 and 1 share the seedling
     // sprite and ages 2 and 3 draw the mid and ripe art, exactly as the legacy blockstate aliased age 1 onto age 0.
     //
-    // The crops deliberately get NO block item and so NO item model here - only the two poles, which are
-    // placeable, do.
+    // The crops and the tied stake deliberately get NO block item and so NO item model here - only the
+    // crop_stake pole, which is the one placeable from an inventory item, does. The stake_tied knot is made by
+    // clicking rope onto a pole, picks as that rope and reverts to the pole on break, exactly as legacy
+    // BlockStakeTied (block-only) did, so it has no item to render.
     // ------------------------------------------------------------------
     private void farmBlocks() {
         simpleBlockWithItem(RusticFarmBlocks.CROP_STAKE.get(), existing("crop_stake"));
@@ -155,7 +157,8 @@ public class RusticBlockStates extends BlockStateProvider {
                 .part().modelFile(attachment).rotationY(90).addModel().condition(StakeTiedBlock.EAST, true).end()
                 .part().modelFile(attachment).rotationY(180).addModel().condition(StakeTiedBlock.SOUTH, true).end()
                 .part().modelFile(attachment).rotationY(270).addModel().condition(StakeTiedBlock.WEST, true).end();
-        simpleBlockItem(RusticFarmBlocks.STAKE_TIED.get(), stakeTied);
+        // stake_tied has no block item (it is not in RusticFarmBlocks.blockItemEntries), so no simpleBlockItem
+        // is emitted here - matching legacy, whose BlockStakeTied registered the block only.
 
         cropCrop(RusticFarmBlocks.TOMATO_CROP, "tomato_crop");
         cropCrop(RusticFarmBlocks.CHILI_CROP, "chili_crop");
@@ -336,14 +339,19 @@ public class RusticBlockStates extends BlockStateProvider {
     private void machines() {
         simpleBlockWithItem(RusticMachineBlocks.BARREL.get(), existing("barrel"));
 
-        ModelFile cabinet = models().cubeAll(path(RusticMachineBlocks.CABINET), tex("cabinet"));
+        // Bug fix 2026-10-19 (part 4): the cabinet block model is recovered as a static asset at
+        // src/main/resources/assets/rustic/models/block/cabinet.json (the pre-port MrCrayfish export, deleted
+        // by d39bc08 during the asset cleanup). The block itself is RenderShape.ENTITYBLOCK_ANIMATED so the
+        // model file does NOT drive world rendering - the CabinetRenderer BER paints the animated body on top.
+        // What the recovered static model IS needed for is the ITEM: it carries the legacy display section
+        // (gui/ground/fixed/thirdperson/firstperson transforms) that lets the inventory slot render the closed
+        // cabinet at the correct scale, exactly as 1.12.2 did. Phase 9 S9.2's builtin/entity + ISTER route was
+        // dropped because without a display section the item rendered off-centre; the legacy parent chain both
+        // fixes the inventory look and matches what the pre-port asset already shipped.
+        ModelFile cabinet = existing("cabinet");
         getVariantBuilder(RusticMachineBlocks.CABINET.get())
                 .forAllStates(state -> ConfiguredModel.builder().modelFile(cabinet).build());
-        // Phase 9 S9.2: the cabinet item is the 3D animated body, not the cube, so its item model is builtin/entity and
-        // the CabinetBlockItemRenderer (registered via a client item extension) draws it. The world block uses the same
-        // BER (getRenderShape ENTITYBLOCK_ANIMATED); the cube model above stays only for the break particles.
-        itemModels().getBuilder(path(RusticMachineBlocks.CABINET))
-                .parent(new ModelFile.UncheckedModelFile("builtin/entity"));
+        simpleBlockItem(RusticMachineBlocks.CABINET.get(), cabinet);
 
         IntegerProperty vaseVariant = VaseBlock.VARIANT;
         getVariantBuilder(RusticMachineBlocks.VASE.get()).forAllStates(state ->
@@ -505,41 +513,19 @@ public class RusticBlockStates extends BlockStateProvider {
          * rather than [0,0,16,16], which makes the east and west faces run the diagonal the same way in
          * world space. Vanilla's cube parent instead bakes every side face upright-as-seen-from-outside,
          * so its u axis reverses between east and west and the two diagonals would face each other like
-         * a mirror. Hence the explicit element below. Only the cull faces are new; the legacy file had
-         * none, and they merely let a neighbouring block skip a face that could never be seen.
+         * a mirror. Bug fix 2026-10-19 (part 4): the pre-port hand-authored file has been recovered to
+         * src/main/resources/assets/rustic/models/block/clay_wall_diag.json (the d39bc08 cleanup had dropped
+         * it, taking its gui/ground/fixed/thirdperson/firstperson display section with it, which is why the
+         * inventory slot was mis-scaled). The datagen now references that static asset via existing() and
+         * lets the block item inherit the display transforms through the parent chain, matching 1.12.2.
          *
          * The rotation mapping still has to be reproduced: the legacy blockstate faced north at y=0,
          * east at 90, south at 180 and west at 270, while Direction#toYRot answers south=0, west=90,
          * north=180, east=270 - a constant 180 degree offset.
          */
-        ResourceLocation wall = tex("clay_wall");
-        ResourceLocation diag = tex("clay_wall_diag");
-        String name = path(RusticBlocks.CLAY_WALL_DIAG);
-        ModelFile model = diagonalCube(name, wall, diag);
+        ModelFile model = existing("clay_wall_diag");
         horizontalBlock(RusticBlocks.CLAY_WALL_DIAG.get(), model, 180);
         simpleBlockItem(RusticBlocks.CLAY_WALL_DIAG.get(), model);
-    }
-
-    /**
-     * A full cube in the 1.12.2 shape: one texture on north, south, up and down, and a second one on
-     * east and west laid out so the two faces agree in world space instead of mirroring each other.
-     */
-    private ModelFile diagonalCube(String name, ResourceLocation plain, ResourceLocation diagonal) {
-        return models().getBuilder(name)
-                .texture("plain", plain)
-                .texture("diagonal", diagonal)
-                // The legacy model used the diagonal texture for its break particles.
-                .texture("particle", diagonal)
-                .element()
-                .from(0, 0, 0).to(16, 16, 16)
-                .face(Direction.DOWN).texture("#plain").uvs(0, 0, 16, 16).cullface(Direction.DOWN).end()
-                .face(Direction.UP).texture("#plain").uvs(0, 0, 16, 16).cullface(Direction.UP).end()
-                .face(Direction.NORTH).texture("#plain").uvs(0, 0, 16, 16).cullface(Direction.NORTH).end()
-                .face(Direction.SOUTH).texture("#plain").uvs(0, 0, 16, 16).cullface(Direction.SOUTH).end()
-                .face(Direction.EAST).texture("#diagonal").uvs(0, 0, 16, 16).cullface(Direction.EAST).end()
-                // u descending as the face's own axis ascends is the horizontal flip described above.
-                .face(Direction.WEST).texture("#diagonal").uvs(16, 0, 0, 16).cullface(Direction.WEST).end()
-                .end();
     }
 
     // ------------------------------------------------------------------

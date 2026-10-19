@@ -717,19 +717,9 @@ public class RusticDecorRegistrationTest {
             assertTrue(shown.contains("rustic:" + id),
                     "the wood-family agriculture half left the FARMING tab: rustic:" + id);
         }
-
-        assertNotNull(RusticCreativeTabs.ALCHEMY.get());
-        CreativeModeTab alchemy = RusticCreativeTabs.ALCHEMY.get();
-        alchemy.buildContents(new CreativeModeTab.ItemDisplayParameters(FeatureFlags.DEFAULT_FLAGS, true, null));
-        // Phase 6 (Slice 6/7) deliberately populated the alchemy tab - the elixir default instance and the
-        // vanta oil filled bottle - so the old "still empty" guard is now a golden check of exactly that brew
-        // content. The condenser-recipe elixirs (Phase 7) will extend it then.
-        assertEquals(List.of("rustic:elixir", "rustic:fluid_bottle"), alchemy.getDisplayItems().stream()
-                        .map(stack -> BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())
-                        .filter(id -> id.startsWith("rustic:"))
-                        .sorted()
-                        .toList(),
-                "the ALCHEMY tab must hold exactly the Phase 6 brew content: the elixir default and the vanta bottle");
+        // The ALCHEMY tab's content is no longer the Phase 6 brew stub - it now carries the legacy
+        // setCreativeTab(alchemyTab) membership in legacy order - and is golden-checked, together with that
+        // order and the recipe-data sync, by RusticAlchemyTabTest.
     }
 
     // ---------------------------------------------------------------- datagen output
@@ -980,10 +970,13 @@ public class RusticDecorRegistrationTest {
     }
 
     /**
-     * The model 1.12.2 hand-authored (MrCrayfish's Model Creator, 85 lines) gives its west face
-     * {@code uv: [16,0,0,16]} while east keeps {@code [0,0,16,16]}. That is not decoration: with a plain
-     * {@code cube} parent the two faces' u axes run in opposite world directions, so the diagonal texture
-     * would mirror itself across the block. The generated model has to write the flip, and nothing else.
+     * The model 1.12.2 hand-authored (MrCrayfish's Model Creator) gives its west face
+     * {@code uv: [16,0,0,16]} while east keeps the default {@code [0,0,16,16]}. That is not decoration: with a plain
+     * {@code cube} the two faces' u axes run in opposite world directions, so the diagonal texture
+     * would mirror itself across the block. Bug-fix 2026-10-19 (part 4) recovered this legacy static verbatim
+     * into {@code src/main/resources} (with its display section, so the inventory item renders correctly) and
+     * pointed datagen at it via {@code existing()}, so the file now carries MrCrayfish's numeric texture keys
+     * and an explicit east default rather than the datagen helper's named keys and omitted east.
      */
     @Test
     public void theGeneratedDiagonalWallModelKeepsTheLegacyUvFlipOnWestOnly() {
@@ -991,10 +984,10 @@ public class RusticDecorRegistrationTest {
         JsonObject faces = model.getAsJsonArray("elements").get(0).getAsJsonObject().getAsJsonObject("faces");
 
         assertEquals(List.of(16.0D, 0.0D, 0.0D, 16.0D), numbers(faces.getAsJsonObject("west").getAsJsonArray("uv")));
-        assertFalse(faces.getAsJsonObject("east").has("uv"),
+        assertEquals(List.of(0.0D, 0.0D, 16.0D, 16.0D), numbers(faces.getAsJsonObject("east").getAsJsonArray("uv")),
                 "east must keep the default uv, or the flip cancels out");
-        assertEquals("rustic:block/clay_wall", model.getAsJsonObject("textures").get("plain").getAsString());
-        assertEquals("rustic:block/clay_wall_diag", model.getAsJsonObject("textures").get("diagonal").getAsString());
+        assertEquals("rustic:block/clay_wall", model.getAsJsonObject("textures").get("0").getAsString());
+        assertEquals("rustic:block/clay_wall_diag", model.getAsJsonObject("textures").get("1").getAsString());
         assertEquals("rustic:block/clay_wall_diag", model.getAsJsonObject("textures").get("particle").getAsString());
     }
 
