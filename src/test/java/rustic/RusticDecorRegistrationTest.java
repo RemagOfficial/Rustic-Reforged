@@ -35,6 +35,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.DoubleHighBlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -50,6 +51,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.SugarCaneBlock;
 import net.minecraft.world.level.block.CactusBlock;
+import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
@@ -195,6 +197,9 @@ public class RusticDecorRegistrationTest {
             // slab is wood(2.0F) and not a copy of the planks' properties, unlike the stairs below.
             expected.put(wood + "_slab", new Expected(SlabBlock.class, 2.0F));
             expected.put("stairs_" + wood, Expected.resistant(StairBlock.class, 2.0F));
+            // Phase 13: BlockDoorRustic set hardness 3F, Material.WOOD and SoundType.WOOD, never a resistance,
+            // so the two-argument Expected (resistance 0.0F) is its exact 1.21 restatement.
+            expected.put(wood + "_door", new Expected(DoorBlock.class, 3.0F));
             expected.put("log_" + wood, Expected.derived(RotatedPillarBlock.class, 2.0F));
             expected.put("leaves_" + wood, Expected.derived(LeavesBlock.class, 0.2F));
             expected.put("sapling_" + wood, Expected.derived(SaplingBlock.class, 0.0F));
@@ -265,6 +270,7 @@ public class RusticDecorRegistrationTest {
                 tools.put(part + wood, "axe");
             }
             tools.put(wood + "_slab", "axe");
+            tools.put(wood + "_door", "axe");
         }
         for (String suffix : List.of("", "_gold", "_silver")) {
             tools.put("chain" + suffix, "pickaxe");
@@ -368,6 +374,40 @@ public class RusticDecorRegistrationTest {
                 "a rustic item exists that is not a block item, which is a later phase's work");
     }
 
+    /**
+     * Phase 13: the two doors, the crux being that 1.12.2's {@code ItemDoor} placed a two-high block and 1.21
+     * keeps that in {@link DoubleHighBlockItem} (there is no {@code DoorItem} any more). A plain {@code BlockItem}
+     * would place only the bottom panel and leave the top missing, so this asserts the special item, the vanilla
+     * door state set the legacy {@code setDefaultState} spelled out (facing, half, hinge, open, powered), and that
+     * the generated blockstate ignores {@code POWERED} exactly as {@code BlockDoorRustic.initModel}'s
+     * {@code StateMap.Builder().ignore(BlockDoor.POWERED)} did.
+     */
+    @Test
+    public void theWoodenDoorsAreTwoHighAndIgnorePoweredLikeTheLegacyBlockDoor() {
+        for (String wood : List.of("olive", "ironwood")) {
+            Block block = rusticBlocks().get(wood + "_door");
+            assertSame(DoorBlock.class, block.getClass(), wood + "_door must be a vanilla DoorBlock");
+            Item item = block.asItem();
+            assertTrue(item instanceof DoubleHighBlockItem,
+                    wood + "_door's item must place both halves, but is " + item.getClass().getSimpleName());
+            assertEquals(wood + "_door", BuiltInRegistries.ITEM.getKey(item).getPath(), wood + " door item id");
+
+            List<String> properties = block.getStateDefinition().getProperties().stream()
+                    .map(Property::getName).sorted().toList();
+            assertEquals(List.of("facing", "half", "hinge", "open", "powered"), properties,
+                    wood + "_door lost one of the legacy door's five states");
+
+            // No generated variant may key on powered, because the state mapper ignored it.
+            JsonObject variants = json("/assets/rustic/blockstates/" + wood + "_door.json")
+                    .getAsJsonObject("variants");
+            for (Map.Entry<String, JsonElement> variant : variants.entrySet()) {
+                assertFalse(variant.getKey().contains("powered"),
+                        wood + "_door blockstate variant keys on POWERED, which the legacy StateMap ignored: "
+                                + variant.getKey());
+            }
+        }
+    }
+
     // ---------------------------------------------------------------- the numbers 1.12.2 set
 
     /**
@@ -432,7 +472,7 @@ public class RusticDecorRegistrationTest {
         }
         for (String wood : List.of("olive", "ironwood")) {
             if (id.equals("planks_" + wood) || id.equals("fence_" + wood) || id.equals("fence_gate_" + wood)
-                    || id.equals(wood + "_slab") || id.equals("stairs_" + wood)) {
+                    || id.equals(wood + "_slab") || id.equals("stairs_" + wood) || id.equals(wood + "_door")) {
                 return SoundType.WOOD;
             }
         }

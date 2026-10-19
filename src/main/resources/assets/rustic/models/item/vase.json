@@ -1,0 +1,18 @@
+{
+    "__comment": "Phase 16: the vase block item. Hand-authored (not datagen-generated) because the vanilla simpleBlockItem generator emits a single-model item with no overrides. The rustic:vase_variant ItemProperties predicate (registered in RusticClient on FMLClientSetupEvent, reading the stack's DataComponents.BLOCK_STATE variant) selects the per-variant block model, replacing the legacy per-damage ModelResourceLocation registration in BlockVase.initModel.",
+    "parent": "rustic:block/vase_0",
+    "overrides": [
+        { "predicate": { "rustic:vase_variant": 1 }, "model": "rustic:block/vase_1" },
+        { "predicate": { "rustic:vase_variant": 2 }, "model": "rustic:block/vase_2" },
+        { "predicate": { "rustic:vase_variant": 3 }, "model": "rustic:block/vase_3" },
+        { "predicate": { "rustic:vase_variant": 4 }, "model": "rustic:block/vase_4" },
+        { "predicate": { "rustic:vase_variant": 5 }, "model": "rustic:block/vase_5" },
+        { "predicate": { "rustic:vase_variant": 6 }, "model": "rustic:block/vase_6" },
+        { "predicate": { "rustic:vase_variant": 7 }, "model": "rustic:block/vase_7" },
+        { "predicate": { "rustic:vase_variant": 8 }, "model": "rustic:block/vase_8" },
+        { "predicate": { "rustic:vase_variant": 9 }, "model": "rustic:block/vase_9" },
+        { "predicate": { "rustic:vase_variant": 10 }, "model": "rustic:block/vase_10" },
+        { "predicate": { "rustic:vase_variant": 11 }, "model": "rustic:block/vase_11" },
+        { "predicate": { "rustic:vase_variant": 12 }, "model": "rustic:block/vase_12" }
+    ]
+}

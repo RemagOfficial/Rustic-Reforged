@@ -1,7 +1,0 @@
-{
-    "parent": "block/door_bottom_rh",
-    "textures": {
-        "bottom": "rustic:blocks/door_olive_lower",
-        "top": "rustic:blocks/door_olive_upper"
-    }
-}

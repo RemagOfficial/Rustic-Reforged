@@ -1,0 +1,35 @@
+{
+    "__comment": "Phase 17 S17.3: the tied-stake rope nub that sprouts toward one connected neighbour. Restored verbatim from the 1.12.2 MrCrayfish export (a truncated length-5 copy of the rope_horizontal strip geometry), only the 1.8 texture path remapped (rustic:blocks/rope_horizontal -> rustic:block/rope_horizontal). The stake_tied multipart rotates this single north-facing model to 90/180/270 for the east/south/west connections, exactly as the legacy blockstate did. No render_type: like rope_horizontal it draws an opaque rope strip.",
+    "textures": {
+        "0": "rustic:block/rope_horizontal",
+        "particle": "rustic:block/rope_horizontal"
+    },
+    "elements": [
+        {
+            "name": "Cube",
+            "from": [ 7.0, 8.0, 0.0 ],
+            "to": [ 9.0, 8.0, 5.0 ],
+            "faces": {
+                "north": { "texture": "#0", "uv": [ 0.0, 0.0, 2.0, 0.0 ] },
+                "east": { "texture": "#0", "uv": [ 0.0, 0.0, 5.0, 0.0 ] },
+                "south": { "texture": "#0", "uv": [ 0.0, 0.0, 2.0, 0.0 ] },
+                "west": { "texture": "#0", "uv": [ 0.0, 0.0, 5.0, 0.0 ] },
+                "up": { "texture": "#0", "uv": [ 0.0, 7.0, 5.0, 9.0 ], "rotation": 90 },
+                "down": { "texture": "#0", "uv": [ 0.0, 7.0, 5.0, 9.0 ], "rotation": 90 }
+            }
+        },
+        {
+            "name": "Cube",
+            "from": [ 8.0, 7.0, 0.0 ],
+            "to": [ 8.0, 9.0, 5.0 ],
+            "faces": {
+                "north": { "texture": "#0", "uv": [ 0.0, 0.0, 0.0, 2.0 ] },
+                "east": { "texture": "#0", "uv": [ 0.0, 7.0, 5.0, 9.0 ] },
+                "south": { "texture": "#0", "uv": [ 0.0, 0.0, 0.0, 2.0 ] },
+                "west": { "texture": "#0", "uv": [ 0.0, 7.0, 5.0, 9.0 ] },
+                "up": { "texture": "#0", "uv": [ 0.0, 0.0, 0.0, 5.0 ] },
+                "down": { "texture": "#0", "uv": [ 0.0, 0.0, 0.0, 5.0 ] }
+            }
+        }
+    ]
+}

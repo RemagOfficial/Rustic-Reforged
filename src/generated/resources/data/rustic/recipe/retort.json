@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "rustic_retort",
+  "key": {
+    "B": {
+      "item": "minecraft:brick"
+    },
+    "E": {
+      "item": "minecraft:bucket"
+    },
+    "I": {
+      "tag": "c:ingots/iron"
+    }
+  },
+  "pattern": [
+    " B",
+    "IE",
+    " B"
+  ],
+  "result": {
+    "count": 1,
+    "id": "rustic:retort"
+  }
+}

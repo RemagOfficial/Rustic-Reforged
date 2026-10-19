@@ -1,0 +1,28 @@
+{
+  "credit": "Rustic olive fruit (Dynamic Trees tree-pack fruit block). Dynamic Trees ships its own fruit as static blockstate + block models (see dynamictrees:blockstates/apple.json); the Rustic olive and ironberry fruits are registered by Dynamic Trees at runtime under rustic:olives / rustic:ironberries, so their render assets must be authored here too - otherwise Minecraft falls back to a missing-texture cube. The legacy olive cluster sprite is drawn as a cutout cross so the fruit reads as a hanging cluster on the branch; the four growth ages share this one model (the per-age collision still grows, driven by trees/rustic/fruits/olives.json block_shapes).",
+  "render_type": "cutout",
+  "textures": {
+    "cross": "rustic:item/olives",
+    "particle": "rustic:item/olives"
+  },
+  "elements": [
+    {
+      "from": [0.8, 0.0, 8.0],
+      "to": [15.2, 14.4, 8.0],
+      "rotation": { "origin": [8.0, 8.0, 8.0], "axis": "y", "angle": 45.0 },
+      "faces": {
+        "north": { "uv": [0.0, 0.0, 16.0, 16.0], "texture": "#cross" },
+        "south": { "uv": [0.0, 0.0, 16.0, 16.0], "texture": "#cross" }
+      }
+    },
+    {
+      "from": [8.0, 0.0, 0.8],
+      "to": [8.0, 14.4, 15.2],
+      "rotation": { "origin": [8.0, 8.0, 8.0], "axis": "y", "angle": 45.0 },
+      "faces": {
+        "west": { "uv": [0.0, 0.0, 16.0, 16.0], "texture": "#cross" },
+        "east": { "uv": [0.0, 0.0, 16.0, 16.0], "texture": "#cross" }
+      }
+    }
+  ]
+}

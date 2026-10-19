@@ -1,8 +1,9 @@
 {
-    "__comment": "Model generated using MrCrayfish's Model Creator (http://mrcrayfish.com/modelcreator/)",
+    "__comment": "Phase 17 S17.1: vinery rope vine (a 4x4 bar spanning z along the rope axis). Was a never-converted 1.8 Bucket-B file; texture path rustic:blocks/grape_vine -> rustic:block/grape_vine, added cutout so the transparent margins stay transparent. Untinted (matches legacy). Part of the restored grape_leaves multipart assembly (rotated y=90 for the x axis).",
+    "render_type": "cutout",
     "textures": {
-	"1": "rustic:blocks/grape_vine",
-	"particle": "rustic:blocks/grape_vine"
+	"1": "rustic:block/grape_vine",
+	"particle": "rustic:block/grape_vine"
     },
     "elements": [
         {

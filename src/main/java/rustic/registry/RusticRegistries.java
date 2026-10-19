@@ -1,5 +1,6 @@
 package rustic.registry;
 
+import net.minecraft.advancements.critereon.ItemSubPredicate;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.crafting.RecipeSerializer;
@@ -14,6 +15,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import rustic.Rustic;
+import rustic.content.advancements.AlcoholItemPredicate;
 import rustic.content.crafting.BrewingBarrelRecipe;
 import rustic.content.crafting.CondenserRecipe;
 import rustic.content.crafting.CrushingTubRecipe;
@@ -71,6 +73,17 @@ public final class RusticRegistries {
     public static final DeferredRegister<RecipeType<?>> RECIPE_TYPES =
             DeferredRegister.create(Registries.RECIPE_TYPE, Rustic.MODID);
 
+    /**
+     * Custom {@link ItemSubPredicate}s referenced from advancement JSON. NeoForge proves this vanilla registry is
+     * forgeable (it registers {@code neoforge:item_ability} here the same way), so {@code rustic:alcohol} - the
+     * booze-quality predicate the legacy advancement tree used - lands as a {@link ItemSubPredicate.Type} codec entry.
+     */
+    public static final DeferredRegister<ItemSubPredicate.Type<?>> ITEM_SUB_PREDICATES =
+            DeferredRegister.create(Registries.ITEM_SUB_PREDICATE_TYPE, Rustic.MODID);
+
+    public static final DeferredHolder<ItemSubPredicate.Type<?>, ItemSubPredicate.Type<AlcoholItemPredicate>> ALCOHOL_PREDICATE =
+            ITEM_SUB_PREDICATES.register("alcohol", () -> AlcoholItemPredicate.TYPE);
+
     private static ResourceLocation machineRecipe(String name) {
         return ResourceLocation.fromNamespaceAndPath(Rustic.MODID, name);
     }
@@ -121,6 +134,7 @@ public final class RusticRegistries {
         FLUIDS.register(modEventBus);
         RECIPE_SERIALIZERS.register(modEventBus);
         RECIPE_TYPES.register(modEventBus);
+        ITEM_SUB_PREDICATES.register(modEventBus);
     }
 
     private RusticRegistries() {

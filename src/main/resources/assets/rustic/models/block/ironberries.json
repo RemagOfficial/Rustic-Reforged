@@ -1,0 +1,28 @@
+{
+  "credit": "Rustic ironberry fruit (Dynamic Trees tree-pack fruit block). Same reasoning as rustic:block/olives: Dynamic Trees registers rustic:ironberries at runtime and ships no asset for it, so the render model is authored here to replace the missing-texture cube fallback. The legacy ironberry cluster sprite is drawn as a cutout cross; the four growth ages share this one model (per-age collision is driven by trees/rustic/fruits/ironberries.json block_shapes).",
+  "render_type": "cutout",
+  "textures": {
+    "cross": "rustic:item/ironberries",
+    "particle": "rustic:item/ironberries"
+  },
+  "elements": [
+    {
+      "from": [0.8, 0.0, 8.0],
+      "to": [15.2, 14.4, 8.0],
+      "rotation": { "origin": [8.0, 8.0, 8.0], "axis": "y", "angle": 45.0 },
+      "faces": {
+        "north": { "uv": [0.0, 0.0, 16.0, 16.0], "texture": "#cross" },
+        "south": { "uv": [0.0, 0.0, 16.0, 16.0], "texture": "#cross" }
+      }
+    },
+    {
+      "from": [8.0, 0.0, 0.8],
+      "to": [8.0, 14.4, 15.2],
+      "rotation": { "origin": [8.0, 8.0, 8.0], "axis": "y", "angle": 45.0 },
+      "faces": {
+        "west": { "uv": [0.0, 0.0, 16.0, 16.0], "texture": "#cross" },
+        "east": { "uv": [0.0, 0.0, 16.0, 16.0], "texture": "#cross" }
+      }
+    }
+  ]
+}

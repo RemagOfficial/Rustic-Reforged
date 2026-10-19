@@ -1,0 +1,10 @@
+{
+    "__comment": "Phase 16: vase variant 10 (alt model white ceramic w/ blue pattern). Child of vase_1 geometry, numeric-key texture remap onto variant 10 art (see vase_6.json comment for the upstream key-mismatch bug).",
+    "parent": "rustic:block/vase_1",
+    "textures": {
+        "0": "rustic:block/vases/vase_side_10",
+        "1": "rustic:block/vases/vase_top_10",
+        "2": "rustic:block/vases/vase_bottom_10",
+        "particle": "rustic:block/vases/vase_side_10"
+    }
+}

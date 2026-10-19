@@ -25,9 +25,10 @@ import rustic.Rustic;
  * {@code ironskin}/<wbr>{@code fullmetal} spelling 1.12.2 used, because those names appear in elixir and
  * booze NBT/component payloads and the description-key {@code effect.rustic.*} lang entries.
  *
- * <p>Deferred to Phase 9: the status-icon sprites (legacy {@code setIconIndex} over
- * {@code rustic:textures/gui/potion_icons.png}). 1.21 assigns effect icons through the client-extensions
- * API, not on the effect object, so nothing here references the icon sheet yet.
+ * <p>Status-icon sprites landed in Phase 17 S17.5: the legacy {@code setIconIndex} grid over
+ * {@code rustic:textures/gui/potion_icons.png} is reproduced by {@code RusticMobEffectIcons}, registered for every
+ * effect below in {@code RusticClient.registerMobEffectExtensions} (1.21 assigns effect icons through the
+ * client-extensions API, not on the effect object, so nothing here references the icon sheet directly).
  */
 public final class RusticMobEffects {
 

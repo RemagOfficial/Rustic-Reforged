@@ -1,8 +1,9 @@
 {
-    "__comment": "Model generated using MrCrayfish's Model Creator (http://mrcrayfish.com/modelcreator/)",
+    "__comment": "Phase 17 S17.1: vinery side-leaf arm (distance 1, a 10x10 bar spanning z). Was a never-converted 1.8 Bucket-B file; texture path blocks/leaves_oak -> minecraft:block/oak_leaves, added cutout_mipped like vanilla leaves. Faces keep tintindex 0 so the biome foliage tint RusticClient registers for GRAPE_LEAVES colours them. Part of the restored grape_leaves multipart assembly (rotated y=90 for the x axis).",
+    "render_type": "cutout_mipped",
     "textures": {
-        "0": "blocks/leaves_oak",
-	"particle": "blocks/leaves_oak"
+        "0": "minecraft:block/oak_leaves",
+	"particle": "minecraft:block/oak_leaves"
     },
     "elements": [
         {

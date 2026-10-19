@@ -1,7 +1,8 @@
 {
-    "__comment": "Model generated using MrCrayfish's Model Creator (http://mrcrayfish.com/modelcreator/)",
+    "__comment": "Phase 17 S17.1: ripe grape cluster (two crossed 16x16 quads rotated 45 deg, hanging below the vine). Was a never-converted 1.8 Bucket-B file; texture path rustic:blocks/grapes -> rustic:block/grapes, added cutout for the transparent margins. Untinted (matches legacy). Part of the restored grape_leaves multipart assembly, shown only when grapes=true.",
+    "render_type": "cutout",
     "textures": {
-        "0": "rustic:blocks/grapes"
+        "0": "rustic:block/grapes"
     },
     "elements": [
         {

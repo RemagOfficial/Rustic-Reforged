@@ -80,8 +80,10 @@ public class RusticBlockTags extends BlockTagsProvider {
         // Material.ROCK so they take the pickaxe. None declared a harvest level, so all still drop by hand.
         tag(BlockTags.MINEABLE_WITH_AXE).add(RusticMachineBlocks.LIQUID_BARREL.get(),
                 RusticMachineBlocks.CRUSHING_TUB.get(), RusticMachineBlocks.BREWING_BARREL.get());
+        // Phase 12: both retorts were also Material.ROCK (hardness 2, SoundType.STONE), so they join the pickaxe set.
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(RusticMachineBlocks.EVAPORATING_BASIN.get(),
-                RusticMachineBlocks.CONDENSER.get(), RusticMachineBlocks.CONDENSER_ADVANCED.get());
+                RusticMachineBlocks.CONDENSER.get(), RusticMachineBlocks.CONDENSER_ADVANCED.get(),
+                RusticMachineBlocks.RETORT.get(), RusticMachineBlocks.RETORT_ADVANCED.get());
 
         // Phase 5 poles: both stake poles were Material.WOOD with isToolEffective("axe"), so they take the axe
         // tag. The crops themselves are hardness-0 plants broken instantly and belong to no mineable tag.
@@ -112,6 +114,11 @@ public class RusticBlockTags extends BlockTagsProvider {
             tag(BlockTags.WOODEN_SLABS).add(wood.slab().get());
             tag(BlockTags.STAIRS).add(wood.stairs().get());
             tag(BlockTags.WOODEN_STAIRS).add(wood.stairs().get());
+            // Phase 13: the door. It already reaches mineable/axe through decorBlocks(), but the vanilla
+            // class tags are separate - other mods' recipes and the "door" advancements read wooden_doors,
+            // and it is a subset of the plain doors tag, exactly how vanilla sorts its doors.
+            tag(BlockTags.DOORS).add(wood.door().get());
+            tag(BlockTags.WOODEN_DOORS).add(wood.door().get());
         }
 
         // Phase 8: the apple tree's parts join the wood family in the class tags - vanilla leaf decay and other
@@ -122,5 +129,9 @@ public class RusticBlockTags extends BlockTagsProvider {
                 .add(RusticFarmBlocks.BEEHIVE.get(), RusticFarmBlocks.APPLE_SAPLING.get(), RusticFarmBlocks.APPLE_LEAVES.get());
         tag(BlockTags.SAPLINGS).add(RusticFarmBlocks.APPLE_SAPLING.get());
         tag(BlockTags.LEAVES).add(RusticFarmBlocks.APPLE_LEAVES.get());
+
+        // Phase 15: the apiary was Material.WOOD (hardness 1, SoundType.WOOD) in 1.12.2, so it takes the axe like
+        // the beehive and the other wooden machines. No harvest level was declared, so it drops by hand.
+        tag(BlockTags.MINEABLE_WITH_AXE).add(RusticMachineBlocks.APIARY.get());
     }
 }

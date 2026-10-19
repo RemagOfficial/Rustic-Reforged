@@ -81,8 +81,8 @@ import java.util.concurrent.CompletableFuture;
  * <p><b>The JSON half.</b> 1.12.2 kept its recipes in two places: {@code Recipes.init()} and 43 data-driven files
  * under {@code assets/rustic/recipes/}. Porting only the first of those is what left the iron and gold mounts, the
  * Rustic wood slabs/stairs/fences, the workstations, the rope, the vase and the gargoyle with no recipe at all -
- * every one of those files whose result this build registers is now emitted here too. The five whose results do not
- * exist yet ({@code apiary}, {@code retort}, {@code retort_advanced} and the two door rows) wait for the phases
+ * every one of those files whose result this build registers is now emitted here too. The three whose results do not
+ * exist yet ({@code apiary}, {@code retort} and {@code retort_advanced}) wait for the phases
  * that add those blocks. The one recipe that was still hand-written in {@code src/main/resources}, the Patchouli
  * almanac, is emitted here too - see {@link #addAlmanac(RecipeOutput)}.
  */
@@ -311,6 +311,13 @@ public class RusticRecipeProvider extends RecipeProvider {
                     .pattern("SPS").pattern("SPS")
                     .unlockedBy(getHasName(planks), has(planks))
                     .save(out, rl(wood + "_fence_gate"));
+            // Phase 13: the door. 1.12.2's olive_door.json / ironwood_door.json were six of the wood's own
+            // planks in three rows of two, yielding three doors. The legacy result id (olive_door) is kept.
+            ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, family.door().get(), 3)
+                    .define('P', planks)
+                    .pattern("PP").pattern("PP").pattern("PP")
+                    .unlockedBy(getHasName(planks), has(planks))
+                    .save(out, rl(wood + "_door"));
         }
     }
 
@@ -427,6 +434,29 @@ public class RusticRecipeProvider extends RecipeProvider {
                 .group("rustic_condenser")
                 .unlockedBy("has_nether_brick", has(Items.NETHER_BRICK))
                 .save(out, rl("condenser_advanced"));
+        // Phase 12: the retort flank blocks. Legacy gave them their OWN shaped recipe (they were never an
+        // ingredient of the condenser recipes above - the plan's assumption there was wrong, corrected against the
+        // real 1.12.2 assets/rustic/recipes/retort*.json). Both tiers share the " B"/"IE"/" B" pattern and differ
+        // only in the brick: basic uses minecraft:brick, advanced uses netherbrick. ingotIron -> c:ingots/iron.
+        ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, RusticMachineBlocks.RETORT.get())
+                .define('B', Items.BRICK).define('E', Items.BUCKET).define('I', Tags.Items.INGOTS_IRON)
+                .pattern(" B").pattern("IE").pattern(" B")
+                .group("rustic_retort")
+                .unlockedBy("has_brick", has(Items.BRICK))
+                .save(out, rl("retort"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, RusticMachineBlocks.RETORT_ADVANCED.get())
+                .define('B', Items.NETHER_BRICK).define('E', Items.BUCKET).define('I', Tags.Items.INGOTS_IRON)
+                .pattern(" B").pattern("IE").pattern(" B")
+                .group("rustic_retort")
+                .unlockedBy("has_nether_brick", has(Items.NETHER_BRICK))
+                .save(out, rl("retort_advanced"));
+        // Phase 15: the apiary. Legacy recipes/apiary.json was a plain log-frame: six logs (ore_dict logWood) around
+        // two planks (plankWood) in the middle row, one result. logWood -> ItemTags.LOGS, plankWood -> ItemTags.PLANKS.
+        ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, RusticMachineBlocks.APIARY.get())
+                .define('L', ItemTags.LOGS).define('P', ItemTags.PLANKS)
+                .pattern("LLL").pattern("P P").pattern("LLL")
+                .unlockedBy("has_planks", has(ItemTags.PLANKS))
+                .save(out, rl("apiary"));
     }
 
     // ------------------------------------------------------------------

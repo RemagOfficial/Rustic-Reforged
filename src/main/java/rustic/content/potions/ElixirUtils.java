@@ -2,6 +2,7 @@ package rustic.content.potions;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FastColor;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.ItemStack;
@@ -86,6 +87,22 @@ public final class ElixirUtils {
             return NO_EFFECTS_COLOR;
         }
         return effects.get(0).getEffect().value().getColor();
+    }
+
+    /**
+     * The item-colour handler result for one tint layer of {@code models/item/elixir.json}, in the ARGB form the
+     * 1.21 renderer expects. Index 0 is the {@code elixir_overlay} liquid mask, coloured by {@link #getColor};
+     * index 1 is the glass bottle, left white - exactly the legacy {@code ItemElixir.colorMultiplier} split.
+     *
+     * <p><b>Why {@link FastColor.ARGB32#opaque(int)}.</b> 1.12.2 ignored the alpha byte of the returned colour,
+     * so the legacy {@code 0xFFFFFF} literal rendered fine. 1.21 honours it: a raw {@code 0xRRGGBB} (alpha
+     * {@code 0x00}) makes the layer fully transparent, and since {@link #getColor} can itself return the
+     * alpha-less {@link #NO_EFFECTS_COLOR} fallback, both layers went clear and the elixir rendered invisible.
+     * Vanilla's own {@code ItemColors} wraps every tint the same way (see the {@code POTION}/{@code SPAWN_EGG}
+     * handlers), so we force opacity on both branches here.
+     */
+    public static int getTint(ItemStack stack, int tintIndex) {
+        return FastColor.ARGB32.opaque(tintIndex == 0 ? getColor(stack) : 0xFFFFFF);
     }
 
     // ------------------------------------------------------------------ vanta oil

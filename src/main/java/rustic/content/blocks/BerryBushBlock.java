@@ -49,9 +49,11 @@ import java.util.function.Supplier;
  * bone meal" clause still lets bonemeal reach the block; the legacy {@code grow() -> growOutward} spread at full
  * age is {@link #growOutward}. The bush is walk-through (the legacy {@code NULL} collision box).
  *
- * <p>Deferred per the phase boundary: the biome worldgen that seeded bushes is Phase 8, the berry recipes are
- * Phase 7, and the multi-element bush model with its per-age berry overlay and the {@code IColoredBlock} foliage
- * tint are Phase 9 - so the blockstate maps every age to one placeholder cross here.
+ * <p>Phase 17 S17.2 restored the two deferred visuals together: the biome foliage tint the legacy {@code IColoredBlock}
+ * applied is registered for this block in {@code RusticClient}, and the blockstate now draws the real 1.12.2 base model
+ * (log stem over a tintindex-1 leaf cube) for every age. The legacy {@code berries=true} berry overlays stay out on
+ * purpose - that variant was never reachable in 1.12.2 either, because the state container here (as there) declares
+ * only {@code AGE 0..5}.
  */
 public class BerryBushBlock extends BushBlock implements BonemealableBlock {
 

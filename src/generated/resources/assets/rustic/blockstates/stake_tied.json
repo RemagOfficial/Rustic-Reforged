@@ -1,52 +1,44 @@
 {
-  "variants": {
-    "east=false,north=false,south=false,west=false": {
-      "model": "rustic:block/stake_tied"
+  "multipart": [
+    {
+      "apply": {
+        "model": "rustic:block/stake_tied"
+      }
     },
-    "east=false,north=false,south=false,west=true": {
-      "model": "rustic:block/stake_tied"
+    {
+      "apply": {
+        "model": "rustic:block/rope_attachment_n"
+      },
+      "when": {
+        "north": "true"
+      }
     },
-    "east=false,north=false,south=true,west=false": {
-      "model": "rustic:block/stake_tied"
+    {
+      "apply": {
+        "model": "rustic:block/rope_attachment_n",
+        "y": 90
+      },
+      "when": {
+        "east": "true"
+      }
     },
-    "east=false,north=false,south=true,west=true": {
-      "model": "rustic:block/stake_tied"
+    {
+      "apply": {
+        "model": "rustic:block/rope_attachment_n",
+        "y": 180
+      },
+      "when": {
+        "south": "true"
+      }
     },
-    "east=false,north=true,south=false,west=false": {
-      "model": "rustic:block/stake_tied"
-    },
-    "east=false,north=true,south=false,west=true": {
-      "model": "rustic:block/stake_tied"
-    },
-    "east=false,north=true,south=true,west=false": {
-      "model": "rustic:block/stake_tied"
-    },
-    "east=false,north=true,south=true,west=true": {
-      "model": "rustic:block/stake_tied"
-    },
-    "east=true,north=false,south=false,west=false": {
-      "model": "rustic:block/stake_tied"
-    },
-    "east=true,north=false,south=false,west=true": {
-      "model": "rustic:block/stake_tied"
-    },
-    "east=true,north=false,south=true,west=false": {
-      "model": "rustic:block/stake_tied"
-    },
-    "east=true,north=false,south=true,west=true": {
-      "model": "rustic:block/stake_tied"
-    },
-    "east=true,north=true,south=false,west=false": {
-      "model": "rustic:block/stake_tied"
-    },
-    "east=true,north=true,south=false,west=true": {
-      "model": "rustic:block/stake_tied"
-    },
-    "east=true,north=true,south=true,west=false": {
-      "model": "rustic:block/stake_tied"
-    },
-    "east=true,north=true,south=true,west=true": {
-      "model": "rustic:block/stake_tied"
+    {
+      "apply": {
+        "model": "rustic:block/rope_attachment_n",
+        "y": 270
+      },
+      "when": {
+        "west": "true"
+      }
     }
-  }
+  ]
 }

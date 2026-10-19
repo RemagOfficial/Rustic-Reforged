@@ -4,9 +4,13 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -21,6 +25,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -45,10 +50,17 @@ import java.util.function.Supplier;
  *   <li>{@code canBlockStay}'s "on soil or on another of myself" rule becomes {@link #canSurvive}, which
  *   is also what {@code BushBlock.updateShape} re-checks, so a vine whose support is removed reverts to a
  *   stake through {@link #updateShape} rather than vanishing;</li>
- *   <li>{@code breakBlock}'s "leave a stake behind" is {@link #playerWillDestroy}, the 1.21 hook whose
- *   non-air return value replaces the broken cell;</li>
+ *   <li>{@code breakBlock}'s "leave a stake behind" is {@link #onDestroyedByPlayer}, the hook that is
+ *   actually responsible for the removal ({@code ServerPlayerGameMode#destroyBlock} ignores whatever
+ *   {@code playerWillDestroy} returns - read from the sources jar), so the override re-places the stake
+ *   once the super call has cleared the cell;</li>
  *   <li>{@code getItem}/{@code getSeed} pick-block is {@link #getCloneItemStack}, which hands back the
  *   seed item so the crop is never given in creative form.</li>
+ *   <li>Divergence, at the user's request rather than legacy: bone meal never harvests the column and
+ *   treats it as one plant - a click advances <em>every</em> unripe cell of the column with one shared
+ *   growth roll, and once the whole column is ripe the same click force-climbs one stake (skipping the
+ *   climb's dice roll), while every other held item still harvests as the legacy {@code tryHarvest} did.
+ *   See {@link #useItemOn} and {@link #performBonemeal}.</li>
  * </ul>
  *
  * <p>The seed, crop and stake references are {@link Supplier}s rather than direct fields: the crop, its
@@ -148,7 +160,9 @@ public abstract class StakeCropBlock extends BushBlock implements BonemealableBl
 
     @Override
     protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        // 1.12.2 gave the foliage the pole's thin collision box and was not passable.
+        // 1.12.2 gave the foliage the pole's thin collision box and was not passable. The box alone would
+        // read as isSolid() (full height hits calculateSolid's ysize bar) and revert the farmland under the
+        // bottom vine, so the family registers on crop().forceSolidOff() - stakeCrop() - instead.
         return CROP_COLLISION;
     }
 
@@ -206,13 +220,29 @@ public abstract class StakeCropBlock extends BushBlock implements BonemealableBl
     }
 
     /**
-     * 1.12.2's {@code canBlockStay}: lit enough, and standing either on soil that accepts the plant or on
-     * another block of the same vine (the column). The soil answer is the NeoForge
+     * 1.12.2's plant gate in {@code BlockCropStake.onBlockActivated}: clicking a seed onto a stake only needed
+     * the soil <em>under the stake</em> to accept the vine ({@code pos.down().canSustainPlant(crop)}) - there
+     * was no light term at placement, so a vine could be planted at night or in a dark greenhouse. Kept apart
+     * from {@link #canSurvive} (which adds the legacy {@code canBlockStay} light rule the ongoing vine must
+     * meet), because folding the light check into planting is what stopped a seed clicking onto a stake in
+     * dim light from taking - a divergence from the legacy block.
+     */
+    public boolean canBePlanted(LevelReader level, BlockPos pos) {
+        BlockPos belowPos = pos.below();
+        BlockState below = level.getBlockState(belowPos);
+        TriState soil = below.canSustainPlant(level, belowPos, Direction.UP, this.defaultBlockState());
+        return soil.isDefault() ? below.getBlock() instanceof net.minecraft.world.level.block.FarmBlock : soil.isTrue();
+    }
+
+    /**
+     * 1.12.2's {@code canBlockStay}: lit enough - or open to the sky, the legacy {@code || canSeeSky}
+     * branch that kept an unlit night column alive - and standing either on soil that accepts the plant
+     * or on another block of the same vine (the column). The soil answer is the NeoForge
      * {@code canSustainPlant} {@link TriState}, exactly as {@code BushBlock#canSurvive} reads it.
      */
     @Override
     public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
-        if (level.getRawBrightness(pos, 0) < 8) {
+        if (level.getRawBrightness(pos, 0) < 8 && !level.canSeeSky(pos)) {
             return false;
         }
         BlockPos belowPos = pos.below();
@@ -247,12 +277,20 @@ public abstract class StakeCropBlock extends BushBlock implements BonemealableBl
 
     /**
      * 1.12.2's {@code breakBlock}: after a player breaks the vine the cell becomes a stake again, ready to
-     * be replanted, rather than air. A non-air return from {@code playerWillDestroy} is the 1.21 form of
-     * that exact behaviour.
+     * be replanted, rather than air. NeoForge's {@code onDestroyedByPlayer} is the hook actually
+     * responsible for the removal - {@code ServerPlayerGameMode#destroyBlock} calls it after
+     * {@code playerWillDestroy}, and nothing in the destruction path consumes any state that hook returns
+     * (verified against the sources jar, both overloads) - so the stake is re-placed here once the super
+     * call has cleared the cell, on both sides because the client predicts the break.
      */
     @Override
-    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
-        return stake().defaultBlockState();
+    public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player,
+            boolean willHarvest, FluidState fluid) {
+        boolean removed = super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
+        if (removed) {
+            level.setBlock(pos, stake().defaultBlockState(), Block.UPDATE_ALL);
+        }
+        return removed;
     }
 
     /** 1.12.2's {@code getItem}/{@code getSeed} pick result: the seed item, never the crop block. */
@@ -262,11 +300,139 @@ public abstract class StakeCropBlock extends BushBlock implements BonemealableBl
     }
 
     // ------------------------------------------------------------------
-    // Bonemeal - 1.12.2's IGrowable, translated onto the three-method BonemealableBlock interface.
+    // Harvest - 1.12.2's onBlockActivated/tryHarvest, split across the two 1.21 empty-hand / with-item
+    // hooks exactly as BerryBushBlock does. A right-click on any vine of a ripe column picks every ripe
+    // vine in that column (the legacy walk up and down the same-crop stack), not just the clicked cell.
+    // ------------------------------------------------------------------
+
+    /**
+     * 1.12.2's {@code onBlockActivated} with an empty hand: harvest a ripe vine in the clicked column.
+     * Bone meal in the main hand stands the harvest down (the divergence lives in {@link #useItemOn} /
+     * {@link #performBonemeal}), so the click reaches the bone meal path instead of being eaten here.
+     */
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+        if (isHoldingBonemeal(player)) {
+            return InteractionResult.PASS;
+        }
+        if (!hasRipeCrop(level, pos)) {
+            return InteractionResult.PASS;
+        }
+        if (!level.isClientSide) {
+            harvestColumn(level, pos, player);
+        }
+        return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    /**
+     * 1.12.2's {@code onBlockActivated} ran {@code tryHarvest} with <em>any</em> held item, bone meal
+     * included. The port deliberately diverges on the bone meal: it never harvests - the click passes to
+     * the {@link BonemealableBlock} path, where it ripens every unripe cell of the column at once (one
+     * plant, one roll) and, once the whole column is ripe, force-climbs one stake per click
+     * ({@link #performBonemeal}). Every other item still harvests the ripe column exactly like the
+     * legacy {@code tryHarvest} did.
+     */
+    @Override
+    protected ItemInteractionResult useItemOn(
+            ItemStack stack,
+            BlockState state,
+            Level level,
+            BlockPos pos,
+            Player player,
+            InteractionHand hand,
+            BlockHitResult hit
+    ) {
+        if (stack.is(Items.BONE_MEAL)) {
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+        if (!hasRipeCrop(level, pos)) {
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+        if (!level.isClientSide) {
+            harvestColumn(level, pos, player);
+        }
+        return ItemInteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    /**
+     * 1.12.2's ripe guard for a click, widened to the whole column: the clicked cell or any same-vine block
+     * directly above or below it counts, so one click on any block of a ripe column harvests the column.
+     */
+    private boolean hasRipeCrop(Level level, BlockPos pos) {
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos(pos.getX(), pos.getY(), pos.getZ());
+        for (int y = pos.getY(); y < level.getHeight(); y++) {
+            cursor.setY(y);
+            BlockState state = level.getBlockState(cursor);
+            if (!state.is(this)) {
+                break;
+            }
+            if (getAge(state) >= getMaxAge()) {
+                return true;
+            }
+        }
+        for (int y = pos.getY() - 1; y >= level.getMinBuildHeight(); y--) {
+            cursor.setY(y);
+            BlockState state = level.getBlockState(cursor);
+            if (!state.is(this)) {
+                break;
+            }
+            if (getAge(state) >= getMaxAge()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 1.12.2's {@code onBlockActivated} column walk - up to the world ceiling and back down to the floor,
+     * stopping at the first block that is not this vine, picking every ripe cell on the way.
+     */
+    private void harvestColumn(Level level, BlockPos pos, Player player) {
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos(pos.getX(), pos.getY(), pos.getZ());
+        for (int y = pos.getY(); y < level.getHeight(); y++) {
+            cursor.setY(y);
+            BlockState state = level.getBlockState(cursor);
+            if (!state.is(this)) {
+                break;
+            }
+            tryHarvest(level, cursor, state, player);
+        }
+        for (int y = pos.getY() - 1; y >= level.getMinBuildHeight(); y--) {
+            cursor.setY(y);
+            BlockState state = level.getBlockState(cursor);
+            if (!state.is(this)) {
+                break;
+            }
+            tryHarvest(level, cursor, state, player);
+        }
+    }
+
+    /**
+     * 1.12.2's {@code tryHarvest}: a ripe cell resets to {@code getMaxAge() - 1} - not to a seed - so the vine
+     * has to ripen once more before it can be picked again (the almanac's "broken vines will have to grow
+     * back"), and hands the player {@link #getCrop(RandomSource)}, dropping it on the ground when the
+     * inventory is full; creative players pick without filling their inventory, like {@code BerryBushBlock}.
+     */
+    private void tryHarvest(Level level, BlockPos pos, BlockState state, Player player) {
+        if (getAge(state) < getMaxAge()) {
+            return;
+        }
+        level.setBlock(pos, getStateForAge(getMaxAge() - 1), Block.UPDATE_ALL);
+        ItemStack stack = new ItemStack(getCrop(level.getRandom()));
+        if (!player.getAbilities().instabuild && !player.getInventory().add(stack)) {
+            player.drop(stack, false);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Bonemeal - 1.12.2's IGrowable, translated onto the three-method BonemealableBlock interface, plus
+    // the user-requested divergence that lets a ripe vine be force-climbed instead of harvested.
     // ------------------------------------------------------------------
     @Override
     public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state) {
-        return !isMaxAge(state);
+        // The column is one plant: the target is valid while ANY cell still grows, not just the clicked
+        // one, and at full ripeness only while there is a stake to climb.
+        return hasUnripeCrop(level, pos) || climbTarget(level, pos) != null;
     }
 
     @Override
@@ -276,11 +442,113 @@ public abstract class StakeCropBlock extends BushBlock implements BonemealableBl
 
     @Override
     public void performBonemeal(ServerLevel level, RandomSource random, BlockPos pos, BlockState state) {
-        int target = getAge(state) + net.minecraft.util.Mth.nextInt(random, 2, 5);
-        if (target > getMaxAge()) {
-            target = getMaxAge();
+        if (hasUnripeCrop(level, pos)) {
+            // User-requested "one plant" feel (diverges from 1.12.2, which grew only the clicked cell):
+            // one shared 2..5 roll - the legacy grow() jump - applied to every unripe cell of the column.
+            int jump = net.minecraft.util.Mth.nextInt(random, 2, 5);
+            BlockPos.MutableBlockPos cursor =
+                    new BlockPos.MutableBlockPos(pos.getX(), pos.getY(), pos.getZ());
+            for (int y = pos.getY(); y < level.getHeight(); y++) {
+                cursor.setY(y);
+                BlockState cell = level.getBlockState(cursor);
+                if (!cell.is(this)) {
+                    break;
+                }
+                if (!isMaxAge(cell)) {
+                    level.setBlock(cursor, getStateForAge(Math.min(getAge(cell) + jump, getMaxAge())),
+                            Block.UPDATE_CLIENTS);
+                }
+            }
+            for (int y = pos.getY() - 1; y >= level.getMinBuildHeight(); y--) {
+                cursor.setY(y);
+                BlockState cell = level.getBlockState(cursor);
+                if (!cell.is(this)) {
+                    break;
+                }
+                if (!isMaxAge(cell)) {
+                    level.setBlock(cursor, getStateForAge(Math.min(getAge(cell) + jump, getMaxAge())),
+                            Block.UPDATE_CLIENTS);
+                }
+            }
+            return;
         }
-        level.setBlock(pos, getStateForAge(target), Block.UPDATE_CLIENTS);
+        // Divergence from 1.12.2 (where bone meal simply harvested a ripe vine): a click on the column
+        // whose ripe top can climb converts the stake above right now, skipping the dice roll that the
+        // random-tick climb rides. One guaranteed block of climb per bone meal - the item consumption and
+        // the growth particles come from {@code BoneMealItem.applyBonemeal} itself, and no sound is
+        // played, matching BerryBushBlock/HerbBlock.
+        BlockPos source = climbTarget(level, pos);
+        if (source == null) {
+            return;
+        }
+        level.setBlock(source.above(), getStateForAge(0), Block.UPDATE_ALL);
+    }
+
+    /**
+     * True while any cell of the clicked vine column is still growing. The column is the contiguous run
+     * of this vine above and below the click - the same walk {@link #hasRipeCrop} makes - so a bone meal
+     * click on one cell sees the whole plant.
+     */
+    private boolean hasUnripeCrop(LevelReader level, BlockPos clicked) {
+        BlockPos.MutableBlockPos cursor =
+                new BlockPos.MutableBlockPos(clicked.getX(), clicked.getY(), clicked.getZ());
+        for (int y = clicked.getY(); y < level.getHeight(); y++) {
+            cursor.setY(y);
+            BlockState state = level.getBlockState(cursor);
+            if (!state.is(this)) {
+                break;
+            }
+            if (!isMaxAge(state)) {
+                return true;
+            }
+        }
+        for (int y = clicked.getY() - 1; y >= level.getMinBuildHeight(); y--) {
+            cursor.setY(y);
+            BlockState state = level.getBlockState(cursor);
+            if (!state.is(this)) {
+                break;
+            }
+            if (!isMaxAge(state)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * True when the main hand holds bone meal; the empty-hand harvest hook stands down for it (the
+     * {@code ServerPlayerGameMode} cascade only reaches that hook from a main-hand click, so an
+     * off-hand stack of bone meal never blocks the ordinary empty-hand harvest). See {@link #useItemOn}.
+     */
+    private static boolean isHoldingBonemeal(Player player) {
+        return player.getItemInHand(InteractionHand.MAIN_HAND).is(Items.BONE_MEAL);
+    }
+
+    /**
+     * The cell a bone meal climb would grow from: the top of the clicked vine column (a column is
+     * contiguous, so only its top cell can have anything but another vine above it), and only when that
+     * cell is fully ripe, a bare {@link CropStakeBlock} sits directly above, and the column has not yet
+     * reached {@code getMaxHeight()} - the same gates as the random-tick climb, minus the dice. {@code
+     * null} when there is nothing to climb, which is also what keeps bone meal on a maxed or stake-less
+     * ripe vine from doing anything at all (and never harvesting it).
+     */
+    private BlockPos climbTarget(LevelReader level, BlockPos clicked) {
+        BlockPos.MutableBlockPos cursor =
+                new BlockPos.MutableBlockPos(clicked.getX(), clicked.getY(), clicked.getZ());
+        BlockPos top = clicked;
+        for (int y = clicked.getY() + 1; y < level.getHeight(); y++) {
+            cursor.setY(y);
+            if (!level.getBlockState(cursor).is(this)) {
+                break;
+            }
+            top = cursor.immutable();
+        }
+        if (!isMaxAge(level.getBlockState(top))
+                || !level.getBlockState(top.above()).is(stake())
+                || level.getBlockState(top.below(maxHeight - 1)).is(this)) {
+            return null;
+        }
+        return top;
     }
 
     /** Fluids do not displace a standing vine; the empty override just states that explicitly. */

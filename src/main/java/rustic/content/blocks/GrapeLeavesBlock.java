@@ -16,6 +16,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.neoforge.common.CommonHooks;
 import rustic.content.items.RusticItems;
@@ -38,12 +39,13 @@ import rustic.content.items.RusticItems;
  *       overrides {@link #acceptsDangleFrom} to {@code false} so a rope hanging below a leaf never makes the
  *       block above it sag - the one exclusion the rope family's own notes had been holding for this block.</li>
  *   <li>{@code onBlockActivated} harvest becomes {@link #useWithoutItem}; {@code breakBlock}'s revert-to-rope
- *       becomes {@link #playerWillDestroy} (mirroring {@link StakeTiedBlock}); {@code getPickBlock} becomes
+ *       becomes {@link #onDestroyedByPlayer} (mirroring {@link StakeTiedBlock}); {@code getPickBlock} becomes
  *       {@link #getCloneItemStack}, handing back the grapes rather than the (nonexistent) leaf block item.</li>
  * </ul>
  *
- * <p>Deferred per the phase boundary: the foliage biome tint the legacy {@code IColoredBlock} applied, and the
- * multi-part leaf/vine/grape model, are Phase 9 - so the blockstate maps every state to one placeholder cross.
+ * <p>Phase 17 S17.1 restored both visuals the earlier phases had deferred together: the foliage biome tint the legacy
+ * {@code IColoredBlock} applied is registered for this block in {@code RusticClient.registerBlockColors}, and the
+ * blockstate emits the legacy multipart leaf/vine/grape assembly (see {@code RusticBlockStates.grape}).
  */
 public class GrapeLeavesBlock extends BlockRopeBase implements BonemealableBlock {
 
@@ -126,11 +128,18 @@ public class GrapeLeavesBlock extends BlockRopeBase implements BonemealableBlock
     /**
      * 1.12.2's {@code breakBlock}: after a break the leaf reverts to the rope it grew along, keeping its axis.
      * The grapes, if any, are handled by the block's loot table - as with {@link StakeTiedBlock}, the revert is
-     * the destroy hook and the produce is the loot.
+     * the destroy hook and the produce is the loot. The hook is {@code onDestroyedByPlayer} rather than
+     * {@code playerWillDestroy} because 1.21 never writes the state that hook returns to the world.
      */
     @Override
-    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
-        return RusticBlocks.ROPE.get().defaultBlockState().setValue(AXIS, state.getValue(AXIS));
+    public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player,
+                                       boolean willHarvest, FluidState fluid) {
+        boolean removed = super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
+        if (removed) {
+            level.setBlock(pos, RusticBlocks.ROPE.get().defaultBlockState()
+                    .setValue(AXIS, state.getValue(AXIS)), Block.UPDATE_ALL);
+        }
+        return removed;
     }
 
     /** 1.12.2's {@code getPickBlock}: middle-click gives the grapes, never a leaf block item (there is none). */

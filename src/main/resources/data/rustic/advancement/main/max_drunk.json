@@ -1,0 +1,43 @@
+{
+  "parent": "rustic:main/root",
+  "criteria": {
+    "has_max_inebriation": {
+      "trigger": "minecraft:effects_changed",
+      "conditions": {
+        "effects": {
+          "rustic:tipsy": {
+            "amplifier": 3,
+            "ambient": false
+          }
+        }
+      }
+    }
+  },
+  "display": {
+    "icon": {
+      "id": "rustic:fluid_bottle",
+      "components": {
+        "rustic:fluid_content": {
+          "id": "rustic:ale",
+          "amount": 1000,
+          "components": {
+            "rustic:quality": 1.0
+          }
+        }
+      }
+    },
+    "frame": "goal",
+    "title": {
+      "translate": "advancements.rustic.max_drunk"
+    },
+    "description": {
+      "translate": "advancements.rustic.max_drunk.desc"
+    }
+  },
+  "requirements": [
+    [
+      "has_max_inebriation"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

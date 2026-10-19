@@ -32,7 +32,8 @@ import java.util.List;
  * <p><b>Tab-entry deviation.</b> Legacy overrode {@code getSubItems} to list every condenser recipe result; the
  * condenser recipes are Phase 7, so the tab shows the legacy default instance (one tick of instant health,
  * the old {@code getDefaultInstance}) until then. The item tint (legacy {@code IColoredItem} via
- * {@code ElixirUtils.getColor}) and the potion-style duration tooltip lines are Phase 9; the plain effect-name
+ * {@code ElixirUtils.getColor}) landed in Phase 17 S17.4 as an {@code ItemColors} handler in {@code RusticClient};
+ * the potion-style duration tooltip lines are still deferred; the plain effect-name
  * lines below are the headless-testable half of the old {@code addPotionTooltip}.
  */
 public class ItemElixir extends Item {

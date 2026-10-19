@@ -1,6 +1,7 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "rustic:item/elixir_bottle"
+    "layer0": "rustic:item/elixir_overlay",
+    "layer1": "rustic:item/elixir_bottle"
   }
 }

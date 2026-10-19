@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "rustic:block/retort_adv",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "rustic:block/retort_adv"
+    },
+    "facing=south": {
+      "model": "rustic:block/retort_adv",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "rustic:block/retort_adv",
+      "y": 270
+    }
+  }
+}

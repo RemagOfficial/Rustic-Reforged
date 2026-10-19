@@ -56,6 +56,8 @@
   "block.rustic.ironwood_slab": "Ironwood Slab",
   "block.rustic.stairs_olive": "Olive Wood Stairs",
   "block.rustic.stairs_ironwood": "Ironwood Stairs",
+  "block.rustic.olive_door": "Olive Door",
+  "block.rustic.ironwood_door": "Ironwood Door",
 
   "block.rustic.olive_branch": "Olive Tree",
   "item.rustic.olive_seed": "Olive Pit",
@@ -67,6 +69,7 @@
 
   "block.rustic.sapling_apple": "Apple Sapling",
   "block.rustic.leaves_apple": "Apple Leaves",
+  "block.rustic.apple_seeds": "Apple Seeds",
   "block.rustic.beehive": "Beehive",
 
   "block.rustic.chain": "Iron Chain",
@@ -136,6 +139,9 @@
   "block.rustic.condenser_advanced": "Advanced Condenser",
   "container.rustic.condenser_advanced": "Advanced Condenser",
 
+  "block.rustic.apiary": "Apiary",
+  "container.rustic.apiary": "Apiary",
+
   "block.rustic.crop_stake": "Crop Stake",
   "block.rustic.stake_tied": "Tied Stake",
   "block.rustic.tomato_crop": "Tomato Crop",
@@ -181,7 +187,6 @@
   "item.rustic.tallow": "Tallow",
   "item.rustic.dust_tiny_iron": "Tiny Pile of Iron Dust",
   "item.rustic.dust_gold": "Gold Dust",
-  "item.rustic.apple_seeds": "Apple Seeds",
   "item.rustic.grape_seeds": "Grape Seeds",
 
   "block.rustic.olive_oil": "Olive Oil",
@@ -254,6 +259,12 @@
   "advancements.rustic.root.desc": "How quaint",
   "advancements.rustic.almanac": "Book Learnin'",
   "advancements.rustic.almanac.desc": "Obtain an almanac",
+  "advancements.rustic.the_good_stuff": "The Good Stuff",
+  "advancements.rustic.the_good_stuff.desc": "Brew a beverage with a quality of at least 90%",
+  "advancements.rustic.max_drunk": "No Ragrets",
+  "advancements.rustic.max_drunk.desc": "Reach dangerous levels of inebriation",
+  "advancements.rustic.winemaxxing": "Winemaxxing",
+  "advancements.rustic.winemaxxing.desc": "Not now honey, Mommy is winemaxxing",
 
   "book.rustic.landing": "Welcome to the Rustic Almanac. This guide covers the decoration, agriculture, and production that Rustic adds to your world. Turn the pages with the arrows, and follow the related-entry chips to dive deeper.",
 

@@ -1,0 +1,36 @@
+{
+  "parent": "rustic:main/root",
+  "criteria": {
+    "has_quality_beverage": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "predicates": {
+              "rustic:alcohol": {
+                "quality": { "min": 0.8999 }
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "display": {
+    "icon": {
+      "id": "rustic:brewing_barrel"
+    },
+    "title": {
+      "translate": "advancements.rustic.the_good_stuff"
+    },
+    "description": {
+      "translate": "advancements.rustic.the_good_stuff.desc"
+    }
+  },
+  "requirements": [
+    [
+      "has_quality_beverage"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -8,6 +8,7 @@ import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.storage.loot.LootPool;
@@ -92,7 +93,7 @@ public class RusticBlockLoot extends BlockLootSubProvider {
 
         // Phase 5 vinery: a grape leaf drops its grapes only when it is carrying them (the legacy getDrops that
         // added ModItems.GRAPES under if (state.getValue(GRAPES))); the block reverts to rope via the destroy hook
-        // (GrapeLeavesBlock.playerWillDestroy), so the loot is the grapes and nothing else. The stem is an ordinary
+        // (GrapeLeavesBlock.onDestroyedByPlayer), so the loot is the grapes and nothing else. The stem is an ordinary
         // placeable plant handled by the default drop-myself loop below.
         add(RusticFarmBlocks.GRAPE_LEAVES.get(),
                 grapesTable(RusticFarmBlocks.GRAPE_LEAVES.get(), RusticItems.GRAPES.get()));
@@ -114,6 +115,11 @@ public class RusticBlockLoot extends BlockLootSubProvider {
             }
             if (block instanceof SlabBlock) {
                 add(block, createSlabItemTable(block));
+            } else if (block instanceof DoorBlock) {
+                // Phase 13: like vanilla's own doors and 1.12.2's BlockDoorRustic.getItemDropped (which returned
+                // AIR for the UPPER half), only the lower half drops the item, so breaking either panel yields
+                // exactly one door rather than two.
+                add(block, createDoorTable(block));
             } else if (!(block instanceof LeavesBlock)) {
                 // The leaves were written above: their drop is the sapling of the same wood, not itself.
                 dropSelf(block);

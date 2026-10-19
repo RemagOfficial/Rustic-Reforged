@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
@@ -87,12 +88,19 @@ public class StakeTiedBlock extends Block {
 
     /**
      * 1.12.2's {@code breakBlock}: after a break the pole reverts to a bare {@link CropStakeBlock} and the
-     * rope is returned. The revert is {@link #playerWillDestroy}; the rope is the loot table.
+     * rope is returned. The revert is {@link #onDestroyedByPlayer}; the rope is the loot table. (Returning a
+     * replacement state from {@code playerWillDestroy} is a dead idiom in 1.21 - the engine only feeds that
+     * state to the drop/destroy calls, it never writes it to the world, so the revert must set the block itself.)
      */
     @Override
-    public BlockState playerWillDestroy(net.minecraft.world.level.Level level, BlockPos pos, BlockState state,
-                                        net.minecraft.world.entity.player.Player player) {
-        return cropStake.get().defaultBlockState();
+    public boolean onDestroyedByPlayer(BlockState state, net.minecraft.world.level.Level level, BlockPos pos,
+                                       net.minecraft.world.entity.player.Player player, boolean willHarvest,
+                                       FluidState fluid) {
+        boolean removed = super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
+        if (removed) {
+            level.setBlock(pos, cropStake.get().defaultBlockState(), Block.UPDATE_ALL);
+        }
+        return removed;
     }
 
     @Override

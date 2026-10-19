@@ -1,0 +1,69 @@
+{
+    "__comment": "Phase 17 S17.2: the wildberry bush base. Restored verbatim from the 1.12.2 MrCrayfish export (a log stem plus a tinted leaf cube), only the 1.8 texture paths remapped for 1.21 (blocks/log_oak -> minecraft:block/oak_log, rustic:blocks/wildberry_bush_leaves -> rustic:block/wildberry_bush_leaves) and a cutout render_type added. The leaf faces keep tintindex 1 exactly as legacy, which is the index BlockBerryBush.getBlockColor keyed the foliage tint off; RusticClient now registers that handler for WILDBERRY_BUSH. The legacy blockstate also listed eight wildberries_0/_1 submodels under a berries=true variant, but BlockBerryBush's state container declared only age 0..5 (no berries property, no getActualState), so that variant never matched a real state and the overlays were dead art - faithful porting draws this base for every age and no berries.",
+    "render_type": "cutout",
+    "textures": {
+        "0": "minecraft:block/oak_log",
+        "1": "rustic:block/wildberry_bush_leaves",
+        "particle": "rustic:block/wildberry_bush_leaves"
+    },
+    "elements": [
+        {
+            "name": "Stem",
+            "from": [ 6.0, 0.0, 6.0 ],
+            "to": [ 10.0, 10.0, 10.0 ],
+            "faces": {
+                "north": { "texture": "#0", "uv": [ 6.0, 6.0, 10.0, 16.0 ] },
+                "east": { "texture": "#0", "uv": [ 6.0, 6.0, 10.0, 16.0 ] },
+                "south": { "texture": "#0", "uv": [ 6.0, 6.0, 10.0, 16.0 ] },
+                "west": { "texture": "#0", "uv": [ 6.0, 6.0, 10.0, 16.0 ] },
+                "up": { "texture": "#0", "uv": [ 6.0, 6.0, 10.0, 10.0 ] },
+                "down": { "texture": "#0", "uv": [ 6.0, 7.0, 10.0, 11.0 ] }
+            }
+        },
+        {
+            "name": "Leaves",
+            "from": [ 2.0, 4.0, 2.0 ],
+            "to": [ 14.0, 16.0, 14.0 ],
+            "faces": {
+                "north": { "texture": "#1", "uv": [ 2.0, 2.0, 14.0, 14.0 ], "tintindex": 1 },
+                "east": { "texture": "#1", "uv": [ 2.0, 2.0, 14.0, 14.0 ], "tintindex": 1 },
+                "south": { "texture": "#1", "uv": [ 2.0, 2.0, 14.0, 14.0 ], "tintindex": 1 },
+                "west": { "texture": "#1", "uv": [ 2.0, 2.0, 14.0, 14.0 ], "tintindex": 1 },
+                "up": { "texture": "#1", "uv": [ 2.0, 2.0, 14.0, 14.0 ], "tintindex": 1 },
+                "down": { "texture": "#1", "uv": [ 2.0, 2.0, 14.0, 14.0 ], "tintindex": 1 }
+            }
+        }
+    ],
+    "display": {
+        "gui": {
+            "rotation": [ 30, 225, 0 ],
+            "translation": [ 0, 0, 0 ],
+            "scale": [ 0.625, 0.625, 0.625 ]
+        },
+        "ground": {
+            "rotation": [ 0, 0, 0 ],
+            "translation": [ 0, 3, 0 ],
+            "scale": [ 0.25, 0.25, 0.25 ]
+        },
+        "fixed": {
+            "rotation": [ 0, 0, 0 ],
+            "translation": [ 0, 0, 0 ],
+            "scale": [ 0.5, 0.5, 0.5 ]
+        },
+        "thirdperson_righthand": {
+            "rotation": [ 75, 45, 0 ],
+            "translation": [ 0, 2.5, 0 ],
+            "scale": [ 0.375, 0.375, 0.375 ]
+        },
+        "firstperson_righthand": {
+            "rotation": [ 0, 45, 0 ],
+            "translation": [ 0, 0, 0 ],
+            "scale": [ 0.40, 0.40, 0.40 ]
+        },
+        "firstperson_lefthand": {
+            "rotation": [ 0, 225, 0 ],
+            "translation": [ 0, 0, 0 ],
+            "scale": [ 0.40, 0.40, 0.40 ]
+        }
+    }
+}

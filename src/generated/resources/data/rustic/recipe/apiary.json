@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "L": {
+      "tag": "minecraft:logs"
+    },
+    "P": {
+      "tag": "minecraft:planks"
+    }
+  },
+  "pattern": [
+    "LLL",
+    "P P",
+    "LLL"
+  ],
+  "result": {
+    "count": 1,
+    "id": "rustic:apiary"
+  }
+}

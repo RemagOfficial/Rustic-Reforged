@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "age=0": { "model": "rustic:block/ironberries" },
+    "age=1": { "model": "rustic:block/ironberries" },
+    "age=2": { "model": "rustic:block/ironberries" },
+    "age=3": { "model": "rustic:block/ironberries" }
+  }
+}

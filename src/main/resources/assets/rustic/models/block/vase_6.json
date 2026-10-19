@@ -1,0 +1,10 @@
+{
+    "__comment": "Phase 16: vase variant 6 (white ceramic). Child of vase_0 geometry; upstream 1.12 shipped the art (block/vases/vase_*_6) but never authored this model. Remaps the parent's numeric keys 0/1/2 onto variant 6 textures - the upstream item jsons tried to remap non-existent 'side'/'top'/'bottom' keys, which is why variants 6+ rendered broken even in 1.12.",
+    "parent": "rustic:block/vase_0",
+    "textures": {
+        "0": "rustic:block/vases/vase_side_6",
+        "1": "rustic:block/vases/vase_top_6",
+        "2": "rustic:block/vases/vase_bottom_6",
+        "particle": "rustic:block/vases/vase_side_6"
+    }
+}

@@ -1,11 +1,11 @@
 {
     "__comment": "Model generated using MrCrayfish's Model Creator (http://mrcrayfish.com/modelcreator/)",
     "textures": {
-        "0": "blocks/log_oak",
-        "1": "blocks/log_oak_top",
-        "2": "rustic:blocks/apiary_front",
-        "3": "blocks/planks_oak",
-	"particle": "blocks/planks_oak"
+        "0": "minecraft:block/oak_log",
+        "1": "minecraft:block/oak_log_top",
+        "2": "rustic:block/apiary_front",
+        "3": "minecraft:block/oak_planks",
+        "particle": "minecraft:block/oak_planks"
     },
     "elements": [
         {
@@ -78,7 +78,6 @@
             "scale":[ 0.5, 0.5, 0.5 ]
 
         },
-
         "thirdperson_righthand": {
 
             "rotation": [ 75, 45, 0 ],
@@ -88,7 +87,6 @@
             "scale": [ 0.375, 0.375, 0.375 ]
 
         },
-
         "firstperson_righthand": {
 
             "rotation": [ 0, 45, 0 ],
@@ -98,7 +96,6 @@
             "scale": [ 0.40, 0.40, 0.40 ]
 
         },
-
         "firstperson_lefthand": {
 
             "rotation": [ 0, 225, 0 ],

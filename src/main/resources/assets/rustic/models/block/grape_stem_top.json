@@ -1,8 +1,8 @@
 {
-    "__comment": "Model generated using MrCrayfish's Model Creator (http://mrcrayfish.com/modelcreator/)",
+    "__comment": "Phase 17 S17.1: vinery stem cap (a 4x6 trunk stub rendered at distance 0). Was a never-converted 1.8 Bucket-B file; texture paths blocks/log_oak -> minecraft:block/oak_log and blocks/log_oak_top -> minecraft:block/oak_log_top. Element geometry/UVs kept verbatim. Untinted (matches legacy). Part of the restored grape_leaves multipart assembly.",
     "textures": {
-        "0": "blocks/log_oak",
-        "1": "blocks/log_oak_top"
+        "0": "minecraft:block/oak_log",
+        "1": "minecraft:block/oak_log_top"
     },
     "elements": [
         {

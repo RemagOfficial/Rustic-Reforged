@@ -74,6 +74,16 @@ public final class RusticMenus {
                     IMenuTypeExtension.create(CondenserAdvancedMenu::client));
 
     /**
+     * The apiary, bespoke for the same reason as the condensers: two item-filtered machine slots at the
+     * {@code apiary.png} coordinates and no {@code DataSlot}s at all (the legacy GUI drew no progress bars), so
+     * {@link ChestMenu} cannot serve it. The factory rebuilds the client copy from the block position the server
+     * wrote, mirroring legacy {@code GuiProxy}'s apiary branch.
+     */
+    public static final DeferredHolder<MenuType<?>, MenuType<ApiaryMenu>> APIARY =
+            MENUS.register("apiary", () ->
+                    IMenuTypeExtension.create(ApiaryMenu::client));
+
+    /**
      * A chest menu type of {@code slots} slots. The client factory rebuilds the same empty inventory the
      * vanilla generic menus build - {@link ChestMenu#threeRows} / {@link ChestMenu#sixRows} hand back a
      * {@code SimpleContainer} of the matching size that {@code AbstractContainerMenu}'s slot sync then

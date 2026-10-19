@@ -50,7 +50,11 @@ public final class RusticCreativeTabs {
                         }
                         // Phase 4: 1.12.2 put the storage machines (barrel, cabinet, vase) in the same
                         // decorTab through setCreativeTab, so the machine register is appended here.
-                        RusticMachineBlocks.entries().forEach(block -> output.accept(block.get()));
+                        // Phase 15 exception: the apiary was setCreativeTab(farmingTab), not decorTab, so it is
+                        // filtered out of this blanket append and listed under FARMING instead.
+                        RusticMachineBlocks.entries().stream()
+                                .filter(block -> block != RusticMachineBlocks.APIARY)
+                                .forEach(block -> output.accept(block.get()));
                         // TODO Phase 3: the remaining decor families (candles, chains, chairs, tables,
                         //   lattice, lanterns, gargoyle, vase) append themselves to DECOR_FAMILIES.
                     })
@@ -91,6 +95,10 @@ public final class RusticCreativeTabs {
                         output.accept(RusticItems.GRAPES.get());
                         // Phase 5 berry bush: the placeable bush came through blockItemEntries(); its produce here.
                         output.accept(RusticItems.WILDBERRIES.get());
+                        // Phase 14 (§A3): the apple-seeds crop's seed. It is not in blockItemEntries() (its
+                        // item is registered directly in RusticItems as the crop's BlockItem), so it is shown
+                        // here - the legacy BlockAppleSeeds sat in farmingTab through setCreativeTab.
+                        output.accept(RusticItems.APPLE_SEEDS.get());
                         // Phase 6 tree fruits: the two potion-foods the olives/ironberries leaf drop yields.
                         // OLIVES is also the tab icon (legacy ModItems.OLIVES); IRONBERRIES carries the stacking
                         // FULLMETAL effect. Both were in legacy's farmingTab through setCreativeTab.
@@ -126,6 +134,20 @@ public final class RusticCreativeTabs {
                         output.accept(fluidBottle(RusticFluids.WILDBERRY_WINE.value(), 0.75F));
                         output.accept(fluidBottle(RusticFluids.WINE.value(), 0.75F));
                         output.accept(fluidBottle(RusticFluids.AMBROSIA.value(), 0.75F));
+                        // Phase 15 (A1): the apiary. 1.12.2 registered it with setCreativeTab(farmingTab), so it
+                        // appears here rather than riding the DECOR machine append (see the filter on that loop).
+                        output.accept(RusticMachineBlocks.APIARY.get());
+                        // Phase 15 follow-up: the six plain ItemBase materials. Every 1.12.2 ItemBase set
+                        // setCreativeTab(Rustic.farmingTab) in its constructor (bee/honeycomb even repeated it
+                        // explicitly in ModItems.init), so the bee chain and the basin/tallow materials belong
+                        // in FARMING - without this the apiary's bee slot was unreachable in creative.
+                        // (grape_seeds is a port-only extra with no legacy tab counterpart, so it stays out.)
+                        output.accept(RusticItems.BEE.get());
+                        output.accept(RusticItems.HONEYCOMB.get());
+                        output.accept(RusticItems.BEESWAX.get());
+                        output.accept(RusticItems.TALLOW.get());
+                        output.accept(RusticItems.IRON_DUST_TINY.get());
+                        output.accept(RusticItems.GOLD_DUST.get());
                     })
                     .build());
 

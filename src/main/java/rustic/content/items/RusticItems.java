@@ -5,8 +5,10 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.BucketItem;
+import net.minecraft.world.item.DoubleHighBlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.DoorBlock;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
@@ -215,7 +217,12 @@ public final class RusticItems {
     public static final DeferredItem<Item> TALLOW = plainItem("tallow");
     public static final DeferredItem<Item> IRON_DUST_TINY = plainItem("dust_tiny_iron");
     public static final DeferredItem<Item> GOLD_DUST = plainItem("dust_gold");
-    public static final DeferredItem<Item> APPLE_SEEDS = plainItem("apple_seeds");
+    // Phase 14 (§A3): apple_seeds is no longer a plain byproduct - it is the seed of the growable
+    // AppleSeedsBlock (rustic:apple_seeds), so it is that block's BlockItem (still under the same id, so the
+    // crushing-tub output and the item-model sprite resolve unchanged) and right-clicks onto farmland to plant
+    // the crop, exactly as legacy's BlockAppleSeeds ItemBlock did.
+    public static final DeferredItem<BlockItem> APPLE_SEEDS = ITEMS.registerSimpleBlockItem(
+            "apple_seeds", RusticFarmBlocks.APPLE_SEEDS_CROP);
     public static final DeferredItem<Item> GRAPE_SEEDS = plainItem("grape_seeds");
 
     /** A stack-of-64 ingredient item with no behaviour, the port of 1.12.2's plain {@code ItemBase}. */
@@ -231,7 +238,12 @@ public final class RusticItems {
     static {
         // 1.12.2: new ItemBlock(this).setRegistryName(getRegistryName()) inside BlockBase.register()
         for (DeferredHolder<Block, ? extends Block> block : RusticBlocks.entries()) {
-            ITEMS.registerSimpleBlockItem(block.getId().getPath(), block);
+            String path = block.getId().getPath();
+            // A door is not a plain BlockItem: 1.12.2's ItemDoor placed both halves, and 1.21 keeps that in
+            // DoubleHighBlockItem (there is no DoorItem any more), so the block-item loop special-cases it.
+            // The type test is deferred into the supplier, the same moment registerSimpleBlockItem would have
+            // resolved block.get() - the block register is populated before the item one runs.
+            ITEMS.register(path, () -> blockItemFor(block.get()));
         }
         // Phase 4: the machine blocks live in their own register but need a block item just the same.
         for (DeferredHolder<Block, ? extends Block> block : RusticMachineBlocks.entries()) {
@@ -251,6 +263,18 @@ public final class RusticItems {
     /** Attaches the item register to the mod event bus. Called from the mod constructor. */
     public static void register(IEventBus modEventBus) {
         ITEMS.register(modEventBus);
+    }
+
+    /**
+     * The block item for one Rustic block: a {@link DoubleHighBlockItem} for a {@link DoorBlock} (the two-half
+     * placer that replaced 1.12.2's {@code ItemDoor}, since 1.21 has no {@code DoorItem}), a plain
+     * {@link BlockItem} otherwise.
+     */
+    private static BlockItem blockItemFor(Block block) {
+        if (block instanceof DoorBlock door) {
+            return new DoubleHighBlockItem(door, new Item.Properties());
+        }
+        return new BlockItem(block, new Item.Properties());
     }
 
     /**

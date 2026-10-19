@@ -158,7 +158,15 @@ public class HerbBlock extends BushBlock implements BonemealableBlock {
 
     @Override
     public void performBonemeal(ServerLevel level, RandomSource random, BlockPos pos, BlockState state) {
-        level.setBlock(pos, getStateForAge(getMaxAge()), Block.UPDATE_CLIENTS);
+        // 1.12.2's BlockHerbBase.grow: getAge + getBonemealAgeIncrease (MathHelper.getInt 2..5), capped at
+        // max - NOT a jump to full age. This mirrors StakeCropBlock's bonemeal; a lone bonemeal can leave a
+        // young herb mid-ripe (age 0 + a roll of 2 lands on 2, not 3), which is what the earlier
+        // "fully matures in one bonemeal" divergence had dropped.
+        int target = getAge(state) + net.minecraft.util.Mth.nextInt(random, 2, 5);
+        if (target > getMaxAge()) {
+            target = getMaxAge();
+        }
+        level.setBlock(pos, getStateForAge(target), Block.UPDATE_CLIENTS);
     }
 
     @Override

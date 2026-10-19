@@ -22,6 +22,9 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -45,11 +48,12 @@ import rustic.content.blockentity.RusticBlockEntities;
  * clicking either half opens the same bottom container, which is the "shared logical inventory" the pairing test
  * checks.
  *
- * <p>The legacy {@code FACING} property and {@code hasRetorts} gate are dropped with the retort machines (see
- * {@link CondenserBlock} for the same call): the plan's contract is "matches {@code advanced=true} recipes with the
- * modifier slot", not the RETORT flank. The two-block lifecycle - place a bottom, it grows a top; break either half,
- * the other follows - mirrors legacy {@code onBlockAdded}/{@code onBlockHarvested} via 1.21's {@link #onPlace} and
- * {@link #playerWillDestroy}.
+ * <p>The legacy {@code FACING} property and {@code hasRetorts} gate are restored here too: the advanced still only opens
+ * when flanked on both sides (perpendicular to its facing) by outward-turned {@link RusticMachineBlocks#RETORT_ADVANCED}
+ * retorts of its own tier (see {@link CondenserFlanking} for the shared rule). {@code FACING} also turns the front panel
+ * with the block, reproducing the 1.12.2 orientable body. The two-block lifecycle - place a bottom, it grows a top;
+ * break either half, the other follows - mirrors legacy {@code onBlockAdded}/{@code onBlockHarvested} via 1.21's
+ * {@link #onPlace} and {@link #playerWillDestroy}.
  */
 public class CondenserAdvancedBlock extends BaseEntityBlock {
 
@@ -57,13 +61,16 @@ public class CondenserAdvancedBlock extends BaseEntityBlock {
 
     /** 1.12.2 {@code BOTTOM}, inverted to the more common {@code top} convention the cabinet uses. */
     public static final BooleanProperty TOP = BooleanProperty.create("top");
+    /** Legacy {@code FACING}: which way the front panel looks and which axis the retorts flank. */
+    public static final DirectionProperty FACING = RetortBlock.FACING;
 
     private static final VoxelShape BOTTOM_SHAPE = Shapes.box(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
     private static final VoxelShape TOP_SHAPE = Shapes.box(0.0D, 0.0D, 0.0D, 1.0D, 0.5D, 1.0D);
 
     public CondenserAdvancedBlock(BlockBehaviour.Properties properties) {
         super(properties);
-        this.registerDefaultState(this.stateDefinition.any().setValue(TOP, false));
+        this.registerDefaultState(this.stateDefinition.any().setValue(TOP, false)
+                .setValue(FACING, net.minecraft.core.Direction.NORTH));
     }
 
     @Override
@@ -73,10 +80,10 @@ public class CondenserAdvancedBlock extends BaseEntityBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(TOP);
+        builder.add(TOP, FACING);
     }
 
-    /** Place as a bottom half, and only when there is headroom above - the legacy {@code canPlaceBlockAt} rule. */
+    /** Place as a bottom half facing the placer, and only when there is headroom above - the legacy {@code canPlaceBlockAt} rule. */
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
@@ -84,7 +91,8 @@ public class CondenserAdvancedBlock extends BaseEntityBlock {
         if (!level.getBlockState(context.getClickedPos().above()).canBeReplaced()) {
             return null;
         }
-        return this.defaultBlockState().setValue(TOP, false);
+        return this.defaultBlockState().setValue(TOP, false)
+                .setValue(FACING, context.getHorizontalDirection().getOpposite());
     }
 
     /** A freshly placed bottom grows its top half above it, mirroring legacy {@code onBlockAdded}. */
@@ -142,12 +150,16 @@ public class CondenserAdvancedBlock extends BaseEntityBlock {
     @Override
     protected ItemInteractionResult useItemOn(ItemStack itemStack, BlockState state, Level level, BlockPos pos,
                                               Player player, InteractionHand hand, BlockHitResult hit) {
-        if (level.isClientSide) {
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-        }
         CondenserAdvancedBlockEntity condenser = resolveBottom(level, pos, state);
         if (condenser == null) {
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            // Not correctly flanked by its advanced retorts (or the bottom half is not resolved yet): CONSUME the
+            // interaction so the held item is not used. Only a consuming result makes ServerPlayerGameMode.useItemOn
+            // return before stack.useOn places the held BlockItem (PASS/SKIP_DEFAULT/FAIL all still place).
+            return ItemInteractionResult.CONSUME;
+        }
+        if (level.isClientSide) {
+            // Operable, but the menu/bucket action is server-side: consume so the client never predicts a placement.
+            return ItemInteractionResult.sidedSuccess(true);
         }
         if (FluidUtil.interactWithFluidHandler(player, hand, condenser.getTank())) {
             return ItemInteractionResult.SUCCESS;
@@ -182,14 +194,30 @@ public class CondenserAdvancedBlock extends BaseEntityBlock {
     }
 
     /**
-     * The bottom half's block entity, whether the click landed on the bottom directly or on the decoration-only top
-     * half (whose data lives one block below). This is the single-logical-inventory forwarding the legacy top tile
-     * performed through its capability delegation.
+     * The bottom half's block entity when the column is correctly flanked by advanced retorts, otherwise {@code null}.
+     * This is the restored legacy {@code hasRetorts} gate (see {@link CondenserFlanking}): without its two
+     * outward-facing {@link RusticMachineBlocks#RETORT_ADVANCED} retorts the still will not open, so both the GUI and
+     * the bucket interaction require a properly shaped multi-block. A top-half click resolves down to the
+     * inventory-owning bottom before the flank is checked, so the gate is always evaluated at the bottom position.
      */
     @Nullable
     private CondenserAdvancedBlockEntity resolveBottom(Level level, BlockPos pos, BlockState state) {
         BlockPos bottom = state.getValue(TOP) ? pos.below() : pos;
-        return level.getBlockEntity(bottom) instanceof CondenserAdvancedBlockEntity be ? be : null;
+        if (!(level.getBlockEntity(bottom) instanceof CondenserAdvancedBlockEntity be)) {
+            return null;
+        }
+        return CondenserFlanking.hasRetorts(level, bottom, level.getBlockState(bottom),
+                RusticMachineBlocks.RETORT_ADVANCED.get()) ? be : null;
+    }
+
+    @Override
+    protected BlockState rotate(BlockState state, Rotation rot) {
+        return state.setValue(FACING, rot.rotate(state.getValue(FACING)));
+    }
+
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.setValue(FACING, mirror.getRotation(state.getValue(FACING)).rotate(state.getValue(FACING)));
     }
 
     @Override

@@ -25,7 +25,9 @@ import java.util.function.Supplier;
  * clicked on it, or into a {@link StakeTiedBlock} when rope is.
  *
  * <p>Everything else is the legacy pole read straight across: a non-solid wood of hardness 2 and the
- * resistant explosion value (so {@link RusticBlockProperties#woodResistant(float)}), a selection box the
+ * resistant explosion value (so {@link RusticBlockProperties#stakePole(float)}, {@code woodResistant}
+ * with {@code forceSolidOff} - the {@code BlockState#isSolid} answer 1.21's farmland revert reads, kept
+ * off so the pole does not destroy the soil it stands on), a selection box the
  * width of the stake and a narrower collision box (the two AABBs below). The legacy
  * {@code canPlaceTorchOnTop} override needs no counterpart: a {@code noOcclusion} pole still reports a
  * solid, flat top face for the torch check, so torches already sit on it.
@@ -66,10 +68,11 @@ public class CropStakeBlock extends Block {
 
     /**
      * 1.12.2's {@code onBlockActivated}. Clicking the pole with a stake-crop seed raises a vine here, but
-     * only if the ground under the pole will actually take it - the legacy {@code canSustainPlant} test is
-     * the crop's own {@link BlockState#canSurvive} once the seed's default state is substituted for the
-     * pole. Clicking it with rope knots the pole into a {@link StakeTiedBlock}. Both consume the held item
-     * outside creative, exactly as the legacy {@code shrink(1)} guarded on {@code isCreativeMode} did.
+     * only if the ground under the pole will actually take it - the legacy {@code canSustainPlant} test, which
+     * is {@link StakeCropBlock#canBePlanted} (the soil rule alone, with no light term, exactly as the legacy
+     * activation checked it). Clicking it with rope knots the pole into a {@link StakeTiedBlock}. Both consume
+     * the held item outside creative, exactly as the legacy {@code shrink(1)} guarded on {@code isCreativeMode}
+     * did.
      */
     @Override
     protected ItemInteractionResult useItemOn(
@@ -82,8 +85,8 @@ public class CropStakeBlock extends Block {
             BlockHitResult hitResult
     ) {
         if (stack.getItem() instanceof StakeCropSeedItem seedItem) {
-            BlockState cropState = seedItem.getCropState();
-            if (cropState.canSurvive(level, pos)) {
+            if (seedItem.getCrop().canBePlanted(level, pos)) {
+                BlockState cropState = seedItem.getCropState();
                 if (!level.isClientSide) {
                     level.setBlock(pos, cropState, Block.UPDATE_ALL);
                     RusticDrops.playPlaceSound(level, pos, cropState);

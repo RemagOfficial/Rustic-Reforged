@@ -42,22 +42,26 @@ public final class RusticFarmBlocks {
     // ------------------------------------------------------------------
     // The stake-crop trio. CROP_STAKE is the pole a vine climbs and reverts to; STAKE_TIED is the same
     // pole knotted with rope. Both are 1.12.2 wood: CROP_STAKE hardness 2 with setResistance(5F) (a
-    // reported 3.0F), STAKE_TIED hardness 1 with the same resistance - hence woodResistant() for both.
+    // reported 3.0F), STAKE_TIED hardness 1 with the same resistance - hence stakePole() for both:
+    // woodResistant() plus forceSolidOff, because the pole's thin full-height collision box would
+    // otherwise compute as solid and revert the farmland under it (a 1.16+ mechanic legacy lacked).
     // ------------------------------------------------------------------
     public static final DeferredBlock<CropStakeBlock> CROP_STAKE = FARM_BLOCKS.registerBlock(
             "crop_stake", properties -> new CropStakeBlock(properties, RusticFarmBlocks::stakeTiedBlock),
-            RusticBlockProperties.woodResistant(2.0F));
+            RusticBlockProperties.stakePole(2.0F));
 
     public static final DeferredBlock<StakeTiedBlock> STAKE_TIED = FARM_BLOCKS.registerBlock(
             "stake_tied", properties -> new StakeTiedBlock(properties, RusticFarmBlocks::cropStakeBlock),
-            RusticBlockProperties.woodResistant(1.0F));
+            RusticBlockProperties.stakePole(1.0F));
 
     // The two stake crops. No crop block item (see the class notes), so neither appears in blockItemEntries.
+    // stakeCrop() rather than crop(): the vines keep the pole's thin collision box (StakeCropBlock overrides
+    // getCollisionShape), so only forceSolidOff keeps a mature vine from reverting its farmland to dirt.
     public static final DeferredBlock<TomatoCropBlock> TOMATO_CROP = FARM_BLOCKS.registerBlock(
-            "tomato_crop", TomatoCropBlock::new, RusticBlockProperties.crop());
+            "tomato_crop", TomatoCropBlock::new, RusticBlockProperties.stakeCrop());
 
     public static final DeferredBlock<ChiliCropBlock> CHILI_CROP = FARM_BLOCKS.registerBlock(
-            "chili_crop", ChiliCropBlock::new, RusticBlockProperties.crop());
+            "chili_crop", ChiliCropBlock::new, RusticBlockProperties.stakeCrop());
 
     // ------------------------------------------------------------------
     // Phase 5 herbs: thirteen single-block HerbBlock plants. Nine are "self-herbs" - the block's own item
@@ -132,6 +136,20 @@ public final class RusticFarmBlocks {
             () -> new SaplingBlock(new TreeGrower("apple", Optional.empty(),
                     Optional.of(RusticWorldGen.APPLE_TREE), Optional.empty()),
                     RusticBlockProperties.ofBase(Blocks.OAK_SAPLING)));
+
+    // ------------------------------------------------------------------
+    // Phase 14 (§A3): the apple-seeds crop the crushing tub's apple byproduct plants. 1.12.2's
+    // BlockAppleSeeds was a two-age growable crop that, once ripe, replaced itself with an APPLE_SAPLING -
+    // the missing gameplay half of the apple line the trees (Phase 8) landed without. It is a plain
+    // BushBlock on the crop() properties (Material.PLANTS, hardness 0, plant sound), so unlike the stake
+    // crops it carries a block item (the seed, registered under the same id in RusticItems) and is planted
+    // by right-clicking that seed on farmland. The sapling it ripens into is passed lazily for the same
+    // construction-order reason the poles take theirs.
+    // ------------------------------------------------------------------
+    public static final DeferredBlock<AppleSeedsBlock> APPLE_SEEDS_CROP = FARM_BLOCKS.registerBlock(
+            "apple_seeds",
+            properties -> new AppleSeedsBlock(properties, () -> APPLE_SAPLING.get()),
+            RusticBlockProperties.crop());
 
     /**
      * The legacy beehive's properties: {@code Material.GOURD} at hardness 0.5F, {@code SoundType.SLIME} (which

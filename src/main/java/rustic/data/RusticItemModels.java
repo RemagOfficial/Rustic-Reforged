@@ -100,10 +100,14 @@ public class RusticItemModels extends ItemModelProvider {
         // against Fluids.EMPTY so an empty bottle shows only the glass, and a filled one re-skins to its contents.
         fluidContainer("fluid_bottle", "item/alcohol_bottle", "item/alcohol_overlay", Fluids.EMPTY);
 
-        // Phase 6 elixir: a plain bottle sprite for now. The legacy item was tinted per stored effect via
-        // ElixirUtils.getColor (IColoredItem); that effect-colour handler is deferred polish, so the elixir shows
-        // as a filled-looking bottle off its own art rather than the earlier texture-less generated placeholder.
-        withExistingParent("elixir", mcLoc("item/generated")).texture("layer0", modLoc("item/elixir_bottle"));
+        // Phase 6 elixir, tint restored in Phase 17 S17.4: the legacy two-layer bottle. layer0 is the
+        // elixir_overlay mask (tint index 0) coloured per stored effect by the item colour handler in RusticClient
+        // (ElixirUtils.getColor - the first effect's colour, else the magenta NO_EFFECTS fallback); layer1 is the
+        // glass bottle (tint index 1), which that handler leaves white. Matches the legacy item/elixir.json layer
+        // order exactly (legacy: layer0 items/elixir_overlay, layer1 items/elixir_bottle).
+        withExistingParent("elixir", mcLoc("item/generated"))
+                .texture("layer0", modLoc("item/elixir_overlay"))
+                .texture("layer1", modLoc("item/elixir_bottle"));
 
         // Phase 7 prerequisite items: the two bee products, the flesh tallow, the two smelting dusts and the
         // two crushing-tub/viney seed byproducts. All seven are flat inventory sprites on their own existing

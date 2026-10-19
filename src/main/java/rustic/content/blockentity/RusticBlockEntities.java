@@ -80,6 +80,12 @@ public final class RusticBlockEntities {
                     .of(CondenserAdvancedBlockEntity::new, RusticMachineBlocks.CONDENSER_ADVANCED.get())
                     .build(null));
 
+    // Phase 15 (§A1): the apiary's colony simulation runs in its block entity (legacy TileEntityApiary was ITickable).
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ApiaryBlockEntity>> APIARY =
+            BLOCK_ENTITIES.register("apiary", () -> BlockEntityType.Builder
+                    .of(ApiaryBlockEntity::new, RusticMachineBlocks.APIARY.get())
+                    .build(null));
+
     /**
      * Exposes the storage tile entities' inventories to automation. Kept in one place so a later machine
      * adds a type here and is guaranteed to be reachable by hoppers, matching the legacy mod where every
@@ -148,6 +154,14 @@ public final class RusticBlockEntities {
                 Capabilities.FluidHandler.BLOCK,
                 CONDENSER_ADVANCED.get(),
                 (condenser, side) -> condenser.getTank());
+        // Phase 15: the apiary reproduces the legacy per-face capability split - the bottom face exposes the
+        // honeycomb handler (a hopper under the box drains comb), every other face the bee handler, so automation
+        // can push bees in the sides. Two single-slot handlers, each already filtered to its one item.
+        event.registerBlockEntity(
+                Capabilities.ItemHandler.BLOCK,
+                APIARY.get(),
+                (apiary, side) -> side == net.minecraft.core.Direction.DOWN
+                        ? apiary.getHoneyCombHandler() : apiary.getBeeHandler());
     }
 
     /** Attaches the block entity register to the mod event bus. Called from the mod constructor. */

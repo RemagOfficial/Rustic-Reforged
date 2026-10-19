@@ -38,6 +38,8 @@
     "rustic:vase",
     "rustic:evaporating_basin",
     "rustic:condenser",
-    "rustic:condenser_advanced"
+    "rustic:condenser_advanced",
+    "rustic:retort",
+    "rustic:retort_advanced"
   ]
 }

@@ -3,6 +3,7 @@ package rustic;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -32,6 +33,7 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.BonemealableBlock;
 import net.minecraft.world.level.block.BushBlock;
@@ -39,7 +41,9 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.material.PushReaction;
 import rustic.content.RusticCreativeTabs;
+import rustic.content.blocks.AppleSeedsBlock;
 import rustic.content.blocks.ChiliCropBlock;
 import rustic.content.blocks.BlockRopeBase;
 import rustic.content.blocks.BerryBushBlock;
@@ -219,11 +223,12 @@ public class RusticFarmRegistrationTest {
         List<String> ids = new ArrayList<>();
         RusticFarmBlocks.entries().forEach(holder -> ids.add(holder.getId().getPath()));
         assertEquals(List.of(
-                "aloe_vera", "beehive", "blood_orchid", "chamomile", "chili_crop", "cloudsbluff", "cohosh",
-                "core_root", "crop_stake", "deathstalk_mushroom", "ginseng", "grape_leaves", "grape_stem",
-                "horsetail", "leaves_apple", "marsh_mallow", "mooncap_mushroom", "sapling_apple", "stake_tied",
-                "tomato_crop", "vanta_lily", "wildberry_bush", "wind_thistle"),
-                ids.stream().sorted().toList(), "the full farm register (Phase 5 crops plus the Phase 8 beehive/apple blocks)");
+                "aloe_vera", "apple_seeds", "beehive", "blood_orchid", "chamomile", "chili_crop", "cloudsbluff",
+                "cohosh", "core_root", "crop_stake", "deathstalk_mushroom", "ginseng", "grape_leaves",
+                "grape_stem", "horsetail", "leaves_apple", "marsh_mallow", "mooncap_mushroom", "sapling_apple",
+                "stake_tied", "tomato_crop", "vanta_lily", "wildberry_bush", "wind_thistle"),
+                ids.stream().sorted().toList(),
+                "the full farm register (Phase 5 crops plus the Phase 8 beehive/apple blocks and the Phase 14 apple crop)");
     }
 
     // ------------------------------------------------------------------ seeds and produce
@@ -280,7 +285,8 @@ public class RusticFarmRegistrationTest {
             shown.add(BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath());
         }
         for (String id : List.of("crop_stake", "stake_tied", "tomato_seeds", "chili_pepper_seeds",
-                "tomato", "chili_pepper", "ghost_pepper", "grape_stem", "grapes", "wildberry_bush", "wildberries")) {
+                "tomato", "chili_pepper", "ghost_pepper", "grape_stem", "grapes", "wildberry_bush", "wildberries",
+                "apple_seeds")) {
             assertTrue(shown.contains(id), "rustic:" + id + " is missing from the FARMING tab: " + shown);
         }
         // The vines themselves have no item, so they can never appear.
@@ -343,9 +349,9 @@ public class RusticFarmRegistrationTest {
 
     /**
      * The vinery's datagen: Phase 11 S11.2 restored the stem's four ages to {@code rustic:block/grape_stem_0.._3}
-     * (ages 0-2 are cutout crosses, age 3 the solid oak-log post), the leaves still resolve every state to one
-     * placeholder cross (their assembly and foliage tint stay deferred), the stem's block item is the flat
-     * "Grape Seeds" sprite, and the leaves loot their grapes only when carrying fruit.
+     * (ages 0-2 are cutout crosses, age 3 the solid oak-log post), Phase 17 S17.1 restored the leaves to the legacy
+     * multipart assembly (leaf core/arm, stem cap, vine, rope body and the grapes overlay), the stem's block item is
+     * the flat "Grape Seeds" sprite, and the leaves loot their grapes only when carrying fruit.
      */
     @Test
     public void datagenProducedTheGrapeStatesModelsAndFruitGatedLoot() {
@@ -362,16 +368,22 @@ public class RusticFarmRegistrationTest {
         assertEquals("rustic:item/grape_seeds", stemItem.getAsJsonObject("textures").get("layer0").getAsString(),
                 "the Grape Seeds sprite reads rustic:item/grape_seeds");
 
-        // Every leaf state resolves to the one placeholder cross; spot-check a fruiting horizontal variant exists.
-        JsonObject leavesVariants = json("/assets/rustic/blockstates/grape_leaves.json").getAsJsonObject("variants");
-        String fruitingKey = leavesVariants.entrySet().stream()
-                .map(java.util.Map.Entry::getKey)
-                .filter(k -> k.contains("grapes=true"))
-                .findFirst().orElse(null);
-        assertNotNull(fruitingKey, "grape_leaves lost its fruiting variant");
-        assertEquals("rustic:block/grape_leaves",
-                leavesVariants.getAsJsonObject(fruitingKey).get("model").getAsString(),
-                "the fruiting leaf draws the placeholder cross");
+        // Phase 17 S17.1: the leaf state file is multipart, part-for-part the legacy dc69f81 blockstate - the
+        // dist-0 leaf cube plus its stem cap, the dist-1 arm turned for the x axis, the vine and rope bodies
+        // along the axis, and the grapes overlay gated on grapes=true.
+        JsonArray leavesParts = json("/assets/rustic/blockstates/grape_leaves.json").getAsJsonArray("multipart");
+        assertMultiPart(leavesParts, "rustic:block/grape_leaves_0", null, "distance", "0");
+        assertMultiPart(leavesParts, "rustic:block/grape_stem_top", null, "distance", "0");
+        assertMultiPart(leavesParts, "rustic:block/grape_leaves_1", 90, "axis", "x", "distance", "1");
+        assertMultiPart(leavesParts, "rustic:block/grape_leaves_1", null, "axis", "z", "distance", "1");
+        assertMultiPart(leavesParts, "rustic:block/grape_vine", 90, "axis", "x");
+        assertMultiPart(leavesParts, "rustic:block/grape_vine", null, "axis", "z");
+        assertMultiPart(leavesParts, "rustic:block/rope_horizontal", 90, "axis", "x");
+        assertMultiPart(leavesParts, "rustic:block/rope_horizontal", null, "axis", "z");
+        assertMultiPart(leavesParts, "rustic:block/grapes", null, "grapes", "true");
+        // The placeholder cross model the pre-S17.1 datagen emitted is gone and nothing regenerates it.
+        assertNull(RusticFarmRegistrationTest.class.getResource("/assets/rustic/models/block/grape_leaves.json"),
+                "the stale grape_leaves placeholder model outlived the multipart restore");
 
         // The stem drops itself; the leaves drop grapes only when grapes=true.
         assertEquals("rustic:grape_stem", lootFirstEntry("/data/rustic/loot_table/blocks/grape_stem.json"));
@@ -417,9 +429,11 @@ public class RusticFarmRegistrationTest {
     }
 
     /**
-     * The bush's datagen: every age collapses to one placeholder cross (the eight per-age berry overlays and the
-     * foliage tint are Phase 9), the block item is a draw of the block itself (as the legacy parent was), the berry
-     * produce is a flat sprite, and the loot drops the bush plus one berry gated on {@code age=5}.
+     * The bush's datagen: Phase 17 S17.2 restored the real base model (a static log-stem-over-leaf-cube, foliage-tinted
+     * through RusticClient) that every age resolves to - the legacy {@code berries} berry overlays were dead art, never
+     * reachable because the state container only declares {@code AGE 0..5}, so they stay out on purpose. The block item
+     * is a draw of the block itself (as the legacy parent was), the berry produce is a flat sprite, and the loot drops
+     * the bush plus one berry gated on {@code age=5}.
      */
     @Test
     public void datagenProducedTheBushStateModelAndRipeBerryLoot() {
@@ -450,6 +464,121 @@ public class RusticFarmRegistrationTest {
                 "the berry condition names the bush");
         assertEquals("5", condition.getAsJsonObject("properties").get("age").getAsString(),
                 "berries only drop at full age");
+    }
+
+    // ------------------------------------------------------------------ apple seeds crop (Phase 14)
+
+    /**
+     * Phase 14 (§A3): the apple-seeds crop the crushing tub's apple byproduct plants. 1.12.2's
+     * {@code BlockAppleSeeds} was a two-age growable crop that ripened into an apple sapling rather than a
+     * fruit, so it is a {@link BushBlock} that is {@link BonemealableBlock} on the crop-family numbers - but
+     * unlike the stake vines it carries a real block item (the seed itself under the same id), which is what
+     * makes it plantable by right-clicking the seed on farmland.
+     */
+    @Test
+    public void theAppleSeedsCropIsABonemealableBushCarryingItsOwnSeedItem() {
+        AppleSeedsBlock crop = RusticFarmBlocks.APPLE_SEEDS_CROP.get();
+        assertSame(AppleSeedsBlock.class, crop.getClass(), "rustic:apple_seeds is not an AppleSeedsBlock");
+        assertTrue(crop instanceof BushBlock, "apple_seeds must be a BushBlock");
+        assertTrue(crop instanceof BonemealableBlock, "apple_seeds must be bonemealable");
+
+        assertEquals(0.0F, crop.defaultDestroyTime(), 0.0001F, "apple_seeds hardness (legacy Material.PLANTS: 0)");
+        assertSame(SoundType.CROP, crop.getSoundType(crop.defaultBlockState(), null, null, null),
+                "apple_seeds uses the plant-family CROP sound");
+
+        assertSame(BlockStateProperties.AGE_1, crop.getStateDefinition().getProperty("age"),
+                "apple_seeds uses vanilla's AGE_1, the legacy PropertyInteger 0..1");
+        assertEquals(List.of(0, 1), List.copyOf(((IntegerProperty) AppleSeedsBlock.AGE).getPossibleValues()),
+                "apple_seeds lost an age step");
+        assertEquals(0, crop.getAge(crop.defaultBlockState()), "a just-planted seed starts at age 0");
+        assertTrue(crop.isMaxAge(crop.getStateForAge(1)), "apple_seeds age 1 is the top");
+        assertFalse(crop.isMaxAge(crop.getStateForAge(0)), "apple_seeds age 0 is not the top");
+
+        // Unlike the stake vines, the crop IS its seed: one plantable block item under the same id, so the
+        // RusticItems field and the block's asItem() must be the same object.
+        Item seedItem = crop.asItem();
+        assertTrue(seedItem instanceof BlockItem, "apple_seeds must have a plantable block item");
+        assertSame(RusticItems.APPLE_SEEDS.get(), seedItem, "the RusticItems seed is the crop's block item");
+        assertSame(crop, ((BlockItem) seedItem).getBlock(), "the seed item places the crop");
+    }
+
+    /**
+     * The apple crop's datagen: the two ages each draw their own cutout cross on the restored
+     * {@code block/apple_seeds_0}/{@code _1} art, the seed item is the flat {@code item/apple_seeds} sprite
+     * (never the world-facing cross), and a broken crop loots the seed itself - the legacy {@code BlockBase}
+     * drop-myself behaviour.
+     */
+    @Test
+    public void datagenProducedTheAppleSeedsStatesModelsAndSeedLoot() {
+        JsonObject variants = json("/assets/rustic/blockstates/apple_seeds.json").getAsJsonObject("variants");
+        assertEquals("rustic:block/apple_seeds_0",
+                variants.getAsJsonObject("age=0").get("model").getAsString(), "apple_seeds age 0 cross");
+        assertEquals("rustic:block/apple_seeds_1",
+                variants.getAsJsonObject("age=1").get("model").getAsString(), "apple_seeds age 1 cross");
+
+        for (int age = 0; age <= 1; age++) {
+            JsonObject model = json("/assets/rustic/models/block/apple_seeds_" + age + ".json");
+            assertEquals("minecraft:block/cross", model.get("parent").getAsString(),
+                    "apple_seeds_" + age + " is a cross model");
+            assertEquals("rustic:block/apple_seeds_" + age,
+                    model.getAsJsonObject("textures").get("cross").getAsString(),
+                    "apple_seeds_" + age + " draws its restored texture");
+        }
+
+        JsonObject seedModel = json("/assets/rustic/models/item/apple_seeds.json");
+        assertEquals("minecraft:item/generated", seedModel.get("parent").getAsString(),
+                "the seed item is a flat sprite, not the world-facing cross");
+        assertEquals("rustic:item/apple_seeds",
+                seedModel.getAsJsonObject("textures").get("layer0").getAsString(),
+                "the seed sprite reads rustic:item/, not the legacy rustic:items/ folder");
+
+        assertEquals("rustic:apple_seeds", lootFirstEntry("/data/rustic/loot_table/blocks/apple_seeds.json"),
+                "a broken crop loots the seed itself");
+    }
+
+    /**
+     * Phase 14 follow-up (in-game bug): the crop-family plants must never compute as {@code isSolid()},
+     * because {@code FarmBlock.canSurvive} reverts farmland to dirt under any solid block above it - which
+     * is how the mature apple crop destroyed the very soil it was planted on, and then itself with it
+     * ({@code AppleSeedsBlock.canSurvive} demands farmland). The legacy
+     * {@code Material.PLANTS}/{@code FOLIAGE} were non-solid and piston-destroyed; 1.21 states that as
+     * {@code noCollission()} plus {@code pushReaction(DESTROY)} on {@code crop()} - {@code noOcclusion()}
+     * alone never did. Vanilla holds the same invariant for every one of its plants, walk-through included.
+     *
+     * <p>The two stake vines and the two bare poles are the documented exceptions to walk-through: legacy
+     * kept the pole's thin {@code 7..9} collision box, and those families trade {@code noCollission()}
+     * for {@code forceSolidOff()} ({@code stakeCrop()}/{@code stakePole()}) to stay non-solid with the box
+     * in place - so for them this asserts non-solid and a NON-empty collision instead. The poles are not
+     * {@code BushBlock}s and are not piston-DESTROYed (legacy wood was pushable); they join the non-solid
+     * check because a solid pole reverts its farmland on placement, the 1.21 half of the tomato bug.
+     */
+    @Test
+    public void noPlantStateIsSolidOrBlocksMovement() {
+        for (var holder : RusticFarmBlocks.entries()) {
+            Block block = holder.get();
+            boolean bushPlant = block instanceof BushBlock;
+            boolean poleCollision = block instanceof StakeCropBlock
+                    || block instanceof CropStakeBlock || block instanceof StakeTiedBlock;
+            if (!bushPlant && !poleCollision) {
+                continue;
+            }
+            for (BlockState state : block.getStateDefinition().getPossibleStates()) {
+                String what = holder.getId() + " " + state;
+                assertFalse(state.isSolid(),
+                        what + " would revert the farmland under it to dirt (FarmBlock.canSurvive)");
+                if (bushPlant) {
+                    assertSame(PushReaction.DESTROY, state.getPistonPushReaction(),
+                            what + " must break under a piston, like every vanilla plant");
+                }
+                if (poleCollision) {
+                    assertFalse(state.getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty(),
+                            what + " must keep the stake pole's thin collision box, as legacy did");
+                } else {
+                    assertTrue(state.getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty(),
+                            what + " must be walk-through, as Material.PLANTS/FOLIAGE were");
+                }
+            }
+        }
     }
 
     // ------------------------------------------------------------------ herbs
@@ -591,10 +720,11 @@ public class RusticFarmRegistrationTest {
 
     /**
      * The datagen that makes the two poles render and drop themselves. Phase 11 S11.2 restored both as static
-     * models: {@code crop_stake} is a single-state pole, while {@code stake_tied} keeps its four connection flags
-     * as sixteen states that all draw the one base knot model (the four-way rope-attachment submodels stay
-     * deferred). Each has a block item parenting the model, a loot table and the axe-mineable tag the legacy
-     * {@code Material.WOOD} implied.
+     * models and Phase 17 S17.3 completed the tied stake: {@code crop_stake} is a single-state pole, while
+     * {@code stake_tied} is now the legacy multipart - the base knot drawn for every state plus one
+     * rope_attachment_n submodel per connected side (north/east/south/west, turned y=0/90/180/270). Each has a
+     * block item parenting the knot model, a loot table and the axe-mineable tag the legacy {@code Material.WOOD}
+     * implied.
      */
     @Test
     public void datagenProducedThePoleStatesModelsLootAndTags() {
@@ -603,13 +733,14 @@ public class RusticFarmRegistrationTest {
                 json("/assets/rustic/blockstates/crop_stake.json").getAsJsonObject("variants")
                         .getAsJsonObject("").get("model").getAsString(), "crop_stake blockstate");
 
-        // stake_tied maps all sixteen connection states to the restored base knot model.
-        JsonObject tiedVariants = json("/assets/rustic/blockstates/stake_tied.json").getAsJsonObject("variants");
-        assertEquals(16, tiedVariants.size(), "stake_tied lost one of its sixteen connection states");
-        for (var entry : tiedVariants.entrySet()) {
-            assertEquals("rustic:block/stake_tied", entry.getValue().getAsJsonObject().get("model").getAsString(),
-                    "stake_tied state " + entry.getKey() + " should draw the restored knot model");
-        }
+        // stake_tied is multipart: the unconditional knot plus one rotated attachment per connection flag.
+        JsonArray tiedParts = json("/assets/rustic/blockstates/stake_tied.json").getAsJsonArray("multipart");
+        assertMultiPart(tiedParts, "rustic:block/stake_tied", null);
+        assertMultiPart(tiedParts, "rustic:block/rope_attachment_n", null, "north", "true");
+        assertMultiPart(tiedParts, "rustic:block/rope_attachment_n", 90, "east", "true");
+        assertMultiPart(tiedParts, "rustic:block/rope_attachment_n", 180, "south", "true");
+        assertMultiPart(tiedParts, "rustic:block/rope_attachment_n", 270, "west", "true");
+        assertEquals(5, tiedParts.size(), "stake_tied multipart grew beyond the knot plus four attachments");
 
         for (String pole : List.of("crop_stake", "stake_tied")) {
             JsonObject itemModel = json("/assets/rustic/models/item/" + pole + ".json");
@@ -708,6 +839,42 @@ public class RusticFarmRegistrationTest {
         JsonObject loot = json(resource);
         return loot.getAsJsonArray("pools").get(0).getAsJsonObject()
                 .getAsJsonArray("entries").get(0).getAsJsonObject().get("name").getAsString();
+    }
+
+    /**
+     * Asserts the multipart array has one part that applies {@code model} (rotated {@code y}, null meaning no
+     * rotation key) under a {@code when} that carries every {@code propPairs} key/value pair (values are the
+     * stringified blockstate values NeoForge writes). NeoForge keeps each part as its own object, so a plain scan
+     * pins the assembly without depending on part order.
+     */
+    private static void assertMultiPart(JsonArray parts, String model, Integer y, String... propPairs) {
+        for (JsonElement element : parts) {
+            JsonObject part = element.getAsJsonObject();
+            JsonObject apply = part.getAsJsonObject("apply");
+            if (apply == null || !model.equals(apply.get("model").getAsString())) {
+                continue;
+            }
+            int actualY = apply.has("y") ? apply.get("y").getAsInt() : 0;
+            if (actualY != (y == null ? 0 : y)) {
+                continue;
+            }
+            JsonObject when = part.getAsJsonObject("when");
+            boolean matched;
+            if (propPairs.length == 0) {
+                // An unconditional part (the base knot NeoForge writes with no "when" key).
+                matched = true;
+            } else {
+                matched = when != null;
+                for (int i = 0; i < propPairs.length && matched; i += 2) {
+                    JsonElement value = when.get(propPairs[i]);
+                    matched = value != null && propPairs[i + 1].equals(value.getAsString());
+                }
+            }
+            if (matched) {
+                return;
+            }
+        }
+        fail("multipart part not found: " + model + (y != null ? " y=" + y : "") + " " + java.util.Arrays.toString(propPairs));
     }
 
     private static List<String> tagValues(String name) {

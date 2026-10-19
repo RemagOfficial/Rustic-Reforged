@@ -1,11 +1,11 @@
 {
-    "__comment": "Model generated using MrCrayfish's Model Creator (http://mrcrayfish.com/modelcreator/)",
+    "__comment": "1.12.2 BlockRetort (advanced tier) art, restored for the Phase 12 retort re-port. Texture paths remapped rustic:blocks/ -> rustic:block/ only; geometry/UV/display are the MrCrayfish export unchanged.",
     "textures": {
-        "0": "rustic:blocks/retort_adv_front",
-        "1": "rustic:blocks/retort_adv_side",
-        "2": "rustic:blocks/retort_adv_bottom",
-        "3": "rustic:blocks/retort_adv_top",
-	"particle": "rustic:blocks/retort_adv_side"
+        "0": "rustic:block/retort_adv_front",
+        "1": "rustic:block/retort_adv_side",
+        "2": "rustic:block/retort_adv_bottom",
+        "3": "rustic:block/retort_adv_top",
+	"particle": "rustic:block/retort_adv_side"
     },
     "elements": [
         {

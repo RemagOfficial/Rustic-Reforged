@@ -68,6 +68,9 @@ public class RusticItemTags extends ItemTagsProvider {
             // vanilla class tags have to carry them here for a Rustic slab or stair to count as one.
             tag(ItemTags.WOODEN_SLABS).add(wood.slab().get().asItem());
             tag(ItemTags.WOODEN_STAIRS).add(wood.stairs().get().asItem());
+            // Phase 13: the door, the item mirror of the doors/wooden_doors block tags RusticBlockTags set.
+            tag(ItemTags.DOORS).add(wood.door().get().asItem());
+            tag(ItemTags.WOODEN_DOORS).add(wood.door().get().asItem());
         }
 
         // Phase 8: the apple tree's parts, the item mirror of the class tags RusticBlockTags set on the blocks

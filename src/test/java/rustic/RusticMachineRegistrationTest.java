@@ -56,6 +56,7 @@ import rustic.content.blocks.CrushingTubBlock;
 import rustic.content.blocks.EvaporatingBasinBlock;
 import rustic.content.blocks.LiquidBarrelBlock;
 import rustic.content.blocks.RusticMachineBlocks;
+import rustic.content.blocks.RetortBlock;
 import rustic.content.blocks.VaseBlock;
 import rustic.content.menu.RusticMenus;
 import rustic.registry.RusticRegistries;
@@ -362,18 +363,22 @@ public class RusticMachineRegistrationTest {
     }
 
     /**
-     * The datagen that makes the vase render and drop. Phase 11 S11.2 restored six stacked-cube styles; the
-     * scaffolded VARIANT(0-12) maps 0..5 onto {@code rustic:block/vase_0.._5} and aliases 6..12 back onto style 0
-     * (only six were ever authored), so the referenced-model set is exactly those six. The item parents vase_0.
-     * Re-run {@code runData} when this fails.
+     * The datagen that makes the vase render and drop. Phase 11 S11.2 restored six stacked-cube styles and aliased
+     * the scaffolded VARIANT(0-12) values 6..12 back onto style 0 (only six models existed); Phase 16 authored the
+     * seven missing vase_6..12 statics, so every one of the thirteen states now names its own model. The item model
+     * is hand-authored (parents vase_0, twelve override entries - see RusticVaseVariantTest). Re-run {@code runData}
+     * when this fails.
      */
     @Test
     public void datagenProducedTheVaseStateModelLootAndTag() {
         Set<String> models = blockstateModels("/assets/rustic/blockstates/vase.json");
         assertEquals(Set.of(
                         "rustic:block/vase_0", "rustic:block/vase_1", "rustic:block/vase_2",
-                        "rustic:block/vase_3", "rustic:block/vase_4", "rustic:block/vase_5"),
-                models, "every vase state should draw one of the six restored styles (variants 6..12 alias onto vase_0)");
+                        "rustic:block/vase_3", "rustic:block/vase_4", "rustic:block/vase_5",
+                        "rustic:block/vase_6", "rustic:block/vase_7", "rustic:block/vase_8",
+                        "rustic:block/vase_9", "rustic:block/vase_10", "rustic:block/vase_11",
+                        "rustic:block/vase_12"),
+                models, "every vase state should draw its own model (Phase 16 ended the 6..12 aliasing)");
 
         JsonObject itemModel = json("/assets/rustic/models/item/vase.json");
         assertEquals("rustic:block/vase_0", itemModel.get("parent").getAsString(),
@@ -526,11 +531,15 @@ public class RusticMachineRegistrationTest {
         for (FluidSpec spec : FLUID_MACHINES) {
             String path = spec.holder().getId().getPath();
             // The advanced condenser is a two-block column: TOP=false draws the body, TOP=true the coil/dish, and
-            // the block item parents the body. Every other fluid machine has one restored model named after it.
+            // the block item parents the body. Phase 12 rebuilt the BASIC condenser to the same two-half contract
+            // (condenser / condenser_top), so both are treated as columns now; every other fluid machine has one
+            // restored model named after it.
+            boolean column = path.equals("condenser_advanced") || path.equals("condenser");
             String body = path.equals("condenser_advanced") ? "condenser_adv" : path;
+            String top = path.equals("condenser_advanced") ? "condenser_adv_top" : "condenser_top";
             Set<String> models = blockstateModels("/assets/rustic/blockstates/" + path + ".json");
-            Set<String> expected = path.equals("condenser_advanced")
-                    ? Set.of("rustic:block/condenser_adv", "rustic:block/condenser_adv_top")
+            Set<String> expected = column
+                    ? Set.of("rustic:block/" + body, "rustic:block/" + top)
                     : Set.of("rustic:block/" + path);
             assertEquals(expected, models, path + " states should draw the restored machine model(s)");
 
@@ -580,6 +589,79 @@ public class RusticMachineRegistrationTest {
         assertSame(RusticRegistries.CONDENSER_SERIALIZER.get(),
                 BuiltInRegistries.RECIPE_SERIALIZER.get(RusticRegistries.CONDENSER_SERIALIZER.getId()),
                 "condenser serializer");
+    }
+
+    // ==================================================================
+    // Phase 12: the retort flank columns and the basic condenser's restored two-half contract.
+    // ==================================================================
+
+    /**
+     * Phase 12 rebuilt the BASIC condenser as a two-block TOP column with a horizontal FACING, symmetric with the
+     * advanced one (previously it was a single collapsed block). The default state is the inventory-owning bottom.
+     */
+    @Test
+    public void basicCondenserCarriesTheTwoHalfColumnContract() {
+        BlockState state = RusticMachineBlocks.CONDENSER.get().defaultBlockState();
+        assertTrue(state.hasProperty(CondenserBlock.TOP), "the basic condenser lost its TOP split property");
+        assertTrue(state.hasProperty(CondenserBlock.FACING), "the basic condenser lost its horizontal FACING");
+        assertEquals(false, state.getValue(CondenserBlock.TOP),
+                "a freshly declared condenser is the bottom half, not the top");
+    }
+
+    /**
+     * Phase 12: both retorts. 1.12.2's {@code BlockRetort} was a plain block (Material.ROCK, hardness 2, STONE sound,
+     * no block entity), the two tiers differing only in texture, so both share {@link RetortBlock} and a horizontal
+     * FACING. They ride the machine {@code entries()} loops for block item / drop-self loot / DECOR tab, take the
+     * pickaxe tag, and their blockstate + item models are the restored MrCrayfish art (block id {@code retort_advanced}
+     * draws the {@code retort_adv} model). Re-run {@code runData} if the model/datagen half fails.
+     */
+    @Test
+    public void bothRetortsAreOrientablePlainBlocksWithTheirDatagen() {
+        CreativeModeTab decor = RusticCreativeTabs.DECOR.get();
+        decor.buildContents(new CreativeModeTab.ItemDisplayParameters(FeatureFlags.DEFAULT_FLAGS, true, null));
+        List<String> tabIds = new ArrayList<>();
+        for (net.minecraft.world.item.ItemStack stack : decor.getDisplayItems()) {
+            tabIds.add(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+        }
+
+        for (String path : List.of("retort", "retort_advanced")) {
+            DeferredBlock<RetortBlock> holder = path.equals("retort")
+                    ? RusticMachineBlocks.RETORT : RusticMachineBlocks.RETORT_ADVANCED;
+            Block block = holder.get();
+            assertSame(RetortBlock.class, block.getClass(), path + " is not a RetortBlock");
+            assertSame(block, BuiltInRegistries.BLOCK.get(holder.getId()), "block register does not resolve " + path);
+            assertEquals(2.0F, block.defaultDestroyTime(), 0.0001F, path + " hardness was Material.ROCK 2");
+            assertSame(SoundType.STONE, block.getSoundType(block.defaultBlockState(), null, null, null), path + " sound");
+            assertFalse(block.defaultBlockState().requiresCorrectToolForDrops(),
+                    path + " declared a harvest level; legacy dropped by hand");
+            assertTrue(block.defaultBlockState().hasProperty(RetortBlock.FACING),
+                    path + " lost its horizontal FACING property");
+
+            Item item = block.asItem();
+            assertTrue(item instanceof BlockItem, path + " has no block item");
+            assertEquals(holder.getId().getPath(), BuiltInRegistries.ITEM.getKey(item).getPath(),
+                    path + " block item drifted from the block id");
+            assertTrue(tabIds.contains(holder.getId().toString()), path + " is not offered in the DECOR tab");
+
+            // Legacy model names: the basic retort uses "retort", the advanced one uses "retort_adv".
+            String model = path.equals("retort") ? "retort" : "retort_adv";
+            Set<String> models = blockstateModels("/assets/rustic/blockstates/" + path + ".json");
+            assertEquals(Set.of("rustic:block/" + model), models,
+                    path + " states should draw the single restored retort model");
+            JsonObject itemModel = json("/assets/rustic/models/item/" + path + ".json");
+            assertEquals("rustic:block/" + model, itemModel.get("parent").getAsString(),
+                    path + " item model parents the retort block model");
+
+            JsonObject loot = json("/data/rustic/loot_table/blocks/" + path + ".json");
+            JsonElement entry = loot.getAsJsonArray("pools").get(0).getAsJsonObject()
+                    .getAsJsonArray("entries").get(0);
+            assertEquals("rustic:" + path, entry.getAsJsonObject().get("name").getAsString(),
+                    path + " must drop itself, as 1.12.2's default did");
+        }
+
+        List<String> pickaxe = tagValues("mineable/pickaxe");
+        assertTrue(pickaxe.contains("rustic:retort"), "Material.ROCK retort is pickaxe-mined");
+        assertTrue(pickaxe.contains("rustic:retort_advanced"), "Material.ROCK advanced retort is pickaxe-mined");
     }
 
     // ---------------------------------------------------------------- helpers

@@ -7,6 +7,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.FenceBlock;
 import net.minecraft.world.level.block.FenceGateBlock;
 import net.minecraft.world.level.block.FireBlock;
@@ -17,6 +18,7 @@ import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.grower.TreeGrower;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.properties.BlockSetType;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredBlock;
@@ -181,11 +183,12 @@ public final class RusticBlocks {
             DeferredBlock<FenceBlock> fence,
             DeferredBlock<FenceGateBlock> fenceGate,
             DeferredBlock<SlabBlock> slab,
-            DeferredBlock<StairBlock> stairs
+            DeferredBlock<StairBlock> stairs,
+            DeferredBlock<DoorBlock> door
     ) {
-        /** The five blocks 1.12.2 put in {@code Rustic.decorTab}. */
+        /** The six blocks 1.12.2 put in {@code Rustic.decorTab}. */
         public List<DeferredBlock<?>> decorBlocks() {
-            return List.of(planks, fence, fenceGate, slab, stairs);
+            return List.of(planks, fence, fenceGate, slab, stairs, door);
         }
 
         /** The three blocks 1.12.2 put in {@code Rustic.farmingTab}. */
@@ -234,7 +237,14 @@ public final class RusticBlocks {
                 () -> new SlabBlock(RusticBlockProperties.wood(2.0F)));
         DeferredBlock<StairBlock> stairs = BLOCKS.register("stairs_" + name,
                 () -> new StairBlock(planks.get().defaultBlockState(), RusticBlockProperties.ofBase(planks.get())));
-        return new WoodFamily(name, planks, log, leaves, sapling, fence, fenceGate, slab, stairs);
+        // Phase 13: the door. 1.12.2's BlockDoorRustic was Material.WOOD, hardness 3F and SoundType.WOOD
+        // with no setResistance, so RusticBlockProperties.wood(3.0F) (map colour WOOD, wood sound, strength
+        // 3/0) plus the door's own noOcclusion matches it; BlockSetType.OAK re-applies the wood sound and the
+        // open/close sounds and gives vanilla's two-half/hinge placement. The legacy StateMap ignored POWERED,
+        // which is exactly what BlockStateProvider.doorBlock writes. It went to decorTab, hence decorBlocks().
+        DeferredBlock<DoorBlock> door = BLOCKS.register(name + "_door",
+                () -> new DoorBlock(BlockSetType.OAK, RusticBlockProperties.wood(3.0F).noOcclusion()));
+        return new WoodFamily(name, planks, log, leaves, sapling, fence, fenceGate, slab, stairs, door);
     }
 
     /** The olive family, named out for the phases that need one particular block. */

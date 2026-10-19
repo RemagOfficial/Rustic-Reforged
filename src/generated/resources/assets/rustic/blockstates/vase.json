@@ -7,13 +7,13 @@
       "model": "rustic:block/vase_1"
     },
     "variant=10": {
-      "model": "rustic:block/vase_0"
+      "model": "rustic:block/vase_10"
     },
     "variant=11": {
-      "model": "rustic:block/vase_0"
+      "model": "rustic:block/vase_11"
     },
     "variant=12": {
-      "model": "rustic:block/vase_0"
+      "model": "rustic:block/vase_12"
     },
     "variant=2": {
       "model": "rustic:block/vase_2"
@@ -28,16 +28,16 @@
       "model": "rustic:block/vase_5"
     },
     "variant=6": {
-      "model": "rustic:block/vase_0"
+      "model": "rustic:block/vase_6"
     },
     "variant=7": {
-      "model": "rustic:block/vase_0"
+      "model": "rustic:block/vase_7"
     },
     "variant=8": {
-      "model": "rustic:block/vase_0"
+      "model": "rustic:block/vase_8"
     },
     "variant=9": {
-      "model": "rustic:block/vase_0"
+      "model": "rustic:block/vase_9"
     }
   }
 }

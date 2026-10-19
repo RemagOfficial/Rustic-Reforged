@@ -85,15 +85,35 @@ public final class RusticMachineBlocks {
     public static final DeferredBlock<BrewingBarrelBlock> BREWING_BARREL =
             MACHINE_BLOCKS.registerBlock("brewing_barrel", BrewingBarrelBlock::new, RusticBlockProperties.wood(1.5F).noOcclusion());
 
-    // 1.12.2: BlockCondenser, Material.ROCK, hardness 2 - the elixir still. Rebuilt as a single functional block
-    // (no retort flank) behind CondenserBlockEntity; its item and loot ride the same entries() loops as every machine.
+    // 1.12.2: BlockCondenser, Material.ROCK, hardness 2 - the elixir still. Phase 12 restored the legacy TWO-BLOCK
+    // TOP/FACING column (bottom owns the CondenserBlockEntity, top is a decoration that forwards clicks) gated by the
+    // outward-facing RETORT flanks; its item and loot ride the same entries() loops as every machine.
     public static final DeferredBlock<CondenserBlock> CONDENSER =
             MACHINE_BLOCKS.registerBlock("condenser", CondenserBlock::new, RusticBlockProperties.stone(2.0F));
 
     // 1.12.2: BlockCondenserAdvanced, Material.ROCK, hardness 2 - the two-block advanced still (bottom owns the
     // inventory, top forwards) behind CondenserAdvancedBlockEntity, with the modifier slot for advanced recipes.
+    // Phase 12 added the horizontal FACING and the outward-facing RETORT_ADVANCED flank gate to match the basic still.
     public static final DeferredBlock<CondenserAdvancedBlock> CONDENSER_ADVANCED =
             MACHINE_BLOCKS.registerBlock("condenser_advanced", CondenserAdvancedBlock::new, RusticBlockProperties.stone(2.0F));
+
+    // 1.12.2: BlockRetort (Material.ROCK, hardness 2, SoundType.STONE, isOpaqueCube=false) - the companion column that
+    // flanks a condenser to complete its multi-block shape and, when clicked, opens the still behind its front. It has
+    // no block entity, so it needs none of the machine wiring beyond block + block item + loot + pickaxe tag (all
+    // supplied by the shared entries() loops). noOcclusion() reproduces the legacy non-opaque contract.
+    // RETORT sits beside the basic condenser, RETORT_ADVANCED (same class, different art) beside the advanced one; each
+    // condenser's hasRetorts gate requires its own tier.
+    public static final DeferredBlock<RetortBlock> RETORT =
+            MACHINE_BLOCKS.registerBlock("retort", RetortBlock::new, RusticBlockProperties.stone(2.0F).noOcclusion());
+
+    public static final DeferredBlock<RetortBlock> RETORT_ADVANCED =
+            MACHINE_BLOCKS.registerBlock("retort_advanced", RetortBlock::new, RusticBlockProperties.stone(2.0F).noOcclusion());
+
+    // 1.12.2: BlockApiary, Material.WOOD, hardness 1F (read from the legacy constructor - the backlog's "1.5" was
+    // a misremember), SoundType.WOOD, isOpaqueCube=false -> noOcclusion(), horizontal FACING facing the placer, and
+    // a two-slot (bee / honeycomb) tile entity behind a bespoke GUI. Phase 15 (§A1).
+    public static final DeferredBlock<ApiaryBlock> APIARY =
+            MACHINE_BLOCKS.registerBlock("apiary", ApiaryBlock::new, RusticBlockProperties.wood(1.0F).noOcclusion());
 
     /**
      * All machine blocks, in registration order. Consumed by the same item/loot loops that walk

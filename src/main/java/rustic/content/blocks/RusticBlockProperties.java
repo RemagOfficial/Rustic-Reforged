@@ -4,6 +4,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.PushReaction;
 
 /**
  * 1.12.2 handed every block a {@code Material} ({@code Material.ROCK}, {@code Material.WOOD},
@@ -137,17 +138,51 @@ public final class RusticBlockProperties {
     /**
      * 1.12.2's {@code BlockStakeCrop.STAKE_CROP}: a {@code Material.FOLIAGE} that was neither solid nor
      * light-blocking, at {@code SoundType.PLANT} and hardness 0 - i.e. broken instantly, which is why
-     * {@code requiresCorrectToolForDrops()} stays unset and no tool tag is written for it. 1.21 expresses
-     * "not solid, no light" as {@link BlockBehaviour.Properties#noOcclusion()} and the plant sound as
-     * {@link SoundType#CROP} (the rename of 1.12's PLANT); the mobility flag the legacy material overrode
-     * to {@code BLOCK} is 1.21's default for a plant, so it is not restated here.
+     * {@code requiresCorrectToolForDrops()} stays unset and no tool tag is written for it. The legacy
+     * material's walk-through, break-on-piston behaviour ({@code Material.PLANTS} and {@code FOLIAGE}
+     * were both {@code setReplaceable} with a mobility the piston destroyed) is 1.21's
+     * {@link BlockBehaviour.Properties#noCollission()} plus {@link PushReaction#DESTROY} - the same pair
+     * every vanilla plant declares. {@link BlockBehaviour.Properties#noOcclusion()} only opts out of
+     * opaque-face culling; it does NOT make a block non-solid, and getting that wrong had the mature
+     * apple crop compute as {@code isSolid()} (its 8/16-tall collision box averages ≥ 0.729 of a cube,
+     * the {@code BlockBehaviour.calculateSolid} bar), which trips {@code FarmBlock.canSurvive} and reverts
+     * the farmland under every taller Rustic plant to dirt. Not restated here: the light term needs no
+     * property, since 1.21 light opacity already defaults to 0 for a block that is not an occluder.
      */
     public static BlockBehaviour.Properties crop() {
         return BlockBehaviour.Properties.of()
                 .mapColor(MapColor.PLANT)
                 .sound(SoundType.CROP)
                 .strength(0.0F, NO_EXPLOSION_RESISTANCE)
-                .noOcclusion();
+                .noCollission()
+                .noOcclusion()
+                .pushReaction(PushReaction.DESTROY);
+    }
+
+    /**
+     * The stake vines ({@code tomato_crop}/{@code chili_crop}) on top of {@link #crop()}. Their legacy
+     * {@code BlockStakeCrop} was {@code Material.FOLIAGE} - non-solid, so the farmland under the bottom
+     * vine survived - yet it kept the pole's thin {@code 7..9} collision box and was not walkable-through.
+     * 1.21 cannot state both through the shape alone: {@code calculateSolid} calls any box reaching full
+     * block height solid, which would let the vine revert its soil like the apple crop did. {@code forceSolidOff}
+     * restores the legacy material's non-solid answer to {@code BlockState#isSolid} while the overridden
+     * {@code getCollisionShape} in {@code StakeCropBlock} keeps the pole's box itself.
+     */
+    public static BlockBehaviour.Properties stakeCrop() {
+        return crop().forceSolidOff();
+    }
+
+    /**
+     * The bare poles ({@code crop_stake}/{@code stake_tied}) on top of {@link #woodResistant(float)}: the
+     * same {@code forceSolidOff()} trick as {@link #stakeCrop()}, for the same reason. Both override
+     * {@code getCollisionShape} with a thin full-height pole box, which 1.21's shape-derived
+     * {@code calculateSolid} reads as solid - but 1.12.2 had no revert-under-a-block mechanism at all, so
+     * legacy poles standing on farmland simply stayed, exactly as {@code CropStakeBlock}'s own notes call
+     * them "a non-solid wood". Without this the pole reverts the soil the moment it is placed, and the
+     * vine pipeline (seed click checks the soil under the pole for farmland) can never start.
+     */
+    public static BlockBehaviour.Properties stakePole(float hardness) {
+        return woodResistant(hardness).forceSolidOff();
     }
 
     /**

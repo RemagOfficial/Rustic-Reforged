@@ -1,76 +1,81 @@
 {
-  "variants": {
-    "axis=x,dangle=false,distance=0,grapes=false": {
-      "model": "rustic:block/grape_leaves"
+  "multipart": [
+    {
+      "apply": {
+        "model": "rustic:block/grape_leaves_0"
+      },
+      "when": {
+        "distance": "0"
+      }
     },
-    "axis=x,dangle=false,distance=0,grapes=true": {
-      "model": "rustic:block/grape_leaves"
+    {
+      "apply": {
+        "model": "rustic:block/grape_stem_top"
+      },
+      "when": {
+        "distance": "0"
+      }
     },
-    "axis=x,dangle=false,distance=1,grapes=false": {
-      "model": "rustic:block/grape_leaves"
+    {
+      "apply": {
+        "model": "rustic:block/grape_leaves_1",
+        "y": 90
+      },
+      "when": {
+        "axis": "x",
+        "distance": "1"
+      }
     },
-    "axis=x,dangle=false,distance=1,grapes=true": {
-      "model": "rustic:block/grape_leaves"
+    {
+      "apply": {
+        "model": "rustic:block/grape_leaves_1"
+      },
+      "when": {
+        "axis": "z",
+        "distance": "1"
+      }
     },
-    "axis=x,dangle=true,distance=0,grapes=false": {
-      "model": "rustic:block/grape_leaves"
+    {
+      "apply": {
+        "model": "rustic:block/grape_vine",
+        "y": 90
+      },
+      "when": {
+        "axis": "x"
+      }
     },
-    "axis=x,dangle=true,distance=0,grapes=true": {
-      "model": "rustic:block/grape_leaves"
+    {
+      "apply": {
+        "model": "rustic:block/grape_vine"
+      },
+      "when": {
+        "axis": "z"
+      }
     },
-    "axis=x,dangle=true,distance=1,grapes=false": {
-      "model": "rustic:block/grape_leaves"
+    {
+      "apply": {
+        "model": "rustic:block/rope_horizontal",
+        "y": 90
+      },
+      "when": {
+        "axis": "x"
+      }
     },
-    "axis=x,dangle=true,distance=1,grapes=true": {
-      "model": "rustic:block/grape_leaves"
+    {
+      "apply": {
+        "model": "rustic:block/rope_horizontal"
+      },
+      "when": {
+        "axis": "z"
+      }
     },
-    "axis=y,dangle=false,distance=0,grapes=false": {
-      "model": "rustic:block/grape_leaves"
-    },
-    "axis=y,dangle=false,distance=0,grapes=true": {
-      "model": "rustic:block/grape_leaves"
-    },
-    "axis=y,dangle=false,distance=1,grapes=false": {
-      "model": "rustic:block/grape_leaves"
-    },
-    "axis=y,dangle=false,distance=1,grapes=true": {
-      "model": "rustic:block/grape_leaves"
-    },
-    "axis=y,dangle=true,distance=0,grapes=false": {
-      "model": "rustic:block/grape_leaves"
-    },
-    "axis=y,dangle=true,distance=0,grapes=true": {
-      "model": "rustic:block/grape_leaves"
-    },
-    "axis=y,dangle=true,distance=1,grapes=false": {
-      "model": "rustic:block/grape_leaves"
-    },
-    "axis=y,dangle=true,distance=1,grapes=true": {
-      "model": "rustic:block/grape_leaves"
-    },
-    "axis=z,dangle=false,distance=0,grapes=false": {
-      "model": "rustic:block/grape_leaves"
-    },
-    "axis=z,dangle=false,distance=0,grapes=true": {
-      "model": "rustic:block/grape_leaves"
-    },
-    "axis=z,dangle=false,distance=1,grapes=false": {
-      "model": "rustic:block/grape_leaves"
-    },
-    "axis=z,dangle=false,distance=1,grapes=true": {
-      "model": "rustic:block/grape_leaves"
-    },
-    "axis=z,dangle=true,distance=0,grapes=false": {
-      "model": "rustic:block/grape_leaves"
-    },
-    "axis=z,dangle=true,distance=0,grapes=true": {
-      "model": "rustic:block/grape_leaves"
-    },
-    "axis=z,dangle=true,distance=1,grapes=false": {
-      "model": "rustic:block/grape_leaves"
-    },
-    "axis=z,dangle=true,distance=1,grapes=true": {
-      "model": "rustic:block/grape_leaves"
+    {
+      "apply": {
+        "model": "rustic:block/grapes"
+      },
+      "when": {
+        "grapes": "true"
+      }
     }
-  }
+  ]
 }

@@ -21,11 +21,13 @@
     "rustic:fence_gate_olive",
     "rustic:olive_slab",
     "rustic:stairs_olive",
+    "rustic:olive_door",
     "rustic:planks_ironwood",
     "rustic:fence_ironwood",
     "rustic:fence_gate_ironwood",
     "rustic:ironwood_slab",
     "rustic:stairs_ironwood",
+    "rustic:ironwood_door",
     "rustic:lantern_wood",
     "rustic:chair_oak",
     "rustic:chair_big_oak",
@@ -74,6 +76,7 @@
     "rustic:stairs_ironwood",
     "rustic:beehive",
     "rustic:sapling_apple",
-    "rustic:leaves_apple"
+    "rustic:leaves_apple",
+    "rustic:apiary"
   ]
 }

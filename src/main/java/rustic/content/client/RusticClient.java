@@ -1,5 +1,6 @@
 package rustic.content.client;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColor;
 import net.minecraft.client.player.Input;
 import net.minecraft.client.renderer.BiomeColors;
@@ -7,21 +8,27 @@ import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
+import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.client.resources.PlayerSkin;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.FoliageColor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.ComputeFovModifierEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
@@ -29,6 +36,7 @@ import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
+import net.neoforged.neoforge.client.extensions.common.IClientMobEffectExtensions;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
@@ -41,6 +49,7 @@ import java.util.Map;
 import rustic.Rustic;
 import rustic.config.RusticConfig;
 import rustic.content.client.IronSkinRenderPolicy;
+import rustic.content.client.screen.RusticApiaryScreen;
 import rustic.content.client.screen.RusticBrewingBarrelScreen;
 import rustic.content.client.screen.RusticChestScreen;
 import rustic.content.client.screen.RusticCondenserScreen;
@@ -48,6 +57,7 @@ import rustic.content.client.screen.RusticCondenserAdvancedScreen;
 import rustic.content.blocks.RusticBlocks;
 import rustic.content.blocks.RusticFarmBlocks;
 import rustic.content.blocks.RusticMachineBlocks;
+import rustic.content.blocks.VaseBlock;
 import rustic.content.blockentity.RusticBlockEntities;
 import rustic.content.client.hud.ArmorOverflowLayer;
 import rustic.content.client.hud.ArmorToughnessLayer;
@@ -65,6 +75,8 @@ import rustic.content.entities.RusticEntities;
 import rustic.content.fluids.RusticFluids;
 import rustic.content.menu.RusticMenus;
 import rustic.content.network.RusticPayloads;
+import rustic.content.items.RusticItems;
+import rustic.content.potions.ElixirUtils;
 import rustic.content.potions.RusticMobEffects;
 
 /**
@@ -106,6 +118,16 @@ public final class RusticClient {
         // an equivalent registration for our leaf items the inventory / hand model resolves tintIndex against a
         // null handler and the icon renders flat gray even though the placed block tints correctly.
         modEventBus.addListener(RusticClient::registerItemColors);
+        // Phase 17 S17.5: the status-effect icons. 1.21 dropped the legacy per-effect setIconIndex, so each Rustic
+        // effect's HUD / inventory icon is blitted from rustic:textures/gui/potion_icons.png through a client
+        // extension (RusticMobEffectIcons) - the direct replacement for PotionBase.getStatusIconIndex binding the sheet.
+        modEventBus.addListener(RusticClient::registerMobEffectExtensions);
+        // Phase 16: the vase variant item model. 1.21.1 has no per-stack ITEM_MODEL component, so the per-variant
+        // icon rides an ItemProperties predicate (rustic:vase_variant) read off the stack's BLOCK_STATE, driving the
+        // overrides in the hand-authored models/item/vase.json - the replacement for legacy BlockVase.initModel's
+        // per-damage ModelResourceLocation loop. There is no RegisterClientCapabilities hook in 21.1, so register on
+        // the mod-bus client-setup event (enqueueWork'd because client setup runs in parallel).
+        modEventBus.addListener(RusticClient::onClientSetup);
         // Phase 6 fire power: the client's left-clicks into empty space and onto blocks are not visible to the
         // server, so they ping RusticPayloads.FirePowerAttackPayload back. Registered on the game bus because these
         // are NeoForge gameplay events; this method only runs on the client dist, so a server never sees them.
@@ -118,6 +140,47 @@ public final class RusticClient {
         // Phase 9 S9.7: the rotated-placement marker, an extra pair of diagonal lines painted on top of the vanilla
         // selection box when a Y face of an AdvancedRotationPlacement block is hovered with that block in hand.
         NeoForge.EVENT_BUS.addListener(RotatedPlacementHighlight::render);
+        // Phase 16: the vase style picker, the sneak + mouse-wheel held-item recolour that was legacy
+        // EventHandlerClient.onVaseMouseWheel. Game bus, client side only, cancellable so the vanilla inventory
+        // scroll never also fires while cycling styles.
+        NeoForge.EVENT_BUS.addListener(RusticClient::onVaseMouseWheel);
+    }
+
+    /**
+     * Phase 16: bind the {@code rustic:vase_variant} item-property that selects the vase's per-variant model.
+     * The value is the stack's {@link VaseBlock#VARIANT} (via its {@code BLOCK_STATE} component) as a float, so
+     * variant 0 uses the base parent and overrides 1..12 each pick their own block model.
+     */
+    private static void onClientSetup(FMLClientSetupEvent event) {
+        event.enqueueWork(() -> ItemProperties.register(
+                RusticMachineBlocks.VASE.get().asItem(),
+                ResourceLocation.fromNamespaceAndPath(Rustic.MODID, "vase_variant"),
+                (stack, level, entity, seed) -> (float) VaseBlock.variantOf(stack)));
+    }
+
+    /**
+     * Phase 16: {@code onVaseMouseWheel}. Sneaking and scrolling the wheel while the vase block item is in the
+     * main hand cycles every vase stack's variant (server-authoritative). The notch count is the integer scroll
+     * delta - the 1.21 analogue of legacy {@code dwheel / 120}. Unlike the legacy handler this does not mutate the
+     * client stack locally first: {@code BLOCK_STATE} is network-synchronised, so the server's recolour syncs back
+     * and repaints the held item, at worst a one-tick round trip.
+     */
+    private static void onVaseMouseWheel(InputEvent.MouseScrollingEvent event) {
+        Player player = Minecraft.getInstance().player;
+        if (player == null || !player.isShiftKeyDown()) {
+            return;
+        }
+        ItemStack held = player.getMainHandItem();
+        if (!held.is(RusticMachineBlocks.VASE.get().asItem())) {
+            return;
+        }
+        int offset = (int) event.getScrollDeltaY();
+        if (offset == 0) {
+            return;
+        }
+        event.setCanceled(true);
+        int next = VaseBlock.nextVariant(VaseBlock.variantOf(held), offset);
+        PacketDistributor.sendToServer(new RusticPayloads.VaseVariantPayload(next));
     }
 
     /** Left click on nothing, client only. */
@@ -203,6 +266,8 @@ public final class RusticClient {
         // GuiCondenser / GuiCondenserAdvanced pair.
         event.register(RusticMenus.CONDENSER.get(), RusticCondenserScreen::new);
         event.register(RusticMenus.CONDENSER_ADVANCED.get(), RusticCondenserAdvancedScreen::new);
+        // The apiary panel is the legacy GuiApiary: the two titles over the apiary.png sheet, no bars.
+        event.register(RusticMenus.APIARY.get(), RusticApiaryScreen::new);
     }
 
     /**
@@ -368,9 +433,13 @@ public final class RusticClient {
     }
 
     /**
-     * Registers the same foliage-tint handler that vanilla applies to OAK_LEAVES, JUNGLE_LEAVES, etc. for the three
-     * Rustic leaf blocks. Without this the IdentityHashMap in BlockColors returns -1 for our non-vanilla instances
-     * and the grayscale leaf textures render flat white/gray.
+     * Registers the same foliage-tint handler that vanilla applies to OAK_LEAVES, JUNGLE_LEAVES, etc. for the Rustic
+     * leaf blocks. Without this the IdentityHashMap in BlockColors returns -1 for our non-vanilla instances
+     * and the grayscale leaf textures render flat white/gray. Phase 17 S17.1 adds GRAPE_LEAVES and S17.2 adds
+     * WILDBERRY_BUSH: their restored art carries tintindex (0 and 1 respectively) exactly like legacy
+     * BlockGrapeLeaves.getBlockColor / BlockBerryBush.getBlockColor (the 1.12.2 mod tinted them through IColoredBlock),
+     * and the handler ignores the index because each model only tints its leaf faces. Grape leaves need no item-tint
+     * twin because that leaf has no block item at all; the bush does, so it appears in registerItemColors below.
      */
     private static void registerBlockColors(RegisterColorHandlersEvent.Block event) {
         // Mirrors vanilla BlockColors.create() line for OAK_LEAVES:
@@ -384,7 +453,9 @@ public final class RusticClient {
         event.register(foliageTint,
                 RusticBlocks.olive().leaves().get(),
                 RusticBlocks.ironwood().leaves().get(),
-                RusticFarmBlocks.APPLE_LEAVES.get());
+                RusticFarmBlocks.APPLE_LEAVES.get(),
+                RusticFarmBlocks.GRAPE_LEAVES.get(),
+                RusticFarmBlocks.WILDBERRY_BUSH.get());
     }
 
     /**
@@ -401,7 +472,44 @@ public final class RusticClient {
         },
                 RusticBlocks.olive().leaves().get(),
                 RusticBlocks.ironwood().leaves().get(),
-                RusticFarmBlocks.APPLE_LEAVES.get());
+                RusticFarmBlocks.APPLE_LEAVES.get(),
+                RusticFarmBlocks.WILDBERRY_BUSH.get());
+        // Phase 17 S17.4: the elixir bottle tint, the 1.21 form of the legacy ItemElixir.getItemColor. Its
+        // models/item/elixir.json paints the elixir_overlay mask at tint index 0 and the glass bottle at index 1; the
+        // legacy colourMultiplier returned ElixirUtils.getColor(stack) for index 0 (the first stored effect's colour,
+        // or the magenta NO_EFFECTS fallback) and white for any other index, so only the liquid mask is recoloured
+        // while the bottle stays un-tinted. getTint forces opacity on both branches - 1.21 honours the alpha byte
+        // the legacy renderer ignored, so a raw 0xRRGGBB would render the whole item transparent.
+        event.register(ElixirUtils::getTint,
+                RusticItems.ELIXIR.get());
+    }
+
+    /**
+     * Phase 17 S17.5: bind each Rustic status effect to its {@code potion_icons.png} tile. The (x, y) pairs are the
+     * legacy {@code PotionsRustic}/{@code PotionXxx} {@code setIconIndex} values verbatim, so the HUD / inventory
+     * icon for every effect matches 1.12.2. {@link RusticMobEffectIcons#tileFor} turns a grid cell into the sheet
+     * pixel; the extension then blits that 18x18 tile in both the inventory and HUD effect rows.
+     */
+    private static void registerMobEffectExtensions(RegisterClientExtensionsEvent event) {
+        registerEffectIcon(event, RusticMobEffects.IRON_SKIN, 0, 0);
+        registerEffectIcon(event, RusticMobEffects.FEATHER, 1, 0);
+        registerEffectIcon(event, RusticMobEffects.BLAZING_TRAIL, 2, 0);
+        registerEffectIcon(event, RusticMobEffects.SHAME, 3, 0);
+        registerEffectIcon(event, RusticMobEffects.TIPSY, 4, 0);
+        registerEffectIcon(event, RusticMobEffects.FULL, 5, 0);
+        registerEffectIcon(event, RusticMobEffects.MAGIC_RESISTANCE, 6, 0);
+        registerEffectIcon(event, RusticMobEffects.WITHER_WARD, 7, 0);
+        registerEffectIcon(event, RusticMobEffects.FULLMETAL, 0, 1);
+        registerEffectIcon(event, RusticMobEffects.UNDYING, 1, 1);
+        registerEffectIcon(event, RusticMobEffects.FIRE_POWER, 2, 1);
+    }
+
+    /** Registers one effect's icon extension from its legacy {@code setIconIndex(x, y)} grid cell. */
+    private static void registerEffectIcon(RegisterClientExtensionsEvent event,
+            DeferredHolder<MobEffect, ? extends MobEffect> effect, int iconX, int iconY) {
+        int[] tile = RusticMobEffectIcons.tileFor(iconX, iconY);
+        IClientMobEffectExtensions extensions = RusticMobEffectIcons.forTile(tile[0], tile[1]);
+        event.registerMobEffect(extensions, effect.get());
     }
 
     /** The cabinet block item is drawn as the 3D cabinet body (its animated BER model), replacing the legacy
